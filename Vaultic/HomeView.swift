@@ -7,32 +7,93 @@ struct HomeView: View {
     @StateObject private var dataStore = OTPDataStore()
     @State private var showingAddToken = false
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var searchText = ""
+    
+    var filteredCodes: [OTPCode] {
+        if searchText.isEmpty {
+            return dataStore.codes
+        } else {
+            return dataStore.codes.filter { code in
+                code.label.localizedCaseInsensitiveContains(searchText) ||
+                code.account.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 8) {
-                    ForEach(dataStore.codes) { code in
+                    // Search bar
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.secondary)
+                            .font(.system(size: 17))
+                        
+                        TextField("Search tokens", text: $searchText)
+                            .textFieldStyle(PlainTextFieldStyle())
+                            .font(.system(size: 17))
+                            .foregroundColor(.primary)
+                        
+                        if !searchText.isEmpty {
+                            Button(action: {
+                                searchText = ""
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 17))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+                    .padding(.bottom, 4)
+                    
+                    ForEach(filteredCodes) { code in
                         OTPCardView(code: code, dataStore: dataStore)
                     }
                     
-                    // Empty state when no tokens
-                    if dataStore.codes.isEmpty {
+                    // Empty state when no tokens or no search results
+                    if filteredCodes.isEmpty {
                         VStack(spacing: 12) {
-                            Image(systemName: "lock.shield")
-                                .font(.system(size: 40))
-                                .foregroundColor(.accentColor)
-                                .opacity(0.5)
-                            
-                            Text("No Tokens Yet")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            Text("Add your first authentication token to get started")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary.opacity(0.8))
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 40)
+                            if searchText.isEmpty {
+                                Image(systemName: "lock.shield")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.accentColor)
+                                    .opacity(0.5)
+                                
+                                Text("No Tokens Yet")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("Add your first authentication token to get started")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
+                            } else {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.secondary)
+                                    .opacity(0.5)
+                                
+                                Text("No Results")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("No tokens match \"\(searchText)\"")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
+                            }
                         }
                         .padding(.vertical, 50)
                     }
@@ -86,6 +147,16 @@ struct OTPCardView: View {
     @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
     
+    // Haptic feedback generators
+    private let copyHaptic = UIImpactFeedbackGenerator(style: .light)
+    private let longPressHaptic = UIImpactFeedbackGenerator(style: .medium)
+    private let deleteHaptic = UINotificationFeedbackGenerator()
+    
+    // Compute warning threshold based on period
+    private var warningThreshold: Int {
+        return max(5, Int(Double(code.period) * 0.1667)) // 5 seconds or 1/6 of period
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Header with service info and timer
@@ -104,7 +175,7 @@ struct OTPCardView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(code.label)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(remainingSeconds <= 5 ? .red : .primary)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : .primary)
                         .lineLimit(1)
                     
                     if !code.account.isEmpty {
@@ -125,9 +196,9 @@ struct OTPCardView: View {
                         .foregroundColor(Color.gray.opacity(0.1))
                         .frame(width: 28, height: 28)
                     
-                    // Progress circle
+                    // Progress circle - NOW DYNAMIC BASED ON PERIOD
                     Circle()
-                        .trim(from: 0, to: CGFloat(remainingSeconds) / 30)
+                        .trim(from: 0, to: CGFloat(remainingSeconds) / CGFloat(code.period))
                         .stroke(
                             style: StrokeStyle(
                                 lineWidth: 1.8,
@@ -135,14 +206,14 @@ struct OTPCardView: View {
                                 lineJoin: .round
                             )
                         )
-                        .foregroundColor(remainingSeconds <= 5 ? .red : .accentColor)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : .accentColor)
                         .rotationEffect(.degrees(-90))
                         .frame(width: 28, height: 28)
                     
                     // Timer text
                     Text("\(remainingSeconds)")
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundColor(remainingSeconds <= 5 ? .red : .secondary)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : .secondary)
                 }
             }
             .padding(.horizontal, 12)
@@ -170,7 +241,7 @@ struct OTPCardView: View {
                 } else {
                     Text(code.currentCode)
                         .font(.system(size: 20, weight: .bold, design: .monospaced))
-                        .foregroundColor(remainingSeconds <= 5 ? .red : .primary)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : .primary)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
@@ -192,8 +263,8 @@ struct OTPCardView: View {
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Color(.separator).opacity(0.12), lineWidth: 0.5)
                 
-                // Red overlay effect when 5 seconds or less
-                if remainingSeconds <= 5 {
+                // Red overlay effect when near expiration
+                if remainingSeconds <= warningThreshold {
                     RoundedRectangle(cornerRadius: 16)
                         .inset(by: -1)
                         .fill(
@@ -219,7 +290,7 @@ struct OTPCardView: View {
         )
         .overlay(
             Group {
-                if remainingSeconds <= 5 {
+                if remainingSeconds <= warningThreshold {
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(
                             LinearGradient(
@@ -235,11 +306,12 @@ struct OTPCardView: View {
         .padding(.horizontal, 2)
         .padding(.vertical, 2)
         .onTapGesture {
-            // Tap to copy
+            // Tap to copy with haptic feedback
             copyToClipboard()
         }
-        .onLongPressGesture {
-            // Long press for context menu/action sheet
+        .onLongPressGesture(minimumDuration: 0.5) {
+            // Long press for context menu/action sheet with haptic feedback
+            longPressHaptic.impactOccurred()
             showActionSheet()
         }
         .confirmationDialog("Manage Token", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
@@ -248,6 +320,8 @@ struct OTPCardView: View {
             }
             
             Button("Delete", role: .destructive) {
+                // Haptic feedback for delete action
+                deleteHaptic.notificationOccurred(.warning)
                 deleteToken()
             }
             
@@ -264,7 +338,7 @@ struct OTPCardView: View {
         .onReceive(timer) { _ in
             updateRemainingSeconds()
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: remainingSeconds <= 5)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: remainingSeconds <= warningThreshold)
         .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
     
@@ -280,6 +354,9 @@ struct OTPCardView: View {
     }
     
     private func copyToClipboard() {
+        // Light haptic feedback for copy
+        copyHaptic.impactOccurred()
+        
         UIPasteboard.general.string = code.currentCode
         withAnimation {
             isCopied = true
@@ -304,7 +381,6 @@ struct OTPCardView: View {
     }
 }
 
-// MARK: - Edit Token View
 struct EditTokenView: View {
     let code: OTPCode
     @ObservedObject var dataStore: OTPDataStore
@@ -314,6 +390,9 @@ struct EditTokenView: View {
     @State private var account: String
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    
+    // Haptic feedback for save
+    private let saveHaptic = UINotificationFeedbackGenerator()
     
     init(code: OTPCode, dataStore: OTPDataStore) {
         self.code = code
@@ -422,299 +501,14 @@ struct EditTokenView: View {
         
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
             dataStore.updateCode(updatedCode, at: index)
+            // Success haptic feedback
+            saveHaptic.notificationOccurred(.success)
         }
         
         dismiss()
     }
 }
 
-// MARK: - Add Token View with Tabs
-struct AddTokenView: View {
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject var dataStore: OTPDataStore
-    
-    @State private var selectedTab = 0
-    @State private var label = ""
-    @State private var account = ""
-    @State private var secret = ""
-    @State private var showingAlert = false
-    @State private var alertMessage = ""
-    @State private var isScanning = false
-    @State private var scannedQRCode: String?
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Tab Selector - Keep on top
-                Picker("Method", selection: $selectedTab) {
-                    Text("Scan QR Code").tag(0)
-                    Text("Enter Setup Key").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding()
-                
-                Divider()
-                
-                // Tab content with consistent height
-                if selectedTab == 0 {
-                    // QR Code Scanner - Compact version
-                    VStack(spacing: 16) { // Reduced spacing
-                        Spacer()
-                        
-                        Image(systemName: "qrcode.viewfinder")
-                            .font(.system(size: 60)) // Smaller icon
-                            .foregroundColor(.accentColor)
-                            .symbolRenderingMode(.hierarchical)
-                        
-                        Text("Scan QR Code")
-                            .font(.title3) // Smaller font
-                            .fontWeight(.semibold)
-                            .padding(.top, 4)
-                        
-                        Text("Point your camera at a QR code from your authentication app")
-                            .font(.callout) // Smaller font
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32) // Reduced padding
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            requestCameraPermission()
-                        }) {
-                            Label("Start Scanning", systemImage: "camera")
-                                .font(.headline)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.accentColor)
-                                )
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 32) // Reduced padding
-                        .padding(.bottom, 24) // Reduced padding
-                    }
-                    .frame(maxHeight: .infinity)
-                } else {
-                    // Manual Entry Form - Compact layout
-                    VStack(spacing: 16) { // Reduced spacing
-                        Spacer()
-                        
-                        // Form Fields only - more compact
-                        VStack(spacing: 12) { // Reduced spacing
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Service Name")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                TextField("e.g., GitHub", text: $label)
-                                    .padding(10) // Reduced padding
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color(.secondarySystemBackground))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color(.separator), lineWidth: 1)
-                                    )
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Account")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                TextField("e.g., user@example.com", text: $account)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color(.secondarySystemBackground))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color(.separator), lineWidth: 1)
-                                    )
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Setup Key")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                
-                                TextField("Enter your setup key", text: $secret)
-                                    .autocapitalization(.none)
-                                    .disableAutocorrection(true)
-                                    .textContentType(.password)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color(.secondarySystemBackground))
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(Color(.separator), lineWidth: 1)
-                                    )
-                            }
-                        }
-                        .padding(.horizontal, 32) // Reduced padding
-                        
-                        Spacer()
-                        
-                        // Add Button - smaller
-                        Button(action: {
-                            validateAndSave()
-                        }) {
-                            Label("Add", systemImage: "plus.circle.fill")
-                                .font(.headline)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 10)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.accentColor)
-                                )
-                                .foregroundColor(.white)
-                        }
-                        .disabled(label.isEmpty || account.isEmpty || secret.isEmpty)
-                        .padding(.horizontal, 32)
-                        .padding(.bottom, 24)
-                    }
-                    .frame(maxHeight: .infinity)
-                }
-            }
-            .navigationTitle("Add Token")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-            .alert("Invalid Secret", isPresented: $showingAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(alertMessage)
-            }
-        }
-    }
-    
-    private func requestCameraPermission() {
-        AVCaptureDevice.requestAccess(for: .video) { granted in
-            DispatchQueue.main.async {
-                if granted {
-                    isScanning = true
-                } else {
-                    alertMessage = "Camera access is required to scan QR codes. Please enable it in Settings."
-                    showingAlert = true
-                }
-            }
-        }
-    }
-    
-    private func parseQRCode(_ qrCode: String) {
-        // Parse otpauth:// URLs
-        if let url = URL(string: qrCode),
-           url.scheme == "otpauth",
-           url.host == "totp" {
-            
-            let path = url.path
-            let components = path.components(separatedBy: ":")
-            
-            if components.count >= 2 {
-                label = components[0].trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-                account = components[1]
-            } else if components.count == 1 {
-                label = components[0].trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-                account = ""
-            }
-            
-            // Extract parameters from query
-            if let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems {
-                for item in queryItems {
-                    if item.name == "secret", let value = item.value {
-                        secret = value
-                    }
-                }
-            }
-            
-            // Auto-save if we have enough info
-            if !label.isEmpty && !secret.isEmpty {
-                let newCode = OTPCode(
-                    label: label,
-                    account: account,
-                    secret: secret,
-                    algorithm: .sha1, // Default
-                    digits: 6, // Default
-                    period: 30 // Default
-                )
-                dataStore.addCode(newCode)
-                dismiss()
-            }
-        } else {
-            alertMessage = "Invalid QR code. Please scan a valid OTP QR code."
-            showingAlert = true
-        }
-    }
-    
-    private func validateAndSave() {
-        if !OTPGenerator.isValidSecret(secret) {
-            alertMessage = "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters)."
-            showingAlert = true
-            return
-        }
-        
-        let newCode = OTPCode(
-            label: label,
-            account: account,
-            secret: secret,
-            algorithm: .sha1, // Default
-            digits: 6, // Default
-            period: 30 // Default
-        )
-        
-        dataStore.addCode(newCode)
-        dismiss()
-    }
-}
-
-// MARK: - QRScannerView placeholder
-struct QRScannerView: View {
-    let onCodeScanned: (String?) -> Void
-    
-    var body: some View {
-        ZStack {
-            Color.black
-                .ignoresSafeArea()
-            
-            VStack {
-                Text("QR Scanner Placeholder")
-                    .foregroundColor(.white)
-                    .font(.title)
-                
-                Text("Camera permission required")
-                    .foregroundColor(.gray)
-                    .padding()
-                
-                Button("Cancel") {
-                    onCodeScanned(nil)
-                }
-                .padding()
-                .background(Color.white)
-                .foregroundColor(.black)
-                .cornerRadius(10)
-            }
-        }
-        .onAppear {
-            // This is a placeholder - implement actual QR scanning here
-            print("QR Scanner placeholder appeared")
-        }
-    }
-}
-
-// MARK: - Preview
 #Preview {
     HomeView()
 }
