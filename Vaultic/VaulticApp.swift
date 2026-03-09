@@ -1,17 +1,16 @@
-//
-//  VaulticApp.swift
-//  Vaultic
-//
-//  Created by Hunter Eddington on 3/7/26.
-//
-
 import SwiftUI
 
 @main
 struct VaulticApp: App {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if hasCompletedOnboarding {
+                ContentView() // Your existing main app view
+            } else {
+                WelcomeView()
+            }
         }
     }
 }
