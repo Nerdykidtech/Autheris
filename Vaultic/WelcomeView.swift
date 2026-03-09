@@ -10,8 +10,20 @@ struct WelcomeView: View {
     @State private var gradientEnd = UnitPoint(x: 1, y: 1)
     @State private var gradientColors: [Color] = []
     
+    // Animation states for entrance effects
+    @State private var isContentVisible = false
+    @State private var logoScale: CGFloat = 0.8
+    @State private var logoOpacity: Double = 0
+    @State private var textOffsetY: CGFloat = 20
+    
+    // Pulsing animation state for "Vaultic" text
+    @State private var pulseScale: CGFloat = 1.0
+    @State private var pulseOpacity: Double = 0.0 // Start at 0
+    @State private var isPulsing = false
+    
     private let totalPages = 3
     private let animationDuration = 8.0
+    private let pulseDuration = 3.0
     
     init() {
         // Initialize gradient colors based on system appearance
@@ -134,6 +146,21 @@ struct WelcomeView: View {
             // Set initial gradient colors based on current color scheme
             gradientColors = Self.gradientColors(for: colorScheme)
             startGradientAnimation()
+            
+            // Start entrance animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                    logoScale = 1.0
+                    logoOpacity = 1.0
+                    textOffsetY = 0
+                    isContentVisible = true
+                }
+                
+                // Start pulsing animation for "Vaultic" text after entrance animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    startPulsingAnimation()
+                }
+            }
         }
         .onChange(of: colorScheme) { newColorScheme in
             // Update gradient colors when color scheme changes
@@ -177,6 +204,38 @@ struct WelcomeView: View {
         }
     }
     
+    // MARK: - Pulsing Animation for "Vaultic" Text
+    private func startPulsingAnimation() {
+        isPulsing = true
+        
+        // First, fade in the pulsing effects
+        withAnimation(.easeInOut(duration: 0.5)) {
+            pulseOpacity = 1.0
+        }
+        
+        // Then start the continuous pulsing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // Create a gentle, repeating pulse animation
+            let basePulse = Animation
+                .easeInOut(duration: pulseDuration)
+                .repeatForever(autoreverses: true)
+            
+            withAnimation(basePulse) {
+                pulseScale = 1.08 // Gentle scale up
+            }
+            
+            // Add a subtle opacity pulse for a more premium feel
+            let opacityPulse = Animation
+                .easeInOut(duration: pulseDuration * 0.8)
+                .repeatForever(autoreverses: true)
+                .delay(pulseDuration * 0.3)
+            
+            withAnimation(opacityPulse) {
+                pulseOpacity = 0.8
+            }
+        }
+    }
+    
     // MARK: - Gradient Colors for Different Color Schemes
     private static func gradientColors(for colorScheme: ColorScheme) -> [Color] {
         switch colorScheme {
@@ -203,86 +262,206 @@ struct WelcomeView: View {
         gradientColors(for: colorScheme)
     }
     
-    // MARK: - Page 1: Welcome
+    // MARK: - Page 1: Welcome (Enhanced Professional Design)
     private var welcomePage: some View {
         GeometryReader { geometry in
             ScrollView {
-                VStack(spacing: 32) {
+                VStack(spacing: 40) {
                     // Vertical spacer to center content
-                    Spacer(minLength: max(0, (geometry.size.height - 400) / 3))
+                    Spacer(minLength: max(0, (geometry.size.height - 500) / 3))
                     
-                    // App icon/logo with modern glow effect
+                    // Premium logo with enhanced effects
                     ZStack {
+                        // Outer glow ring
                         Circle()
-                            .fill(
+                            .stroke(
                                 LinearGradient(
                                     gradient: Gradient(colors: [
-                                        Color.accentColor.opacity(0.2),
+                                        Color.accentColor.opacity(0.4),
+                                        Color.accentColor.opacity(0.1),
                                         Color.accentColor.opacity(0.05)
                                     ]),
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
-                                )
+                                ),
+                                lineWidth: 2
                             )
-                            .frame(width: 160, height: 160)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 30, x: 0, y: 15)
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                Color.accentColor.opacity(0.3),
-                                                Color.accentColor.opacity(0.1)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
+                            .frame(width: 200, height: 200)
+                            .blur(radius: 8)
+                            .scaleEffect(logoScale)
+                            .opacity(logoOpacity)
+                        
+                        // Main logo container
+                        ZStack {
+                            // Metallic gradient background
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.accentColor.opacity(0.3),
+                                            Color.accentColor.opacity(0.15),
+                                            Color.accentColor.opacity(0.05)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
                                     )
-                            )
-                        
-                        Image(systemName: "lock.shield.fill")
-                            .font(.system(size: 60, weight: .regular))
-                            .foregroundColor(.accentColor)
-                            .symbolRenderingMode(.hierarchical)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                                )
+                                .frame(width: 180, height: 180)
+                                .shadow(
+                                    color: Color.accentColor.opacity(0.4),
+                                    radius: 40,
+                                    x: 0,
+                                    y: 15
+                                )
+                            
+                            // Inner shadow for depth
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.white.opacity(0.15),
+                                            Color.clear,
+                                            Color.black.opacity(0.1)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                                .frame(width: 178, height: 178)
+                            
+                            // Icon with premium styling
+                            Image(systemName: "lock.shield.fill")
+                                .font(.system(size: 70, weight: .regular))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.accentColor,
+                                            Color.accentColor.opacity(0.8)
+                                        ]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
+                                .shadow(color: Color.accentColor.opacity(0.3), radius: 15, x: 0, y: 8)
+                        }
+                        .scaleEffect(logoScale)
+                        .opacity(logoOpacity)
                     }
+                    .animation(.spring(response: 0.8, dampingFraction: 0.7), value: logoScale)
                     
-                    VStack(spacing: 16) {
-                        Text("Welcome to")
-                            .font(.title3)
-                            .fontWeight(.medium)
+                    // Professional text content with entrance animation
+                    VStack(spacing: 24) {
+                        // Welcome text with subtle animation
+                        Text("WELCOME TO")
+                            .font(.system(size: 18, weight: .semibold, design: .rounded))
                             .foregroundColor(.secondary)
-                            .tracking(1)
+                            .tracking(3)
+                            .opacity(isContentVisible ? 1 : 0)
+                            .offset(y: isContentVisible ? 0 : 10)
+                            .animation(.easeOut(duration: 0.5).delay(0.3), value: isContentVisible)
                         
-                        Text("Vaultic")
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                            .overlay(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.accentColor,
-                                        Color.accentColor.opacity(0.8)
-                                    ]),
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                        // Main app name with professional pulsing animation
+                        ZStack {
+                            // Subtle glow behind the text (only visible when pulsing starts)
+                            Text("Vaultic")
+                                .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                .foregroundColor(.clear)
+                                .overlay(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.accentColor.opacity(0.7),
+                                            Color.accentColor.opacity(0.3)
+                                        ]),
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                    .mask(
+                                        Text("Vaultic")
+                                            .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                            .blur(radius: 8)
+                                    )
+                                    .offset(y: 2)
                                 )
-                                .mask(
-                                    Text("Vaultic")
-                                        .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .scaleEffect(pulseScale * 1.05) // Slightly larger glow pulse
+                                .opacity(pulseOpacity * 0.7)
+                                .opacity(isPulsing ? pulseOpacity * 0.7 : 0)
+                                .animation(
+                                    .easeInOut(duration: pulseDuration)
+                                        .repeatForever(autoreverses: true),
+                                    value: pulseScale
                                 )
-                            )
+                            
+                            // Pulsing outline effect (only visible when pulsing starts)
+                            Text("Vaultic")
+                                .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                .foregroundColor(.clear)
+                                .overlay(
+                                    Color.accentColor
+                                        .opacity(0.2)
+                                        .mask(
+                                            Text("Vaultic")
+                                                .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                        )
+                                )
+                                .scaleEffect(pulseScale)
+                                .opacity(pulseOpacity * 0.4)
+                                .opacity(isPulsing ? pulseOpacity * 0.4 : 0)
+                                .animation(
+                                    .easeInOut(duration: pulseDuration * 0.9)
+                                        .repeatForever(autoreverses: true)
+                                        .delay(0.1),
+                                    value: pulseScale
+                                )
+                            
+                            // Main text with metallic gradient
+                            Text("Vaultic")
+                                .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                .foregroundColor(.primary)
+                                .overlay(
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [
+                                            Color.accentColor,
+                                            Color.accentColor.opacity(0.7)
+                                        ]),
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                    .mask(
+                                        Text("Vaultic")
+                                            .font(.system(size: 62, weight: .heavy, design: .rounded))
+                                    )
+                                )
+                                .shadow(color: Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                                .scaleEffect(isPulsing ? pulseScale : 1.0)
+                                .animation(
+                                    isPulsing ? 
+                                        .easeInOut(duration: pulseDuration)
+                                            .repeatForever(autoreverses: true) :
+                                        .default,
+                                    value: isPulsing ? pulseScale : 1.0
+                                )
+                                .opacity(isContentVisible ? 1 : 0)
+                                .offset(y: isContentVisible ? 0 : textOffsetY)
+                                .animation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.5), value: isContentVisible)
+                        }
                         
+                        // Tagline with elegant typography (line removed as requested)
                         Text("Secure 2FA Token Manager")
-                            .font(.title3)
-                            .fontWeight(.medium)
+                            .font(.system(size: 20, weight: .medium, design: .default))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
+                            .lineSpacing(6)
+                            .padding(.horizontal, 40)
+                            .opacity(isContentVisible ? 1 : 0)
+                            .offset(y: isContentVisible ? 0 : textOffsetY)
+                            .animation(.easeOut(duration: 0.5).delay(0.6), value: isContentVisible)
                     }
                     .padding(.horizontal, 32)
                     
                     // Bottom spacer
-                    Spacer(minLength: max(0, (geometry.size.height - 400) / 3))
+                    Spacer(minLength: max(0, (geometry.size.height - 500) / 3))
                 }
                 .frame(maxWidth: .infinity, minHeight: geometry.size.height)
             }
