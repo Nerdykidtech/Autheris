@@ -4,10 +4,12 @@ import AVFoundation
 import Combine
 
 struct HomeView: View {
-    @StateObject private var dataStore = OTPDataStore()
+    @EnvironmentObject private var dataStore: OTPDataStore
     @State private var showingAddToken = false
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var searchText = ""
+    @State private var showingBackupView = false
+    @State private var showingQRCodeView = false
     
     var filteredCodes: [OTPCode] {
         if searchText.isEmpty {
@@ -106,9 +108,27 @@ struct HomeView: View {
             .toolbar {
                 // Swapped positions: ellipsis on left, plus on right
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        // Settings or edit action
-                    }) {
+                    Menu {
+                        Button(action: {
+                            showingBackupView = true
+                        }) {
+                            Label("Backup", systemImage: "externaldrive.badge.plus")
+                        }
+                        
+                        Button(action: {
+                            showingQRCodeView = true
+                        }) {
+                            Label("Transfer via QR Code", systemImage: "qrcode")
+                        }
+                        
+                        Divider()
+                        
+                        Button(action: {
+                            // Settings or other options could go here
+                        }) {
+                            Label("Settings", systemImage: "gear")
+                        }
+                    } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.title3)
                     }
@@ -129,6 +149,34 @@ struct HomeView: View {
                 AddTokenView(dataStore: dataStore)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showingBackupView) {
+                BackupView(dataStore: dataStore)
+            }
+            .sheet(isPresented: $showingQRCodeView) {
+                if let exportData = dataStore.exportData() {
+                    QRCodeView(data: exportData, title: "Export Tokens")
+                } else {
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 50))
+                            .foregroundColor(.orange)
+                        
+                        Text("Unable to Generate QR Code")
+                            .font(.headline)
+                        
+                        Text("There was an error preparing your tokens for export.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Button("Dismiss") {
+                            showingQRCodeView = false
+                        }
+                        .padding(.top, 20)
+                    }
+                    .padding()
+                }
             }
             .onReceive(timer) { _ in
                 // Force view update every second for countdown
@@ -511,5 +559,6 @@ struct EditTokenView: View {
 
 #Preview {
     HomeView()
+        .environmentObject(OTPDataStore())
 }
 

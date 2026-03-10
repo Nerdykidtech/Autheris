@@ -13,6 +13,8 @@ struct AddTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isScanning = false
+    @State private var showingImportSuccess = false
+    @State private var importedTokenCount = 0
     
     var body: some View {
         NavigationStack {
@@ -44,7 +46,7 @@ struct AddTokenView: View {
                             .font(.title3)
                             .fontWeight(.semibold)
                         
-                        Text("Point your camera at a QR code from your authentication app")
+                        Text("Point your camera at a QR code from your authentication app or export file")
                             .font(.callout)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -172,6 +174,13 @@ struct AddTokenView: View {
             } message: {
                 Text(alertMessage)
             }
+            .alert("Import Successful", isPresented: $showingImportSuccess) {
+                Button("OK", role: .cancel) {
+                    dismiss()
+                }
+            } message: {
+                Text("Successfully imported \(importedTokenCount) token\(importedTokenCount == 1 ? "" : "s").")
+            }
             .sheet(isPresented: $isScanning) {
                 QRScannerView(isScanning: $isScanning, onCodeScanned: { qrCode in
                     if let qrCode = qrCode {
@@ -199,7 +208,49 @@ struct AddTokenView: View {
     }
     
     private func parseQRCode(_ qrCode: String) {
-        // First, try to parse as otpauth URL (most common)
+        print("Scanned QR code: \(qrCode)")
+        
+        // First, check if it's our custom Vaultic URL scheme
+        if let url = URL(string: qrCode), url.scheme == "vaultic" {
+            print("Detected Vaultic URL scheme")
+            if url.host == "import" {
+                print("Detected import URL")
+                // Extract the data from query parameters
+                if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                   let queryItems = components.queryItems,
+                   let dataString = queryItems.first(where: { $0.name == "data" })?.value,
+                   let data = decodeVaulticImportData(dataString) {
+                    
+                    print("Successfully extracted data from URL, size: \(data.count) bytes")
+                    
+                    // Try to parse as export format
+                    if let exportData = parseExportFormatFromData(data) {
+                        print("Parsed as export data with \(exportData.tokens.count) tokens")
+                        handleExportData(exportData)
+                        return
+                    } else {
+                        print("Failed to parse as export data")
+                        alertMessage = "Failed to parse import data. The QR code may be corrupted."
+                        showingAlert = true
+                        return
+                    }
+                } else {
+                    print("Failed to extract data from URL")
+                    alertMessage = "Invalid import URL. Could not extract data."
+                    showingAlert = true
+                    return
+                }
+            }
+        }
+        
+        // Then, check if it's an export format (direct Base64 or JSON)
+        if let exportData = parseExportFormat(qrCode) {
+            print("Detected direct export format with \(exportData.tokens.count) tokens")
+            handleExportData(exportData)
+            return
+        }
+        
+        // Otherwise, handle as single token...
         if let url = URL(string: qrCode), url.scheme == "otpauth" {
             parseOTPAuthURL(url)
             return
@@ -246,11 +297,99 @@ struct AddTokenView: View {
         - otpauth://totp/...
         - otpauth://hotp/...
         - Base32 secret key
-        - Other OTP formats
+        - Export format (multiple tokens)
         
         Please enter the details manually.
         """
         showingAlert = true
+    }
+
+    private func decodeVaulticImportData(_ dataString: String) -> Data? {
+        // `vaultic://import?data=...` uses URL-safe Base64 (like RFC 4648 "base64url"):
+        // - uses '-' and '_' instead of '+' and '/'
+        // - may omit '=' padding
+        let standardBase64String = dataString
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+
+        let paddingLength = (4 - (standardBase64String.count % 4)) % 4
+        let padded = standardBase64String + String(repeating: "=", count: paddingLength)
+
+        return Data(base64Encoded: padded)
+    }
+    
+    private func parseExportFormat(_ qrCode: String) -> ExportData? {
+        print("Trying to parse as export format...")
+        
+        // Try to decode as Base64 first (QR codes often encode binary data as Base64)
+        if let data = Data(base64Encoded: qrCode) {
+            print("Successfully decoded as Base64, size: \(data.count) bytes")
+            return parseExportFormatFromData(data)
+        }
+        
+        // Try as direct JSON string
+        if let jsonData = qrCode.data(using: .utf8) {
+            print("Trying to parse as JSON string, length: \(qrCode.count) chars")
+            return parseExportFormatFromData(jsonData)
+        }
+        
+        print("Not an export format")
+        return nil
+    }
+    
+    private func parseExportFormatFromData(_ data: Data) -> ExportData? {
+        do {
+            let exportData = try JSONDecoder().decode(ExportData.self, from: data)
+            print("Successfully parsed ExportData with \(exportData.tokens.count) tokens")
+            return exportData
+        } catch {
+            print("Failed to parse as ExportData: \(error)")
+            
+            // Try to parse as plain array of OTPCode (old format)
+            do {
+                let tokens = try JSONDecoder().decode([OTPCode].self, from: data)
+                print("Parsed as plain array with \(tokens.count) tokens")
+                // Wrap in ExportData for consistency
+                return ExportData(version: "1.0", timestamp: Date(), tokens: tokens)
+            } catch {
+                print("Failed to parse as plain array: \(error)")
+                return nil
+            }
+        }
+    }
+    
+    private func handleExportData(_ exportData: ExportData) {
+        print("Handling export data with \(exportData.tokens.count) tokens")
+        
+        // Filter out duplicates (tokens with same label and account)
+        let existingTokens = dataStore.codes
+        let newTokens = exportData.tokens.filter { newToken in
+            !existingTokens.contains { existingToken in
+                existingToken.label == newToken.label && existingToken.account == newToken.account
+            }
+        }
+        
+        print("Found \(newTokens.count) new tokens (filtered out \(exportData.tokens.count - newTokens.count) duplicates)")
+        
+        if newTokens.isEmpty {
+            alertMessage = "All \(exportData.tokens.count) token\(exportData.tokens.count == 1 ? "" : "s") in this export already exist on your device."
+            showingAlert = true
+            return
+        }
+        
+        // Add new tokens
+        for token in newTokens {
+            print("Adding token: \(token.label) - \(token.account)")
+            dataStore.addCode(token)
+        }
+        
+        importedTokenCount = newTokens.count
+        showingImportSuccess = true
+        
+        // Auto-dismiss after successful import
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            dismiss()
+        }
     }
     
     private func parseOTPAuthURL(_ url: URL) {

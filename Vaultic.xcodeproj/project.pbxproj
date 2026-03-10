@@ -267,6 +267,7 @@
 				DEVELOPMENT_TEAM = 37GWLWW278;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Vaultic/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Authenticator;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan ​QR codes for 2​FA tokens";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -301,6 +302,7 @@
 				DEVELOPMENT_TEAM = 37GWLWW278;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Vaultic/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Authenticator;
 				INFOPLIST_KEY_NSCameraUsageDescription = "Camera access is required to scan ​QR codes for 2​FA tokens";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
