@@ -2,6 +2,8 @@ import SwiftUI
 import Foundation
 import AVFoundation
 import Combine
+import MessageUI
+import UIKit
 
 struct HomeView: View {
     @EnvironmentObject private var dataStore: OTPDataStore
@@ -10,6 +12,12 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var showingBackupView = false
     @State private var showingQRCodeView = false
+    @State private var showingSupportMail = false
+    @State private var supportTo = "vaultic@eddington.com"
+    @State private var supportSubject = "Support Request from Vaultic User"
+    @State private var supportBody = SupportMailData.troubleshootingTemplate()
+    @State private var showingSupportError = false
+    @State private var supportErrorMessage = ""
     
     var filteredCodes: [OTPCode] {
         if searchText.isEmpty {
@@ -124,9 +132,9 @@ struct HomeView: View {
                         Divider()
                         
                         Button(action: {
-                            // Settings or other options could go here
+                            presentSupportEmail()
                         }) {
-                            Label("Settings", systemImage: "gear")
+                            Label("Support", systemImage: "envelope")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -178,9 +186,140 @@ struct HomeView: View {
                     .padding()
                 }
             }
+            .sheet(isPresented: $showingSupportMail) {
+                SupportMailComposer(
+                    to: supportTo,
+                    subject: supportSubject,
+                    body: supportBody
+                )
+            }
+            .alert("Support Email", isPresented: $showingSupportError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(supportErrorMessage)
+            }
             .onReceive(timer) { _ in
                 // Force view update every second for countdown
             }
+        }
+    }
+
+    private func presentSupportEmail() {
+        supportTo = "vaultic@eddington.tech"
+        supportSubject = "Support Request from Vaultic User"
+        supportBody = SupportMailData.troubleshootingTemplate()
+
+        if MFMailComposeViewController.canSendMail() {
+            showingSupportMail = true
+            return
+        }
+
+        // Fallback: open Mail app via mailto:
+        guard let url = SupportMailData.mailtoURL(to: supportTo, subject: supportSubject, body: supportBody) else {
+            supportErrorMessage = "Unable to open Mail. Please email \(supportTo) with subject “\(supportSubject)”."
+            showingSupportError = true
+            return
+        }
+
+        UIApplication.shared.open(url)
+    }
+}
+
+private struct SupportMailData {
+    let to: String
+    let subject: String
+    let body: String
+
+    static func troubleshootingTemplate() -> String {
+        let device = UIDevice.current
+
+        let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "Unknown"
+        let build = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "Unknown"
+
+        let modelIdentifier = Self.modelIdentifier() ?? "Unknown"
+
+        return """
+        Hi Vaultic Support,
+
+        I need help with:
+        - Issue summary:
+        - What I expected to happen:
+        - What actually happened:
+        - Steps to reproduce:
+
+        Error message (if any):
+        -
+
+        Troubleshooting tried:
+        -
+
+        Device info:
+        - Device: \(device.model) (\(modelIdentifier))
+        - iOS: \(device.systemVersion)
+        - Vaultic: \(appVersion) (\(build))
+
+        Thanks!
+        """
+    }
+
+    static func mailtoURL(to: String, subject: String, body: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = to
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: subject),
+            URLQueryItem(name: "body", value: body)
+        ]
+        return components.url
+    }
+
+    static func modelIdentifier() -> String? {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+
+        let mirror = Mirror(reflecting: systemInfo.machine)
+        return mirror.children.compactMap { element -> String? in
+            guard let value = element.value as? Int8, value != 0 else { return nil }
+            return String(UnicodeScalar(UInt8(value)))
+        }.joined()
+    }
+}
+
+private struct SupportMailComposer: UIViewControllerRepresentable {
+    let to: String
+    let subject: String
+    let body: String
+
+    @Environment(\.dismiss) private var dismiss
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onFinish: { dismiss() })
+    }
+
+    func makeUIViewController(context: Context) -> MFMailComposeViewController {
+        let vc = MFMailComposeViewController()
+        vc.mailComposeDelegate = context.coordinator
+        vc.setToRecipients([to])
+        vc.setSubject(subject)
+        vc.setMessageBody(body, isHTML: false)
+        return vc
+    }
+
+    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
+
+    final class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+        private let onFinish: () -> Void
+
+        init(onFinish: @escaping () -> Void) {
+            self.onFinish = onFinish
+        }
+
+        func mailComposeController(
+            _ controller: MFMailComposeViewController,
+            didFinishWith result: MFMailComposeResult,
+            error: Error?
+        ) {
+            onFinish()
         }
     }
 }
