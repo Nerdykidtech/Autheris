@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showingBackupView = false
     @State private var showingQRCodeView = false
     @State private var showingSupportMail = false
+    @State private var showingSettings = false  // <-- Add this state variable
     @State private var supportTo = "autheris@eddington.com"
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
@@ -129,6 +130,13 @@ struct HomeView: View {
                             Label("Transfer via QR Code", systemImage: "qrcode")
                         }
                         
+                        // Add Settings option to the menu
+                        Button(action: {
+                            showingSettings = true
+                        }) {
+                            Label("Settings", systemImage: "gear")
+                        }
+                        
                         Divider()
                         
                         Button(action: {
@@ -185,6 +193,9 @@ struct HomeView: View {
                     }
                     .padding()
                 }
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
             }
             .sheet(isPresented: $showingSupportMail) {
                 SupportMailComposer(

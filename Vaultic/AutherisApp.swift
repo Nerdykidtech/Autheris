@@ -4,9 +4,13 @@ import SwiftUI
 struct AutherisApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
+    @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @StateObject private var dataStore = OTPDataStore()
     @State private var showingImportSheet = false
     @State private var importData: Data?
+    @State private var isAppActive = true
+    @State private var showPrivacyOverlay = false
     
     var body: some Scene {
         WindowGroup {
@@ -18,8 +22,12 @@ struct AutherisApp: App {
                             print("ContentView received URL: \(url.absoluteString)")
                             handleIncomingURL(url)
                         }
+                        .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
+                        .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
                 } else {
                     WelcomeView()
+                        .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
+                        .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
                 }
                 
                 // Import sheet overlay - shows on top of everything
@@ -36,9 +44,18 @@ struct AutherisApp: App {
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
+                
+                // Privacy overlay for app switcher and when backgrounded
+                if showPrivacyOverlay && hideCodesInAppSwitcher {
+                    PrivacyOverlay()
+                        .transition(.opacity)
+                        .zIndex(1) // Ensure it's on top
+                }
             }
             .animation(.easeInOut(duration: 0.3), value: showingImportSheet)
             .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
+            .animation(.easeInOut(duration: 0.3), value: isAppActive)
+            .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
             .onAppear {
                 print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
                 // Check for pending import data
@@ -50,6 +67,9 @@ struct AutherisApp: App {
                         UserDefaults.standard.removeObject(forKey: "pendingImportData")
                     }
                 }
+                
+                // Set up app state observers
+                setupAppStateObservers()
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
                 print("Received import data notification")
@@ -59,6 +79,15 @@ struct AutherisApp: App {
                         showingImportSheet = true
                     }
                 }
+            }
+            .onChange(of: isAppActive) { oldValue, newValue in
+                print("App active state changed: \(newValue)")
+                // Update privacy overlay based on app state and settings
+                updatePrivacyOverlay()
+            }
+            .onChange(of: hideCodesInAppSwitcher) { oldValue, newValue in
+                // Update privacy overlay when setting changes
+                updatePrivacyOverlay()
             }
         }
     }
@@ -106,4 +135,84 @@ struct AutherisApp: App {
             print("No data parameter found in URL")
         }
     }
+    
+    private func setupAppStateObservers() {
+        // Observe app state changes
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("App will resign active")
+            isAppActive = false
+            updatePrivacyOverlay()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("App did become active")
+            isAppActive = true
+            updatePrivacyOverlay()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("App did enter background")
+            isAppActive = false
+            updatePrivacyOverlay()
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            print("App will enter foreground")
+            isAppActive = true
+            updatePrivacyOverlay()
+        }
+    }
+    
+    private func updatePrivacyOverlay() {
+        // Show privacy overlay when app is not active AND the setting is enabled
+        showPrivacyOverlay = !isAppActive && hideCodesInAppSwitcher
+        print("Privacy overlay: \(showPrivacyOverlay), isAppActive: \(isAppActive), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher)")
+    }
 }
+
+// MARK: - Privacy Overlay View
+struct PrivacyOverlay: View {
+    var body: some View {
+        ZStack {
+            // Blurred background
+            Rectangle()
+                .fill(.ultraThickMaterial)
+                .ignoresSafeArea()
+            
+            // Privacy message (centered)
+            VStack(spacing: 16) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 64))
+                    .foregroundColor(.accentColor)
+                    .symbolRenderingMode(.hierarchical)
+                
+                Text("Autheris")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                
+                Text("Protected by Privacy Mode")
+                    .font(.system(size: 16, weight: .medium, design: .default))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+        }
+    }
+}
+
