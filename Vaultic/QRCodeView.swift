@@ -110,7 +110,8 @@ struct QRCodeView: View {
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
         
-        let urlString = "vaultic://import?data=\(encodedBase64String)"
+        // FIXED: Changed from "Autheris://" to "autheris://" (lowercase)
+        let urlString = "autheris://import?data=\(encodedBase64String)"
         print("Generated URL: \(urlString)")
         
         // Convert to Data for QR code

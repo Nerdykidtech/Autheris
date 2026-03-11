@@ -5,8 +5,9 @@ struct ImportConfirmationView: View {
     @ObservedObject var dataStore: OTPDataStore
     @Binding var isPresented: Bool
     @State private var importResult: ImportResult?
-    @State private var isImporting = false
+    @State private var isImporting = true
     @State private var debugInfo: String = ""
+    @State private var hasStartedImport = false
     
     enum ImportResult {
         case success(total: Int, new: Int, duplicates: Int)
@@ -15,165 +16,346 @@ struct ImportConfirmationView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                if isImporting {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        
-                        Text("Importing tokens...")
-                            .font(.headline)
-                        
-                        Text(debugInfo)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let result = importResult {
-                    switch result {
-                    case .success(let total, let new, let duplicates):
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.green)
-                        
-                        Text("Import Successful")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        VStack(spacing: 8) {
-                            Text("**Total scanned:** \(total) token\(total == 1 ? "" : "s")")
-                            
-                            if new > 0 {
-                                Text("**Added:** \(new) new token\(new == 1 ? "" : "s")")
-                                    .foregroundColor(.green)
-                                    .fontWeight(.bold)
-                            }
-                            
-                            if duplicates > 0 {
-                                Text("**Skipped:** \(duplicates) duplicate\(duplicates == 1 ? "" : "s")")
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                        .font(.body)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                        
-                        Text("Check your home screen for the new tokens!")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.top, 8)
-                        
-                        Button("Done") {
-                            isPresented = false
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top)
-                        
-                    case .allDuplicates(let count):
-                        Image(systemName: "info.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.orange)
-                        
-                        Text("Tokens Already Exist")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text("All \(count) token\(count == 1 ? "" : "s") in this import already exist on your device.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        Button("Done") {
-                            isPresented = false
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .padding(.top)
-                        
-                    case .failure(let message):
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.red)
-                        
-                        Text("Import Failed")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text(message)
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                        
-                        Button("Try Again") {
-                            importResult = nil
-                            isImporting = true
-                            processImport()
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.top)
-                        
-                        Button("Cancel") {
-                            isPresented = false
-                        }
-                        .buttonStyle(.bordered)
-                        .padding(.top, 4)
-                    }
-                } else {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 60))
-                        .foregroundColor(.accentColor)
-                    
-                    Text("Import Tokens")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text("You've scanned a QR code with authentication tokens. Would you like to import them?")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    
-                    HStack(spacing: 16) {
-                        Button("Cancel") {
-                            isPresented = false
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("Import") {
-                            isImporting = true
-                            processImport()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding(.top)
-                }
-            }
-            .padding(40)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
-                }
-            }
-            .onAppear {
-                print("ImportConfirmationView appeared with data size: \(data.count) bytes")
+        GeometryReader { proxy in
+            let targetHeight = min(proxy.size.height * 0.55, 520)
+
+            VStack(spacing: 0) {
+                // Top handle (iOS-style)
+                Capsule()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 40, height: 5)
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
                 
-                // Auto-start import after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    if importResult == nil && !isImporting {
+                // Content area with dynamic sizing
+                Group {
+                    if let result = importResult {
+                        resultView(for: result)
+                    } else {
+                        importingView
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                
+                // Bottom padding for spacing
+                Spacer(minLength: 40)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: targetHeight, alignment: .top)
+            .background(
+                Color(.systemBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .ignoresSafeArea(edges: .bottom)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color(.separator).opacity(0.3), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: -5)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        }
+        .task {
+            guard !hasStartedImport else { return }
+            hasStartedImport = true
+            print("ImportConfirmationView appeared with data size: \(data.count) bytes")
+            isImporting = true
+            processImport()
+        }
+        .preferredColorScheme(.light)
+    }
+    
+    // MARK: - Subviews
+    
+    private var importingView: some View {
+        VStack(spacing: 24) {
+            ProgressView()
+                .scaleEffect(1.3)
+                .tint(.accentColor)
+            
+            VStack(spacing: 8) {
+                Text("Importing tokens...")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text(debugInfo)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+        }
+        .padding(.vertical, 40)
+    }
+    
+    private var confirmationView: some View {
+        VStack(spacing: 24) {
+            // Icon
+            Image(systemName: "square.and.arrow.down")
+                .font(.system(size: 52))
+                .foregroundColor(.accentColor)
+                .symbolRenderingMode(.hierarchical)
+            
+            // Title
+            Text("Import Tokens")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            // Description
+            Text("You've scanned a QR code with authentication tokens. Would you like to import them?")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            // Buttons
+            VStack(spacing: 12) {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         isImporting = true
                         processImport()
                     }
+                }) {
+                    Text("Import")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            Capsule()
+                                .fill(Color.accentColor)
+                        )
+                }
+                
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isPresented = false
+                    }
+                }) {
+                    Text("Cancel")
+                        .font(.headline)
+                        .foregroundColor(.accentColor)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            Capsule()
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
                 }
             }
         }
+        .padding(.vertical, 40)
     }
+    
+    private func resultView(for result: ImportResult) -> some View {
+        VStack(spacing: 24) {
+            Group {
+                switch result {
+                case .success(let total, let new, let duplicates):
+                    successView(total: total, new: new, duplicates: duplicates)
+                case .allDuplicates(let count):
+                    duplicatesView(count: count)
+                case .failure(let message):
+                    failureView(message: message)
+                }
+            }
+        }
+        .padding(.vertical, 40)
+    }
+    
+    private func successView(total: Int, new: Int, duplicates: Int) -> some View {
+        VStack(spacing: 20) {
+            // Success icon
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.green)
+                .symbolRenderingMode(.hierarchical)
+            
+            // Title
+            Text("Import Successful")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            // Stats
+            VStack(spacing: 12) {
+                statRow(
+                    label: "Total scanned:",
+                    value: "\(total) token\(total == 1 ? "" : "s")",
+                    color: .primary
+                )
+                
+                if new > 0 {
+                    statRow(
+                        label: "Added:",
+                        value: "\(new) new token\(new == 1 ? "" : "s")",
+                        color: .green,
+                        icon: "plus.circle.fill"
+                    )
+                }
+                
+                if duplicates > 0 {
+                    statRow(
+                        label: "Skipped:",
+                        value: "\(duplicates) duplicate\(duplicates == 1 ? "" : "s")",
+                        color: .orange,
+                        icon: "xmark.circle.fill"
+                    )
+                }
+            }
+            .font(.callout)
+            
+            // Note
+            Text("Check your home screen for the new tokens!")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 4)
+            
+            // Done button
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isPresented = false
+                }
+            }) {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        Capsule()
+                            .fill(Color.accentColor)
+                    )
+            }
+            .padding(.top, 8)
+        }
+    }
+    
+    private func duplicatesView(count: Int) -> some View {
+        VStack(spacing: 20) {
+            // Info icon
+            Image(systemName: "info.circle.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.orange)
+                .symbolRenderingMode(.hierarchical)
+            
+            // Title
+            Text("Tokens Already Exist")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            // Message
+            Text("All \(count) token\(count == 1 ? "" : "s") in this import already exist on your device.")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            // Done button
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isPresented = false
+                }
+            }) {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        Capsule()
+                            .fill(Color.accentColor)
+                    )
+            }
+            .padding(.top, 8)
+        }
+    }
+    
+    private func failureView(message: String) -> some View {
+        VStack(spacing: 20) {
+            // Error icon
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.red)
+                .symbolRenderingMode(.hierarchical)
+            
+            // Title
+            Text("Import Failed")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+            
+            // Error message
+            Text(message)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            
+            // Buttons
+            VStack(spacing: 12) {
+                Button(action: {
+                    importResult = nil
+                    isImporting = true
+                    processImport()
+                }) {
+                    Text("Try Again")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            Capsule()
+                                .fill(Color.accentColor)
+                        )
+                }
+                
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isPresented = false
+                    }
+                }) {
+                    Text("Cancel")
+                        .font(.headline)
+                        .foregroundColor(.accentColor)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            Capsule()
+                                .stroke(Color.accentColor, lineWidth: 2)
+                        )
+                }
+            }
+            .padding(.top, 8)
+        }
+    }
+    
+    private func statRow(label: String, value: String, color: Color, icon: String? = nil) -> some View {
+        HStack(spacing: 8) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(color)
+            }
+            
+            Text(label)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            Text(value)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+        }
+        .font(.callout)
+    }
+    
+    // MARK: - Import Logic
     
     private func processImport() {
         print("Starting import process...")
@@ -297,3 +479,4 @@ struct ImportConfirmationView: View {
         }
     }
 }
+

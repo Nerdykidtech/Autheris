@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct VaulticApp: App {
+struct AutherisApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @StateObject private var dataStore = OTPDataStore()
@@ -24,15 +24,16 @@ struct VaulticApp: App {
                 
                 // Import sheet overlay - shows on top of everything
                 if showingImportSheet {
-                    Color.black.opacity(0.3)
-                        .edgesIgnoringSafeArea(.all)
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .ignoresSafeArea()
+                        .overlay(Color.black.opacity(0.25))
                         .transition(.opacity)
                     
                     if let data = importData {
                         ImportConfirmationView(data: data, dataStore: dataStore, isPresented: $showingImportSheet)
                             .transition(.scale.combined(with: .opacity))
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding()
                     }
                 }
             }
@@ -50,7 +51,7 @@ struct VaulticApp: App {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("VaulticImportData"))) { notification in
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
                 print("Received import data notification")
                 if let data = notification.object as? Data {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -65,12 +66,12 @@ struct VaulticApp: App {
     private func handleIncomingURL(_ url: URL) {
         print("Handling incoming URL: \(url.absoluteString)")
         
-        guard url.scheme == "vaultic" && url.host == "import" else {
-            print("Not a vaultic import URL")
+        guard url.scheme == "autheris" && url.host == "import" else {
+            print("Not an autheris import URL")
             return
         }
         
-        print("Processing vaultic import URL...")
+        print("Processing autheris import URL...")
         
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let queryItems = components.queryItems,

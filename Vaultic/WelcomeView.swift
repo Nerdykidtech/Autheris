@@ -16,7 +16,7 @@ struct WelcomeView: View {
     @State private var logoOpacity: Double = 0
     @State private var textOffsetY: CGFloat = 20
     
-    // Pulsing animation state for "Vaultic" text
+    // Pulsing animation state for "Autheris" text
     @State private var pulseScale: CGFloat = 1.0
     @State private var pulseOpacity: Double = 0.0 // Start at 0
     @State private var isPulsing = false
@@ -156,7 +156,7 @@ struct WelcomeView: View {
                     isContentVisible = true
                 }
                 
-                // Start pulsing animation for "Vaultic" text after entrance animation
+                // Start pulsing animation for "Autheris" text after entrance animation
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     startPulsingAnimation()
                 }
@@ -204,7 +204,7 @@ struct WelcomeView: View {
         }
     }
     
-    // MARK: - Pulsing Animation for "Vaultic" Text
+    // MARK: - Pulsing Animation for "Autheris" Text
     private func startPulsingAnimation() {
         isPulsing = true
         
@@ -365,7 +365,7 @@ struct WelcomeView: View {
                         // Main app name with professional pulsing animation
                         ZStack {
                             // Subtle glow behind the text (only visible when pulsing starts)
-                            Text("Vaultic")
+                            Text("Autheris")
                                 .font(.system(size: 62, weight: .heavy, design: .rounded))
                                 .foregroundColor(.clear)
                                 .overlay(
@@ -378,7 +378,7 @@ struct WelcomeView: View {
                                         endPoint: .bottom
                                     )
                                     .mask(
-                                        Text("Vaultic")
+                                        Text("Autheris")
                                             .font(.system(size: 62, weight: .heavy, design: .rounded))
                                             .blur(radius: 8)
                                     )
@@ -394,14 +394,14 @@ struct WelcomeView: View {
                                 )
                             
                             // Pulsing outline effect (only visible when pulsing starts)
-                            Text("Vaultic")
+                            Text("Autheris")
                                 .font(.system(size: 62, weight: .heavy, design: .rounded))
                                 .foregroundColor(.clear)
                                 .overlay(
                                     Color.accentColor
                                         .opacity(0.2)
                                         .mask(
-                                            Text("Vaultic")
+                                            Text("Autheris")
                                                 .font(.system(size: 62, weight: .heavy, design: .rounded))
                                         )
                                 )
@@ -416,7 +416,7 @@ struct WelcomeView: View {
                                 )
                             
                             // Main text with metallic gradient
-                            Text("Vaultic")
+                            Text("Autheris")
                                 .font(.system(size: 62, weight: .heavy, design: .rounded))
                                 .foregroundColor(.primary)
                                 .overlay(
@@ -429,7 +429,7 @@ struct WelcomeView: View {
                                         endPoint: .bottomTrailing
                                     )
                                     .mask(
-                                        Text("Vaultic")
+                                        Text("Autheris")
                                             .font(.system(size: 62, weight: .heavy, design: .rounded))
                                     )
                                 )
@@ -662,3 +662,4 @@ struct WelcomeView_Previews: PreviewProvider {
         }
     }
 }
+

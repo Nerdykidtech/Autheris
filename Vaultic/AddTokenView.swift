@@ -210,16 +210,16 @@ struct AddTokenView: View {
     private func parseQRCode(_ qrCode: String) {
         print("Scanned QR code: \(qrCode)")
         
-        // First, check if it's our custom Vaultic URL scheme
-        if let url = URL(string: qrCode), url.scheme == "vaultic" {
-            print("Detected Vaultic URL scheme")
+        // First, check if it's our custom Autheris URL scheme
+        if let url = URL(string: qrCode), url.scheme == "autheris" {
+            print("Detected Autheris URL scheme")
             if url.host == "import" {
                 print("Detected import URL")
                 // Extract the data from query parameters
                 if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                    let queryItems = components.queryItems,
                    let dataString = queryItems.first(where: { $0.name == "data" })?.value,
-                   let data = decodeVaulticImportData(dataString) {
+                   let data = decodeAutherisImportData(dataString) {
                     
                     print("Successfully extracted data from URL, size: \(data.count) bytes")
                     
@@ -304,8 +304,8 @@ struct AddTokenView: View {
         showingAlert = true
     }
 
-    private func decodeVaulticImportData(_ dataString: String) -> Data? {
-        // `vaultic://import?data=...` uses URL-safe Base64 (like RFC 4648 "base64url"):
+    private func decodeAutherisImportData(_ dataString: String) -> Data? {
+        // `autheris://import?data=...` uses URL-safe Base64 (like RFC 4648 "base64url"):
         // - uses '-' and '_' instead of '+' and '/'
         // - may omit '=' padding
         let standardBase64String = dataString
@@ -606,4 +606,5 @@ struct AddTokenView_Previews: PreviewProvider {
         AddTokenView(dataStore: OTPDataStore())
     }
 }
+
 

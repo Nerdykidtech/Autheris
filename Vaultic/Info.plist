@@ -8,10 +8,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.eddingtontech.vaultic</string>
+			<string>com.eddingtontech.autheris</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>vaultic</string>
+				<string>autheris</string>
 			</array>
 		</dict>
 		<dict>
@@ -25,5 +25,7 @@
 			</array>
 		</dict>
 	</array>
+	<key>LOGODEV_PUBLISHABLE_KEY</key>
+	<string>pk_HF9Whmm6RiyndClKLP8Ddg</string>
 </dict>
 </plist>

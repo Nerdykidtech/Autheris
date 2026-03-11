@@ -2,7 +2,7 @@ import UIKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        print("Vaultic app launched")
+        print("Autheris app launched")
         
         // Clear any old pending data
         UserDefaults.standard.removeObject(forKey: "pendingImportData")
@@ -14,8 +14,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         print("App opened with URL: \(url.absoluteString)")
         
-        guard url.scheme == "vaultic" && url.host == "import" else {
-            print("Not a vaultic import URL, ignoring")
+        guard url.scheme == "autheris" && url.host == "import" else {
+            print("Not an autheris import URL, ignoring")
             return false
         }
         
@@ -49,7 +49,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 
                 // Post notification
                 NotificationCenter.default.post(
-                    name: Notification.Name("VaulticImportData"),
+                    name: Notification.Name("AutherisImportData"),
                     object: data
                 )
                 

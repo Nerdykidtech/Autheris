@@ -13,8 +13,8 @@ struct HomeView: View {
     @State private var showingBackupView = false
     @State private var showingQRCodeView = false
     @State private var showingSupportMail = false
-    @State private var supportTo = "vaultic@eddington.com"
-    @State private var supportSubject = "Support Request from Vaultic User"
+    @State private var supportTo = "autheris@eddington.com"
+    @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false
     @State private var supportErrorMessage = ""
@@ -111,7 +111,7 @@ struct HomeView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
             }
-            .navigationTitle("Vaultic")
+            .navigationTitle("Autheris")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 // Swapped positions: ellipsis on left, plus on right
@@ -205,8 +205,8 @@ struct HomeView: View {
     }
 
     private func presentSupportEmail() {
-        supportTo = "vaultic@eddington.tech"
-        supportSubject = "Support Request from Vaultic User"
+        supportTo = "autheris@eddington.tech"
+        supportSubject = "Support Request from Autheris User"
         supportBody = SupportMailData.troubleshootingTemplate()
 
         if MFMailComposeViewController.canSendMail() {
@@ -216,7 +216,7 @@ struct HomeView: View {
 
         // Fallback: open Mail app via mailto:
         guard let url = SupportMailData.mailtoURL(to: supportTo, subject: supportSubject, body: supportBody) else {
-            supportErrorMessage = "Unable to open Mail. Please email \(supportTo) with subject “\(supportSubject)”."
+            supportErrorMessage = "Unable to open Mail. Please email \(supportTo) with subject \"\(supportSubject)\"."
             showingSupportError = true
             return
         }
@@ -239,7 +239,7 @@ private struct SupportMailData {
         let modelIdentifier = Self.modelIdentifier() ?? "Unknown"
 
         return """
-        Hi Vaultic Support,
+        Hi Autheris Support,
 
         I need help with:
         - Issue summary:
@@ -256,7 +256,7 @@ private struct SupportMailData {
         Device info:
         - Device: \(device.model) (\(modelIdentifier))
         - iOS: \(device.systemVersion)
-        - Vaultic: \(appVersion) (\(build))
+        - Autheris: \(appVersion) (\(build))
 
         Thanks!
         """
@@ -343,21 +343,16 @@ struct OTPCardView: View {
     private var warningThreshold: Int {
         return max(5, Int(Double(code.period) * 0.1667)) // 5 seconds or 1/6 of period
     }
+
+    private var branding: IssuerBranding {
+        IssuerBranding.forLabel(code.label)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
             // Header with service info and timer
             HStack(alignment: .center, spacing: 8) {
-                // Service icon/placeholder
-                ZStack {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.08))
-                        .frame(width: 28, height: 28)
-                    
-                    Image(systemName: "lock.shield.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.accentColor)
-                }
+                IssuerIconView(branding: branding)
                 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(code.label)
@@ -393,7 +388,7 @@ struct OTPCardView: View {
                                 lineJoin: .round
                             )
                         )
-                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : .accentColor)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : branding.color)
                         .rotationEffect(.degrees(-90))
                         .frame(width: 28, height: 28)
                     
