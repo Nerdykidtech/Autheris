@@ -87,32 +87,14 @@ struct QRCodeView: View {
         // Encode as Base64 string for better QR code compatibility
         let base64String = data.base64EncodedString()
         
-        // Debug: Print what we're encoding
-        print("QR Code Data (Base64): \(base64String)")
-        print("QR Code Data length: \(data.count) bytes")
-        
-        // Try to decode and print JSON for debugging
-        do {
-            if let jsonObject = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                print("QR Code JSON structure: \(jsonObject)")
-                if let tokens = jsonObject["tokens"] as? [Any] {
-                    print("Number of tokens in QR: \(tokens.count)")
-                }
-            }
-        } catch {
-            print("Failed to parse QR data as JSON: \(error)")
-        }
-        
         // Create a URL with our custom scheme
-        // IMPORTANT: Base64 strings can contain '+' and '/' which need to be URL-encoded
+        // Base64 strings can contain '+' and '/' which need to be URL-encoded
         let encodedBase64String = base64String
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
         
-        // FIXED: Changed from "Autheris://" to "autheris://" (lowercase)
         let urlString = "autheris://import?data=\(encodedBase64String)"
-        print("Generated URL: \(urlString)")
         
         // Convert to Data for QR code
         if let qrData = urlString.data(using: .utf8) {

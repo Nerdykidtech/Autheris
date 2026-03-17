@@ -70,7 +70,9 @@ class OTPDataStore: ObservableObject {
             try data.write(to: backupURL)
             return backupURL
         } catch {
+            #if DEBUG
             print("Failed to create backup: \(error)")
+            #endif
             return nil
         }
     }
@@ -88,7 +90,9 @@ class OTPDataStore: ObservableObject {
                     return (date1 ?? Date.distantPast) > (date2 ?? Date.distantPast)
                 }
         } catch {
+            #if DEBUG
             print("Failed to list backups: \(error)")
+            #endif
             return []
         }
     }
@@ -104,7 +108,9 @@ class OTPDataStore: ObservableObject {
             objectWillChange.send()
             return true
         } catch {
+            #if DEBUG
             print("Failed to restore backup: \(error)")
+            #endif
             return false
         }
     }
@@ -115,7 +121,9 @@ class OTPDataStore: ObservableObject {
             try FileManager.default.removeItem(at: url)
             return true
         } catch {
+            #if DEBUG
             print("Failed to delete backup: \(error)")
+            #endif
             return false
         }
     }
@@ -135,7 +143,9 @@ class OTPDataStore: ObservableObject {
             
             return try encoder.encode(exportData)
         } catch {
+            #if DEBUG
             print("Failed to export data: \(error)")
+            #endif
             return nil
         }
     }
@@ -160,7 +170,9 @@ class OTPDataStore: ObservableObject {
             objectWillChange.send()
             return true
         } catch {
+            #if DEBUG
             print("Failed to import data: \(error)")
+            #endif
             return false
         }
     }

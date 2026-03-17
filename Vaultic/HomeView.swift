@@ -15,7 +15,7 @@ struct HomeView: View {
     @State private var showingQRCodeView = false
     @State private var showingSupportMail = false
     @State private var showingSettings = false  // <-- Add this state variable
-    @State private var supportTo = "autheris@eddington.com"
+    @State private var supportTo = "autheris@eddington.tech"
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false

@@ -1,5 +1,5 @@
 {
-  "name": "Vaultic-3-backend",
+  "name": "Vaultic-5-backend",
   "version": "1.0.0",
   "scripts": {
     "generate": "teeny generate --local",

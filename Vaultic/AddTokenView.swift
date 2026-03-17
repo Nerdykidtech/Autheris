@@ -342,34 +342,48 @@ struct AddTokenView: View {
     }
     
     private func parseQRCode(_ qrCode: String) {
+        #if DEBUG
         print("Scanned QR code: \(qrCode)")
+        #endif
         
         // First, check if it's our custom Autheris URL scheme
         if let url = URL(string: qrCode), url.scheme == "autheris" {
+            #if DEBUG
             print("Detected Autheris URL scheme")
+            #endif
             if url.host == "import" {
+                #if DEBUG
                 print("Detected import URL")
+                #endif
                 // Extract the data from query parameters
                 if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                    let queryItems = components.queryItems,
                    let dataString = queryItems.first(where: { $0.name == "data" })?.value,
                    let data = decodeAutherisImportData(dataString) {
                     
+                    #if DEBUG
                     print("Successfully extracted data from URL, size: \(data.count) bytes")
+                    #endif
                     
                     // Try to parse as export format
                     if let exportData = parseExportFormatFromData(data) {
+                        #if DEBUG
                         print("Parsed as export data with \(exportData.tokens.count) tokens")
+                        #endif
                         handleExportData(exportData)
                         return
                     } else {
+                        #if DEBUG
                         print("Failed to parse as export data")
+                        #endif
                         alertMessage = "Failed to parse import data. The QR code may be corrupted."
                         showingAlert = true
                         return
                     }
                 } else {
+                    #if DEBUG
                     print("Failed to extract data from URL")
+                    #endif
                     alertMessage = "Invalid import URL. Could not extract data."
                     showingAlert = true
                     return
@@ -379,7 +393,9 @@ struct AddTokenView: View {
         
         // Then, check if it's an export format (direct Base64 or JSON)
         if let exportData = parseExportFormat(qrCode) {
+            #if DEBUG
             print("Detected direct export format with \(exportData.tokens.count) tokens")
+            #endif
             handleExportData(exportData)
             return
         }
@@ -460,47 +476,65 @@ struct AddTokenView: View {
     }
     
     private func parseExportFormat(_ qrCode: String) -> ExportData? {
+        #if DEBUG
         print("Trying to parse as export format...")
+        #endif
         
         // Try to decode as Base64 first (QR codes often encode binary data as Base64)
         if let data = Data(base64Encoded: qrCode) {
+            #if DEBUG
             print("Successfully decoded as Base64, size: \(data.count) bytes")
+            #endif
             return parseExportFormatFromData(data)
         }
         
         // Try as direct JSON string
         if let jsonData = qrCode.data(using: .utf8) {
+            #if DEBUG
             print("Trying to parse as JSON string, length: \(qrCode.count) chars")
+            #endif
             return parseExportFormatFromData(jsonData)
         }
         
+        #if DEBUG
         print("Not an export format")
+        #endif
         return nil
     }
     
     private func parseExportFormatFromData(_ data: Data) -> ExportData? {
         do {
             let exportData = try JSONDecoder().decode(ExportData.self, from: data)
+            #if DEBUG
             print("Successfully parsed ExportData with \(exportData.tokens.count) tokens")
+            #endif
             return exportData
         } catch {
+            #if DEBUG
             print("Failed to parse as ExportData: \(error)")
+            #endif
             
             // Try to parse as plain array of OTPCode (old format)
             do {
                 let tokens = try JSONDecoder().decode([OTPCode].self, from: data)
+                #if DEBUG
                 print("Parsed as plain array with \(tokens.count) tokens")
+                #endif
                 // Wrap in ExportData for consistency
                 return ExportData(version: "1.0", timestamp: Date(), tokens: tokens)
             } catch {
+                #if DEBUG
                 print("Failed to parse as plain array: \(error)")
+                #endif
                 return nil
             }
         }
     }
     
     private func handleExportData(_ exportData: ExportData) {
+        #if DEBUG
         print("Handling export data with \(exportData.tokens.count) tokens")
+        #endif
         
         // Filter out duplicates (tokens with same label and account)
         let existingTokens = dataStore.codes
@@ -510,7 +544,9 @@ struct AddTokenView: View {
             }
         }
         
+        #if DEBUG
         print("Found \(newTokens.count) new tokens (filtered out \(exportData.tokens.count - newTokens.count) duplicates)")
+        #endif
         
         if newTokens.isEmpty {
             let count = exportData.tokens.count
@@ -522,7 +558,9 @@ struct AddTokenView: View {
         
         // Add new tokens
         for token in newTokens {
+            #if DEBUG
             print("Adding token: \(token.label) - \(token.account)")
+            #endif
             dataStore.addCode(token)
         }
         
@@ -599,7 +637,9 @@ struct AddTokenView: View {
                     // For HOTP (counter-based OTP)
                     if let value = item.value, let counterValue = Int(value) {
                         // We'll use this if we add HOTP support
+                        #if DEBUG
                         print("HOTP counter: \(counterValue)")
+                        #endif
                     }
                 default:
                     break

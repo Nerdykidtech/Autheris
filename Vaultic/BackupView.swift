@@ -176,7 +176,9 @@ struct BackupView: View {
                         }
                     }
                 case .failure(let error):
+                    #if DEBUG
                     print("Failed to import file: \(error)")
+                    #endif
                 }
             }
             .sheet(isPresented: $showingShareSheet) {

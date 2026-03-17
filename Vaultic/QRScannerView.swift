@@ -96,7 +96,9 @@ struct QRScannerView: UIViewControllerRepresentable {
     
     private func setupCameraSession(viewController: UIViewController, context: Context) {
         guard let captureDevice = AVCaptureDevice.default(for: .video) else {
+            #if DEBUG
             print("No camera device available")
+            #endif
             DispatchQueue.main.async {
                 self.onCodeScanned(nil)
                 self.dismiss()
@@ -117,7 +119,9 @@ struct QRScannerView: UIViewControllerRepresentable {
             if captureSession.canAddInput(input) {
                 captureSession.addInput(input)
             } else {
+                #if DEBUG
                 print("Could not add input to session")
+                #endif
                 DispatchQueue.main.async {
                     self.onCodeScanned(nil)
                     self.dismiss()
@@ -133,7 +137,9 @@ struct QRScannerView: UIViewControllerRepresentable {
                 metadataOutput.setMetadataObjectsDelegate(context.coordinator, queue: DispatchQueue.main)
                 metadataOutput.metadataObjectTypes = [.qr]
             } else {
+                #if DEBUG
                 print("Could not add output to session")
+                #endif
                 DispatchQueue.main.async {
                     self.onCodeScanned(nil)
                     self.dismiss()
@@ -163,7 +169,9 @@ struct QRScannerView: UIViewControllerRepresentable {
             }
             
         } catch {
+            #if DEBUG
             print("Failed to setup camera: \(error.localizedDescription)")
+            #endif
             DispatchQueue.main.async {
                 self.onCodeScanned(nil)
                 self.dismiss()

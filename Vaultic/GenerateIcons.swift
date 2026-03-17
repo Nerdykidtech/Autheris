@@ -15,7 +15,9 @@ func generateAppIcons() {
                         let filename = "AppIcon-\(Int(size))x\(Int(size))@\(Int(scale))x.png"
                         let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent(filename)
                         try? data.write(to: url)
+                        #if DEBUG
                         print("Generated: \(filename)")
+                        #endif
                     }
                 }
             }

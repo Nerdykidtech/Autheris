@@ -9,7 +9,7 @@ Blitz starts the backend automatically. Get the live URL and token via
 ## Direct API access
 
 ```bash
-TOKEN=$(grep ADMIN_SERVICE_TOKEN /Users/huntereddington/.blitz/projects/Vaultic-3/backend/.dev.vars | cut -d= -f2)
+TOKEN=$(grep ADMIN_SERVICE_TOKEN /Users/huntereddington/.blitz/projects/Vaultic-5/backend/.dev.vars | cut -d= -f2)
 DB_URL="http://localhost:8787"
 
 # List records

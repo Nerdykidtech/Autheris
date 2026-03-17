@@ -1,5 +1,5 @@
 #:schema ./node_modules/wrangler/config-schema.json
-name = "Vaultic-3"
+name = "Vaultic-5"
 main = "./src-backend/worker.ts"
 compatibility_date = "2024-09-25"
 account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
@@ -33,7 +33,7 @@ RESPOND_WITH_QUERY_LOG = true # todo remove
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#d1-databases
 [[d1_databases]]
 binding = "PRIMARY_DB"
-database_name = "Vaultic-3-db"
+database_name = "Vaultic-5-db"
 database_id = "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 preview_database_id = "xxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 migrations_dir = "migrations"
@@ -42,7 +42,7 @@ migrations_dir = "migrations"
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#r2-buckets
 [[r2_buckets]]
 binding = "PRIMARY_R2"
-bucket_name = "Vaultic-3-bucket"
+bucket_name = "Vaultic-5-bucket"
 preview_bucket_name = "teeny-sample-primary-bucket"
 
 # Automatically place your workloads in an optimal location to minimize latency.

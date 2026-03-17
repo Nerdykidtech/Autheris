@@ -58,7 +58,9 @@ struct ImportConfirmationView: View {
         .task {
             guard !hasStartedImport else { return }
             hasStartedImport = true
+            #if DEBUG
             print("ImportConfirmationView appeared with data size: \(data.count) bytes")
+            #endif
             isImporting = true
             processImport()
         }
@@ -358,22 +360,30 @@ struct ImportConfirmationView: View {
     // MARK: - Import Logic
     
     private func processImport() {
+        #if DEBUG
         print("Starting import process...")
         debugInfo = "Parsing QR code data..."
+        #endif
         
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 // Try to decode as ExportData
                 if let exportData = try? JSONDecoder().decode(ExportData.self, from: data) {
+                    #if DEBUG
                     print("Successfully parsed ExportData with \(exportData.tokens.count) tokens")
+                    #endif
                     
                     DispatchQueue.main.async {
+                        #if DEBUG
                         self.debugInfo = "Found \(exportData.tokens.count) tokens. Checking for duplicates..."
+                        #endif
                     }
                     
                     // Check for duplicates
                     let existingTokens = self.dataStore.codes
+                    #if DEBUG
                     print("Existing tokens count: \(existingTokens.count)")
+                    #endif
                     
                     let newTokens = exportData.tokens.filter { newToken in
                         // Check if token already exists by label AND account
@@ -384,7 +394,9 @@ struct ImportConfirmationView: View {
                         return !isDuplicate
                     }
                     
+                    #if DEBUG
                     print("Found \(newTokens.count) new tokens out of \(exportData.tokens.count) total")
+                    #endif
                     
                     DispatchQueue.main.async {
                         self.isImporting = false
@@ -393,9 +405,13 @@ struct ImportConfirmationView: View {
                             self.importResult = .allDuplicates(exportData.tokens.count)
                         } else {
                             // Add new tokens
+                            #if DEBUG
                             print("Adding \(newTokens.count) new tokens to data store")
+                            #endif
                             for token in newTokens {
+                                #if DEBUG
                                 print("Adding token: \(token.label) - \(token.account)")
+                                #endif
                                 self.dataStore.addCode(token)
                             }
                             
@@ -418,15 +434,21 @@ struct ImportConfirmationView: View {
                 } else {
                     // Try old format (plain array of OTPCode)
                     let importedCodes = try JSONDecoder().decode([OTPCode].self, from: data)
+                    #if DEBUG
                     print("Successfully parsed as plain array with \(importedCodes.count) tokens")
+                    #endif
                     
                     DispatchQueue.main.async {
+                        #if DEBUG
                         self.debugInfo = "Found \(importedCodes.count) tokens. Checking for duplicates..."
+                        #endif
                     }
                     
                     // Check for duplicates
                     let existingTokens = self.dataStore.codes
+                    #if DEBUG
                     print("Existing tokens count: \(existingTokens.count)")
+                    #endif
                     
                     let newTokens = importedCodes.filter { newToken in
                         // Check if token already exists by label AND account
@@ -437,7 +459,9 @@ struct ImportConfirmationView: View {
                         return !isDuplicate
                     }
                     
+                    #if DEBUG
                     print("Found \(newTokens.count) new tokens out of \(importedCodes.count) total")
+                    #endif
                     
                     DispatchQueue.main.async {
                         self.isImporting = false
@@ -446,9 +470,13 @@ struct ImportConfirmationView: View {
                             self.importResult = .allDuplicates(importedCodes.count)
                         } else {
                             // Add new tokens
+                            #if DEBUG
                             print("Adding \(newTokens.count) new tokens to data store")
+                            #endif
                             for token in newTokens {
+                                #if DEBUG
                                 print("Adding token: \(token.label) - \(token.account)")
+                                #endif
                                 self.dataStore.addCode(token)
                             }
                             
@@ -470,7 +498,9 @@ struct ImportConfirmationView: View {
                     }
                 }
             } catch {
+                #if DEBUG
                 print("Failed to parse import data: \(error)")
+                #endif
                 DispatchQueue.main.async {
                     self.isImporting = false
                     self.importResult = .failure("Could not parse the import data. The QR code may be corrupted or in an unsupported format.")

@@ -19,7 +19,9 @@ struct AutherisApp: App {
                     ContentView()
                         .environmentObject(dataStore)
                         .onOpenURL { url in
+                            #if DEBUG
                             print("ContentView received URL: \(url.absoluteString)")
+                            #endif
                             handleIncomingURL(url)
                         }
                         .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
@@ -57,10 +59,14 @@ struct AutherisApp: App {
             .animation(.easeInOut(duration: 0.3), value: isAppActive)
             .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
             .onAppear {
+                #if DEBUG
                 print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
+                #endif
                 // Check for pending import data
                 if let data = UserDefaults.standard.data(forKey: "pendingImportData") {
+                    #if DEBUG
                     print("Found pending import data on app appear")
+                    #endif
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         importData = data
                         showingImportSheet = true
@@ -72,7 +78,9 @@ struct AutherisApp: App {
                 setupAppStateObservers()
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
+                #if DEBUG
                 print("Received import data notification")
+                #endif
                 if let data = notification.object as? Data {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         importData = data
@@ -81,7 +89,9 @@ struct AutherisApp: App {
                 }
             }
             .onChange(of: isAppActive) { oldValue, newValue in
+                #if DEBUG
                 print("App active state changed: \(newValue)")
+                #endif
                 // Update privacy overlay based on app state and settings
                 updatePrivacyOverlay()
             }
@@ -93,20 +103,28 @@ struct AutherisApp: App {
     }
     
     private func handleIncomingURL(_ url: URL) {
+        #if DEBUG
         print("Handling incoming URL: \(url.absoluteString)")
+        #endif
         
         guard url.scheme == "autheris" && url.host == "import" else {
+            #if DEBUG
             print("Not an autheris import URL")
+            #endif
             return
         }
         
+        #if DEBUG
         print("Processing autheris import URL...")
+        #endif
         
         if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let queryItems = components.queryItems,
            let dataString = queryItems.first(where: { $0.name == "data" })?.value {
             
+            #if DEBUG
             print("Found data string in URL, length: \(dataString.count)")
+            #endif
             
             // Convert URL-safe Base64 back to standard Base64
             let standardBase64String = dataString
@@ -120,19 +138,27 @@ struct AutherisApp: App {
                 paddedBase64String = standardBase64String + String(repeating: "=", count: paddingLength)
             }
             
+            #if DEBUG
             print("Decoding Base64 data...")
+            #endif
             
             if let data = Data(base64Encoded: paddedBase64String) {
+                #if DEBUG
                 print("Successfully decoded data, size: \(data.count) bytes")
+                #endif
                 
                 // Store and show the import sheet
                 importData = data
                 showingImportSheet = true
             } else {
+                #if DEBUG
                 print("Failed to decode Base64 data")
+                #endif
             }
         } else {
+            #if DEBUG
             print("No data parameter found in URL")
+            #endif
         }
     }
     
@@ -143,7 +169,9 @@ struct AutherisApp: App {
             object: nil,
             queue: .main
         ) { _ in
+            #if DEBUG
             print("App will resign active")
+            #endif
             isAppActive = false
             updatePrivacyOverlay()
         }
@@ -153,7 +181,9 @@ struct AutherisApp: App {
             object: nil,
             queue: .main
         ) { _ in
+            #if DEBUG
             print("App did become active")
+            #endif
             isAppActive = true
             updatePrivacyOverlay()
         }
@@ -163,7 +193,9 @@ struct AutherisApp: App {
             object: nil,
             queue: .main
         ) { _ in
+            #if DEBUG
             print("App did enter background")
+            #endif
             isAppActive = false
             updatePrivacyOverlay()
         }
@@ -173,7 +205,9 @@ struct AutherisApp: App {
             object: nil,
             queue: .main
         ) { _ in
+            #if DEBUG
             print("App will enter foreground")
+            #endif
             isAppActive = true
             updatePrivacyOverlay()
         }
@@ -182,7 +216,9 @@ struct AutherisApp: App {
     private func updatePrivacyOverlay() {
         // Show privacy overlay when app is not active AND the setting is enabled
         showPrivacyOverlay = !isAppActive && hideCodesInAppSwitcher
+        #if DEBUG
         print("Privacy overlay: \(showPrivacyOverlay), isAppActive: \(isAppActive), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher)")
+        #endif
     }
 }
 

@@ -51,7 +51,9 @@ struct OTPAuthURLView: View {
                 Text(alertMessage)
             }
             .onAppear {
+                #if DEBUG
                 print("Processing OTP Auth URL: \(urlString)")
+                #endif
             }
         }
     }
