@@ -31,14 +31,8 @@ class OTPDataStore: ObservableObject {
             // Force UI update
             objectWillChange.send()
         } else {
-            // Default sample codes with UNIQUE secrets for testing
-            codes = [
-                OTPCode(label: "GitHub", account: "hunter@dev.com", secret: "JBSWY3DPEHPK3PXPA"),
-                OTPCode(label: "Google", account: "hunter.eddington", secret: "JBSWY3DPEHPK3PXPB"),
-                OTPCode(label: "Work VPN", account: "h.eddington", secret: "JBSWY3DPEHPK3PXPC"),
-                OTPCode(label: "AWS", account: "hunter@dev.com", secret: "JBSWY3DPEHPK3PXPD"),
-                OTPCode(label: "Dropbox", account: "hunter", secret: "JBSWY3DPEHPK3PXPE")
-            ]
+            // First-time user: no demo or sample tokens
+            codes = []
             saveCodes()
         }
     }

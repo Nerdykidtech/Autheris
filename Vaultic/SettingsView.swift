@@ -27,11 +27,31 @@ struct SettingsView: View {
                 }
                 
                 Section {
-                    Text("Version 1.0")
-                        .foregroundColor(.secondary)
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        Text("1.0")
+                            .foregroundColor(.secondary)
+                    }
                     
-                    Text("Build 1")
-                        .foregroundColor(.secondary)
+                    HStack {
+                        Text("Made By")
+                        Spacer()
+                        Text("Hunter Eddington")
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Link(destination: URL(string: "https://eddington.tech/autheris")!) {
+                        HStack {
+                            Text("Website")
+                            Spacer()
+                            Text("eddington.tech/autheris")
+                                .foregroundColor(.secondary)
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 } header: {
                     Text("About")
                 }

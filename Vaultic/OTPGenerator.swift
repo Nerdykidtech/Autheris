@@ -60,6 +60,28 @@ struct OTPGenerator {
         return result
     }
     
+    /// Encodes raw secret bytes to Base32 (RFC 4648) for storage. Used when importing Google Authenticator export.
+    static func encodeBase32(_ data: Data) -> String {
+        let alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+        var result = ""
+        var buffer = 0
+        var bitsLeft = 0
+        for byte in data {
+            buffer = (buffer << 8) | Int(byte)
+            bitsLeft += 8
+            while bitsLeft >= 5 {
+                bitsLeft -= 5
+                let index = (buffer >> bitsLeft) & 0x1F
+                result.append(alphabet[alphabet.index(alphabet.startIndex, offsetBy: index)])
+            }
+        }
+        if bitsLeft > 0 {
+            let index = (buffer << (5 - bitsLeft)) & 0x1F
+            result.append(alphabet[alphabet.index(alphabet.startIndex, offsetBy: index)])
+        }
+        return result
+    }
+    
     static func isValidSecret(_ secret: String) -> Bool {
         let cleaned = secret.uppercased().replacingOccurrences(of: " ", with: "")
         let base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"

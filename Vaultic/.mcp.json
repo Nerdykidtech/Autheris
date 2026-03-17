@@ -1,0 +1,20 @@
+{
+  "mcpServers" : {
+    "blitz-iphone" : {
+      "args" : [
+        "-y",
+        "@blitzdev\/iphone-mcp"
+      ],
+      "command" : "\/Users\/huntereddington\/.blitz\/node-runtime\/bin\/npx",
+      "env" : {
+        "PATH" : "\/Users\/huntereddington\/.blitz\/node-runtime\/bin:\/usr\/bin:\/bin:\/usr\/sbin:\/sbin"
+      }
+    },
+    "blitz-macos" : {
+      "args" : [
+        "\/Users\/huntereddington\/.blitz\/blitz-mcp-bridge.sh"
+      ],
+      "command" : "bash"
+    }
+  }
+}

@@ -8,6 +8,7 @@ import UIKit
 struct HomeView: View {
     @EnvironmentObject private var dataStore: OTPDataStore
     @State private var showingAddToken = false
+    @State private var importResult: (title: String, body: String)? = nil
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var searchText = ""
     @State private var showingBackupView = false
@@ -162,7 +163,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingAddToken) {
-                AddTokenView(dataStore: dataStore)
+                AddTokenView(dataStore: dataStore, importResult: $importResult)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -204,11 +205,94 @@ struct HomeView: View {
                     body: supportBody
                 )
             }
-            .alert("Support Email", isPresented: $showingSupportError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(supportErrorMessage)
+            .overlay {
+                if showingSupportError {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        VStack(spacing: 0) {
+                            VStack(spacing: 12) {
+                                Text("Support Email")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .multilineTextAlignment(.center)
+                                Text(supportErrorMessage)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                            .padding(.bottom, 16)
+                            Divider()
+                            Button {
+                                showingSupportError = false
+                            } label: {
+                                Text("OK")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.accentColor)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .frame(maxWidth: 270)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .zIndex(1)
+                    }
+                }
             }
+            .animation(.easeOut(duration: 0.25), value: showingSupportError)
+            .overlay {
+                if let result = importResult {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        VStack(spacing: 0) {
+                            VStack(spacing: 12) {
+                                Text(result.title)
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .multilineTextAlignment(.center)
+                                Text(result.body)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                            .padding(.bottom, 16)
+                            Divider()
+                            Button {
+                                importResult = nil
+                            } label: {
+                                Text("OK")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.accentColor)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .frame(maxWidth: 270)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .zIndex(1)
+                    }
+                }
+            }
+            .animation(.easeOut(duration: 0.25), value: importResult != nil)
             .onReceive(timer) { _ in
                 // Force view update every second for countdown
             }

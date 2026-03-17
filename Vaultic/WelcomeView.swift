@@ -291,16 +291,16 @@ struct WelcomeView: View {
                             .scaleEffect(logoScale)
                             .opacity(logoOpacity)
                         
-                        // Main logo container
+                        // Main logo container — Autheris logo, rounded and fitted
                         ZStack {
-                            // Metallic gradient background
+                            // Brand gradient background (Autheris accent)
                             Circle()
                                 .fill(
                                     LinearGradient(
                                         gradient: Gradient(colors: [
-                                            Color.accentColor.opacity(0.3),
-                                            Color.accentColor.opacity(0.15),
-                                            Color.accentColor.opacity(0.05)
+                                            Color.accentColor.opacity(0.25),
+                                            Color.accentColor.opacity(0.12),
+                                            Color.accentColor.opacity(0.04)
                                         ]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -308,20 +308,20 @@ struct WelcomeView: View {
                                 )
                                 .frame(width: 180, height: 180)
                                 .shadow(
-                                    color: Color.accentColor.opacity(0.4),
-                                    radius: 40,
+                                    color: Color.accentColor.opacity(0.35),
+                                    radius: 36,
                                     x: 0,
-                                    y: 15
+                                    y: 12
                                 )
                             
-                            // Inner shadow for depth
+                            // Inner stroke for depth
                             Circle()
                                 .stroke(
                                     LinearGradient(
                                         gradient: Gradient(colors: [
-                                            Color.white.opacity(0.15),
+                                            Color.white.opacity(0.2),
                                             Color.clear,
-                                            Color.black.opacity(0.1)
+                                            Color.black.opacity(0.08)
                                         ]),
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -330,21 +330,13 @@ struct WelcomeView: View {
                                 )
                                 .frame(width: 178, height: 178)
                             
-                            // Icon with premium styling
-                            Image(systemName: "lock.shield.fill")
-                                .font(.system(size: 70, weight: .regular))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.accentColor,
-                                            Color.accentColor.opacity(0.8)
-                                        ]),
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                                .symbolRenderingMode(.hierarchical)
-                                .shadow(color: Color.accentColor.opacity(0.3), radius: 15, x: 0, y: 8)
+                            // Autheris logo — rounded, aspect-fit inside circle
+                            Image("Logo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 120, height: 120)
+                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                                .shadow(color: Color.accentColor.opacity(0.2), radius: 12, x: 0, y: 6)
                         }
                         .scaleEffect(logoScale)
                         .opacity(logoOpacity)
@@ -447,9 +439,9 @@ struct WelcomeView: View {
                                 .animation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.5), value: isContentVisible)
                         }
                         
-                        // Tagline with elegant typography (line removed as requested)
+                        // Autheris tagline — on-brand
                         Text("Secure 2FA Token Manager")
-                            .font(.system(size: 20, weight: .medium, design: .default))
+                            .font(.system(size: 20, weight: .medium, design: .rounded))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                             .lineSpacing(6)
@@ -457,6 +449,14 @@ struct WelcomeView: View {
                             .opacity(isContentVisible ? 1 : 0)
                             .offset(y: isContentVisible ? 0 : textOffsetY)
                             .animation(.easeOut(duration: 0.5).delay(0.6), value: isContentVisible)
+                        Text("Your accounts, protected on device")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary.opacity(0.9))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                            .opacity(isContentVisible ? 1 : 0)
+                            .offset(y: isContentVisible ? 0 : textOffsetY)
+                            .animation(.easeOut(duration: 0.5).delay(0.7), value: isContentVisible)
                     }
                     .padding(.horizontal, 32)
                     
@@ -468,46 +468,57 @@ struct WelcomeView: View {
         }
     }
     
-    // MARK: - Page 2: Features
+    // MARK: - Page 2: Features (In-depth Autheris feature overview)
     private var featuresPage: some View {
         GeometryReader { geometry in
             ScrollView {
-                VStack(spacing: 40) {
-                    // Vertical spacer to center content
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 4))
+                VStack(spacing: 28) {
+                    Spacer(minLength: 24)
                     
-                    Text("Everything You Need")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                    Text("Why Autheris")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
-                        .padding(.horizontal, 32)
+                    Text("Everything you need to manage 2FA — private, simple, and reliable")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
                     
-                    VStack(spacing: 32) {
-                        // Feature 1: QR Scanning
+                    VStack(spacing: 24) {
                         featureRow(
                             icon: "qrcode.viewfinder",
-                            title: "Quick QR Scanning",
-                            description: "Add tokens instantly by scanning QR codes from any authenticator app"
+                            title: "Instant QR Import",
+                            description: "Add accounts in seconds by scanning the same QR code you’d use with Google Authenticator or any other app. No typing codes by hand — just point your camera and go."
                         )
-                        
-                        // Feature 2: Security
                         featureRow(
-                            icon: "lock.iphone",
-                            title: "Device-Locked Security",
-                            description: "Your tokens are encrypted and never leave your device"
+                            icon: "lock.shield.fill",
+                            title: "Encrypted on Your Device",
+                            description: "All tokens are encrypted and stored only on this device. Nothing is sent to the cloud or to our servers — we never see your codes. Your keys stay yours."
                         )
-                        
-                        // Feature 3: Modern Interface
                         featureRow(
                             icon: "timer",
-                            title: "Live Countdowns",
-                            description: "Real-time OTP updates with beautiful visual timers"
+                            title: "Live Codes & Timers",
+                            description: "See one-time passwords update in real time with clear countdown timers. Copy a code with one tap and know exactly when the next one is ready."
+                        )
+                        featureRow(
+                            icon: "square.grid.2x2",
+                            title: "Organized by Account",
+                            description: "Group and label tokens by service (email, banking, work, etc.). Search and scroll through your accounts quickly so you’re never hunting for the right code."
+                        )
+                        featureRow(
+                            icon: "arrow.triangle.2.circlepath",
+                            title: "Backup & Restore",
+                            description: "Export an encrypted backup to restore tokens on a new device or keep a safe copy. You stay in control of your 2FA data with industry-standard encryption."
+                        )
+                        featureRow(
+                            icon: "hand.raised.fill",
+                            title: "No Account Required",
+                            description: "Use Autheris without signing up or giving an email. No tracking, no ads, no subscriptions — just a focused 2FA manager that respects your privacy."
                         )
                     }
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 24)
                     
-                    // Bottom spacer
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 4))
+                    Spacer(minLength: 32)
                 }
                 .frame(maxWidth: .infinity, minHeight: geometry.size.height)
             }

@@ -1,10 +1,14 @@
 import SwiftUI
 import Foundation
 import AVFoundation
+import PhotosUI
+import Vision
+import UIKit
 
 struct AddTokenView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var dataStore: OTPDataStore
+    @Binding var importResult: (title: String, body: String)?
     
     @State private var selectedTab = 0
     @State private var label = ""
@@ -13,8 +17,8 @@ struct AddTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isScanning = false
-    @State private var showingImportSuccess = false
-    @State private var importedTokenCount = 0
+    @State private var showingImagePicker = false
+    @State private var isProcessingImage = false
     
     var body: some View {
         NavigationStack {
@@ -46,32 +50,65 @@ struct AddTokenView: View {
                             .font(.title3)
                             .fontWeight(.semibold)
                         
-                        Text("Point your camera at a QR code from your authentication app or export file")
+                        Text("Point your camera at a QR code, or upload a screenshot. Google Authenticator export (otpauth-migration) codes work too.")
                             .font(.callout)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
+                            .padding(.horizontal, 24)
                         
                         Spacer()
                         
-                        Button(action: {
-                            requestCameraPermission()
-                        }) {
-                            Label("Start Scanning", systemImage: "camera")
-                                .font(.headline)
-                                .padding(.vertical, 12)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.accentColor)
-                                )
-                                .foregroundColor(.white)
+                        HStack(spacing: 12) {
+                            Button(action: { requestCameraPermission() }) {
+                                Label("Scan", systemImage: "camera")
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Capsule().fill(Color.accentColor))
+                                    .foregroundColor(.white)
+                            }
+                            Button(action: { showingImagePicker = true }) {
+                                Label("Upload QR", systemImage: "photo.on.rectangle.angled")
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Capsule().fill(Color.accentColor.opacity(0.2)))
+                                    .foregroundColor(.accentColor)
+                            }
                         }
                         .padding(.horizontal, 32)
-                        .padding(.bottom, 24)
+                        
+                        Text("Upload a screenshot of a QR code, or a Google Transfer / export image")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 24)
                     }
                     .frame(maxHeight: .infinity)
                     .padding(.horizontal)
+                    .overlay {
+                        if isProcessingImage {
+                            ZStack {
+                                Color.black.opacity(0.45)
+                                    .ignoresSafeArea()
+                                VStack(spacing: 20) {
+                                    ProgressView()
+                                        .scaleEffect(1.3)
+                                        .tint(.white)
+                                    Text("Reading QR code…")
+                                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.white)
+                                }
+                                .padding(32)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                        .fill(.ultraThinMaterial)
+                                )
+                            }
+                        }
+                    }
+                    .allowsHitTesting(!isProcessingImage)
                 } else {
                     // Manual Entry Form
                     ScrollView {
@@ -169,18 +206,50 @@ struct AddTokenView: View {
                     }
                 }
             }
-            .alert("Error", isPresented: $showingAlert) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(alertMessage)
-            }
-            .alert("Import Successful", isPresented: $showingImportSuccess) {
-                Button("OK", role: .cancel) {
-                    dismiss()
+            .overlay(alignment: .center) {
+                if showingAlert {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        VStack(spacing: 0) {
+                            VStack(spacing: 12) {
+                                Text("Something Went Wrong")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+                                    .multilineTextAlignment(.center)
+                                Text(alertMessage)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                            .padding(.bottom, 16)
+                            Divider()
+                            Button {
+                                showingAlert = false
+                            } label: {
+                                Text("OK")
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(Color.accentColor)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .frame(maxWidth: 270)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .zIndex(1)
+                    }
                 }
-            } message: {
-                Text("Successfully imported \(importedTokenCount) token\(importedTokenCount == 1 ? "" : "s").")
             }
+            .animation(.easeOut(duration: 0.25), value: showingAlert)
             .sheet(isPresented: $isScanning) {
                 QRScannerView(isScanning: $isScanning, onCodeScanned: { qrCode in
                     if let qrCode = qrCode {
@@ -188,6 +257,15 @@ struct AddTokenView: View {
                     }
                 })
                 .edgesIgnoringSafeArea(.all)
+            }
+            .sheet(isPresented: $showingImagePicker) {
+                QRImagePickerView { image in
+                    showingImagePicker = false
+                    if let image = image {
+                        isProcessingImage = true
+                        readQRFromImage(image)
+                    }
+                }
             }
         }
         .presentationDetents([.medium, .large])
@@ -204,6 +282,62 @@ struct AddTokenView: View {
                     self.showingAlert = true
                 }
             }
+        }
+    }
+    
+    private func readQRFromImage(_ image: UIImage) {
+        guard let cgImage = image.cgImage else {
+            isProcessingImage = false
+            deferAlert(message: "Could not read the selected image.")
+            return
+        }
+        // Downscale large photos so Vision runs faster and UI doesn't feel frozen
+        let maxDimension: CGFloat = 1024
+        let imageToUse: CGImage
+        if max(image.size.width, image.size.height) > maxDimension {
+            let scale = maxDimension / max(image.size.width, image.size.height)
+            let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            let renderer = UIGraphicsImageRenderer(size: newSize)
+            let scaled = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
+            imageToUse = scaled.cgImage ?? cgImage
+        } else {
+            imageToUse = cgImage
+        }
+        let request = VNDetectBarcodesRequest()
+        request.symbologies = [.qr]
+        let handler = VNImageRequestHandler(cgImage: imageToUse, options: [:])
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try handler.perform([request])
+                let results = request.results ?? []
+                let payloads = results.compactMap { ($0 as? VNBarcodeObservation)?.payloadStringValue }
+                if let firstPayload = payloads.first {
+                    DispatchQueue.main.async {
+                        self.isProcessingImage = false
+                        self.parseQRCode(firstPayload)
+                    }
+                } else {
+                    DispatchQueue.main.async {
+                        self.isProcessingImage = false
+                        self.alertMessage = "No QR code found in this image. Try a clearer screenshot or crop to the QR code."
+                        self.showingAlert = true
+                    }
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.isProcessingImage = false
+                    self.alertMessage = "Could not process image: \(error.localizedDescription)"
+                    self.showingAlert = true
+                }
+            }
+        }
+    }
+    
+    /// Show an alert on the next run loop so it isn't lost when a sheet has just closed.
+    private func deferAlert(message: String) {
+        DispatchQueue.main.async {
+            self.alertMessage = message
+            self.showingAlert = true
         }
     }
     
@@ -247,6 +381,13 @@ struct AddTokenView: View {
         if let exportData = parseExportFormat(qrCode) {
             print("Detected direct export format with \(exportData.tokens.count) tokens")
             handleExportData(exportData)
+            return
+        }
+        
+        // Google Authenticator export (otpauth-migration://offline?data=...)
+        if qrCode.hasPrefix("otpauth-migration://"),
+           let tokens = GoogleMigrationParser.parseMigrationURL(qrCode), !tokens.isEmpty {
+            handleExportData(ExportData(version: "1.0", timestamp: Date(), tokens: tokens))
             return
         }
         
@@ -372,8 +513,10 @@ struct AddTokenView: View {
         print("Found \(newTokens.count) new tokens (filtered out \(exportData.tokens.count - newTokens.count) duplicates)")
         
         if newTokens.isEmpty {
-            alertMessage = "All \(exportData.tokens.count) token\(exportData.tokens.count == 1 ? "" : "s") in this export already exist on your device."
-            showingAlert = true
+            let count = exportData.tokens.count
+            let body = "All \(count) token\(count == 1 ? "" : "s") in this export already exist on your device."
+            importResult = ("Already on this device", body)
+            dismiss()
             return
         }
         
@@ -383,13 +526,10 @@ struct AddTokenView: View {
             dataStore.addCode(token)
         }
         
-        importedTokenCount = newTokens.count
-        showingImportSuccess = true
-        
-        // Auto-dismiss after successful import
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            dismiss()
-        }
+        let count = newTokens.count
+        let body = "Successfully imported \(count) token\(count == 1 ? "" : "s")."
+        importResult = ("Import Successful", body)
+        dismiss()
     }
     
     private func parseOTPAuthURL(_ url: URL) {
@@ -513,18 +653,9 @@ struct AddTokenView: View {
     }
     
     private func parseMigrationFormat(_ qrCode: String) -> (label: String, account: String, secret: String, algorithm: OTPAlgorithm, digits: Int, period: Int)? {
-        // Google Authenticator migration format is complex
-        // For now, just extract basic info and prompt for manual entry
-        if let url = URL(string: qrCode) {
-            alertMessage = """
-            Google Authenticator migration format detected.
-            This format contains multiple tokens and requires special handling.
-            
-            Please:
-            1. Export tokens individually from Google Authenticator
-            2. Scan each QR code separately
-            3. Or enter the setup key manually
-            """
+        // Google migration is handled above via GoogleMigrationParser. If we land here, parsing failed.
+        if qrCode.hasPrefix("otpauth-migration://") {
+            alertMessage = "Could not parse this Google Authenticator export. Make sure the QR or image is clear and complete, or try exporting again from Google Authenticator."
             showingAlert = true
         }
         return nil
@@ -601,9 +732,51 @@ struct AddTokenView: View {
     }
 }
 
+// MARK: - Image Picker for QR upload (screenshot / Google export)
+struct QRImagePickerView: UIViewControllerRepresentable {
+    var onImagePicked: (UIImage?) -> Void
+    
+    func makeUIViewController(context: Context) -> PHPickerViewController {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = 1
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = context.coordinator
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, PHPickerViewControllerDelegate {
+        let parent: QRImagePickerView
+        
+        init(_ parent: QRImagePickerView) {
+            self.parent = parent
+        }
+        
+        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+            picker.dismiss(animated: true)
+            guard let result = results.first else {
+                parent.onImagePicked(nil)
+                return
+            }
+            let parent = self.parent
+            result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
+                DispatchQueue.main.async {
+                    parent.onImagePicked(object as? UIImage)
+                }
+            }
+        }
+    }
+}
+
 struct AddTokenView_Previews: PreviewProvider {
     static var previews: some View {
-        AddTokenView(dataStore: OTPDataStore())
+        AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil))
     }
 }
 
