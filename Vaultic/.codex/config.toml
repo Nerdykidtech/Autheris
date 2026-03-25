@@ -1,0 +1,4 @@
+[mcp_servers.blitz_macos]
+command = "bash"
+args = ["/Users/huntereddington/.blitz/blitz-mcp-bridge.sh"]
+cwd = "/Users/huntereddington/.blitz/projects/Vaultic-7"

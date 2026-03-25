@@ -1,6 +1,8 @@
 {
-  "createdAt" : "2026-03-17T04:37:05Z",
-  "lastOpenedAt" : "2026-03-17T04:53:20Z",
+  "bundleIdentifier" : "com.eddingtontech.autheri",
+  "createdAt" : "2026-03-25T03:01:43Z",
+  "lastOpenedAt" : "2026-03-25T03:01:43Z",
   "name" : "Vaultic",
+  "platform" : "iOS",
   "type" : "swift"
 }
