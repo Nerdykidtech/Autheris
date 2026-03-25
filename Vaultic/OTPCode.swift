@@ -8,8 +8,10 @@ struct OTPCode: Identifiable, Codable {
     let algorithm: OTPAlgorithm
     let digits: Int
     let period: Int
+    /// Optional `RRGGBB` hex (no `#`) for the countdown ring; `nil` uses issuer branding color.
+    let timerRingHex: String?
     
-    init(id: UUID = UUID(), label: String, account: String, secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30) {
+    init(id: UUID = UUID(), label: String, account: String, secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30, timerRingHex: String? = nil) {
         self.id = id
         self.label = label
         self.account = account
@@ -17,6 +19,7 @@ struct OTPCode: Identifiable, Codable {
         self.algorithm = algorithm
         self.digits = digits
         self.period = period
+        self.timerRingHex = timerRingHex
     }
     
     var currentCode: String {

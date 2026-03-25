@@ -5,6 +5,14 @@ struct SettingsView: View {
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     
+    private var appMarketingVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "—"
+    }
+    
+    private var appBuildNumber: String {
+        (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "—"
+    }
+    
     var body: some View {
         NavigationStack {
             List {
@@ -15,7 +23,7 @@ struct SettingsView: View {
                     Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
                         .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                 } header: {
-                    Text("Privacy Options")
+                    Text("Privacy")
                 } footer: {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
@@ -30,8 +38,17 @@ struct SettingsView: View {
                     HStack {
                         Text("Version")
                         Spacer()
-                        Text("1.0")
-                            .foregroundColor(.secondary)
+                        Text(appMarketingVersion)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                    
+                    HStack {
+                        Text("Build")
+                        Spacer()
+                        Text(appBuildNumber)
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
                     }
                     
                     HStack {

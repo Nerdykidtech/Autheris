@@ -132,7 +132,7 @@ class OTPDataStore: ObservableObject {
     func exportData() -> Data? {
         do {
             let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
+            // Compact JSON — pretty printing inflates size and can exceed QR capacity (~3KB).
             
             // Create export structure with all tokens
             let exportData = ExportData(

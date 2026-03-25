@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreImage
 import CoreImage.CIFilterBuiltins
 
 struct QRCodeView: View {
@@ -7,12 +8,29 @@ struct QRCodeView: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var qrImage: UIImage?
+    @State private var generationError: String?
     @State private var isSharing = false
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 30) {
-                if let qrImage = qrImage {
+                if let generationError {
+                    VStack(spacing: 16) {
+                        Image(systemName: "qrcode")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                        Text("Couldn’t create QR code")
+                            .font(.headline)
+                        Text(generationError)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                } else if let qrImage {
                     Image(uiImage: qrImage)
                         .interpolation(.none)
                         .resizable()
@@ -56,6 +74,8 @@ struct QRCodeView: View {
                         )
                         .foregroundColor(.white)
                 }
+                .disabled(qrImage == nil)
+                .opacity(qrImage == nil ? 0.45 : 1)
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
@@ -73,7 +93,7 @@ struct QRCodeView: View {
                 generateQRCode()
             }
             .sheet(isPresented: $isSharing) {
-                if let qrImage = qrImage {
+                if let qrImage {
                     ActivityViewController(activityItems: [qrImage])
                 }
             }
@@ -81,33 +101,55 @@ struct QRCodeView: View {
     }
     
     private func generateQRCode() {
-        let context = CIContext()
-        let filter = CIFilter.qrCodeGenerator()
-        
-        // Encode as Base64 string for better QR code compatibility
-        let base64String = data.base64EncodedString()
-        
-        // Create a URL with our custom scheme
-        // Base64 strings can contain '+' and '/' which need to be URL-encoded
-        let encodedBase64String = base64String
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
-        
-        let urlString = "autheris://import?data=\(encodedBase64String)"
-        
-        // Convert to Data for QR code
-        if let qrData = urlString.data(using: .utf8) {
-            filter.message = qrData
-        } else {
-            filter.message = data
-        }
-        
-        if let outputImage = filter.outputImage {
+        let payloadData = data
+        DispatchQueue.global(qos: .userInitiated).async {
+            let context = CIContext()
+            let filter = CIFilter.qrCodeGenerator()
+            filter.setValue("L", forKey: "inputCorrectionLevel")
+            
+            let base64String = payloadData.base64EncodedString()
+            let encodedBase64String = base64String
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+            
+            let urlString = "autheris://import?data=\(encodedBase64String)"
+            
+            let messageData: Data?
+            if let qrData = urlString.data(using: .utf8) {
+                messageData = qrData
+            } else {
+                messageData = payloadData
+            }
+            
+            guard let messageData else {
+                DispatchQueue.main.async {
+                    generationError = "The export data could not be encoded for a QR code."
+                }
+                return
+            }
+            
+            filter.message = messageData
+            
+            guard let outputImage = filter.outputImage else {
+                DispatchQueue.main.async {
+                    generationError = "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead."
+                }
+                return
+            }
+            
             let transformedImage = outputImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
             
-            if let cgImage = context.createCGImage(transformedImage, from: transformedImage.extent) {
-                qrImage = UIImage(cgImage: cgImage)
+            guard let cgImage = context.createCGImage(transformedImage, from: transformedImage.extent) else {
+                DispatchQueue.main.async {
+                    generationError = "Could not render the QR image. Try again, or use Backup to export your tokens."
+                }
+                return
+            }
+            
+            let image = UIImage(cgImage: cgImage)
+            DispatchQueue.main.async {
+                qrImage = image
             }
         }
     }

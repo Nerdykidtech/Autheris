@@ -14,7 +14,8 @@ struct HomeView: View {
     @State private var showingBackupView = false
     @State private var showingQRCodeView = false
     @State private var showingSupportMail = false
-    @State private var showingSettings = false  // <-- Add this state variable
+    @State private var showingSettings = false
+    @State private var showingChangelog = false
     @State private var supportTo = "autheris@eddington.tech"
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
@@ -138,6 +139,12 @@ struct HomeView: View {
                             Label("Settings", systemImage: "gear")
                         }
                         
+                        Button(action: {
+                            showingChangelog = true
+                        }) {
+                            Label("Changelog", systemImage: "list.bullet.rectangle")
+                        }
+                        
                         Divider()
                         
                         Button(action: {
@@ -197,6 +204,9 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showingChangelog) {
+                ChangelogView()
             }
             .sheet(isPresented: $showingSupportMail) {
                 SupportMailComposer(
@@ -443,6 +453,13 @@ struct OTPCardView: View {
         IssuerBranding.forLabel(code.label)
     }
     
+    private var timerRingColor: Color {
+        if let hex = code.timerRingHex, let c = Color(hex: hex) {
+            return c
+        }
+        return branding.color
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Header with service info and timer
@@ -483,7 +500,7 @@ struct OTPCardView: View {
                                 lineJoin: .round
                             )
                         )
-                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : branding.color)
+                        .foregroundColor(remainingSeconds <= warningThreshold ? .red : timerRingColor)
                         .rotationEffect(.degrees(-90))
                         .frame(width: 28, height: 28)
                     
@@ -665,17 +682,28 @@ struct EditTokenView: View {
     
     @State private var label: String
     @State private var account: String
+    @State private var ringColor: Color
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
     // Haptic feedback for save
     private let saveHaptic = UINotificationFeedbackGenerator()
     
+    private var editBranding: IssuerBranding {
+        IssuerBranding.forLabel(code.label)
+    }
+    
     init(code: OTPCode, dataStore: OTPDataStore) {
         self.code = code
         self.dataStore = dataStore
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
+        let branding = IssuerBranding.forLabel(code.label)
+        if let hex = code.timerRingHex, let c = Color(hex: hex) {
+            _ringColor = State(initialValue: c)
+        } else {
+            _ringColor = State(initialValue: branding.color)
+        }
     }
     
     var body: some View {
@@ -717,6 +745,46 @@ struct EditTokenView: View {
                                     .stroke(Color(.separator), lineWidth: 1)
                             )
                     }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Countdown ring")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        VStack(alignment: .leading, spacing: 10) {
+                            ColorPicker(selection: $ringColor, supportsOpacity: false) {
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        Circle()
+                                            .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
+                                            .frame(width: 44, height: 44)
+                                        Circle()
+                                            .stroke(ringColor, lineWidth: 3.5)
+                                            .frame(width: 36, height: 36)
+                                    }
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text("Ring color")
+                                            .font(.body.weight(.medium))
+                                            .foregroundStyle(.primary)
+                                        Text(ringColorMatchesBranding ? "Automatic (service color)" : "Custom color")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer(minLength: 8)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            
+                            HStack {
+                                Spacer(minLength: 0)
+                                Button("Use service default") {
+                                    ringColor = editBranding.color
+                                }
+                                .font(.footnote.weight(.semibold))
+                                .buttonStyle(.bordered)
+                            }
+                        }
+                    }
                 }
                 .padding(.horizontal, 40)
                 
@@ -755,8 +823,23 @@ struct EditTokenView: View {
                 Text(alertMessage)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+    }
+    
+    private var ringColorMatchesBranding: Bool {
+        guard let picked = ringColor.rgbHexStringForStorage(),
+              let brand = editBranding.color.rgbHexStringForStorage() else {
+            return false
+        }
+        return picked == brand
+    }
+    
+    /// `nil` when the chosen color matches the automatic service color (same as legacy “default”).
+    private func ringHexForSave() -> String? {
+        guard let picked = ringColor.rgbHexStringForStorage() else { return code.timerRingHex }
+        guard let brand = editBranding.color.rgbHexStringForStorage() else { return picked }
+        return picked == brand ? nil : picked
     }
     
     private func saveChanges() {
@@ -773,7 +856,8 @@ struct EditTokenView: View {
             secret: code.secret,
             algorithm: code.algorithm,
             digits: code.digits,
-            period: code.period
+            period: code.period,
+            timerRingHex: ringHexForSave()
         )
         
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
