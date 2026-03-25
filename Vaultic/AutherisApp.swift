@@ -18,12 +18,6 @@ struct AutherisApp: App {
                 if hasCompletedOnboarding {
                     ContentView()
                         .environmentObject(dataStore)
-                        .onOpenURL { url in
-                            #if DEBUG
-                            print("ContentView received URL: \(url.absoluteString)")
-                            #endif
-                            handleIncomingURL(url)
-                        }
                         .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
                         .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
                 } else {
@@ -53,6 +47,12 @@ struct AutherisApp: App {
                         .transition(.opacity)
                         .zIndex(1) // Ensure it's on top
                 }
+            }
+            .onOpenURL { url in
+                #if DEBUG
+                print("App received URL: \(url.absoluteString)")
+                #endif
+                handleIncomingURL(url)
             }
             .animation(.easeInOut(duration: 0.3), value: showingImportSheet)
             .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)

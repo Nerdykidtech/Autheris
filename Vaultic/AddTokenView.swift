@@ -310,7 +310,7 @@ struct AddTokenView: View {
             do {
                 try handler.perform([request])
                 let results = request.results ?? []
-                let payloads = results.compactMap { ($0 as? VNBarcodeObservation)?.payloadStringValue }
+                let payloads = results.compactMap(\.payloadStringValue)
                 if let firstPayload = payloads.first {
                     DispatchQueue.main.async {
                         self.isProcessingImage = false

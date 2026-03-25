@@ -66,7 +66,6 @@ enum GoogleMigrationParser {
         var algorithm: OTPAlgorithm = .sha1
         var digits: Int = 6
         var type: Int = 2 // TOTP
-        var counter: Int64 = 0
         
         var offset = 0
         let bytes = [UInt8](data)

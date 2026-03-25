@@ -162,8 +162,7 @@ struct WelcomeView: View {
                 }
             }
         }
-        .onChange(of: colorScheme) { newColorScheme in
-            // Update gradient colors when color scheme changes
+        .onChange(of: colorScheme) { _, newColorScheme in
             withAnimation(.easeInOut(duration: 1.0)) {
                 gradientColors = Self.gradientColors(for: newColorScheme)
             }

@@ -1,6 +1,6 @@
 import Foundation
 
-struct OTPCode: Identifiable, Codable {
+nonisolated struct OTPCode: Identifiable, Codable, Sendable {
     let id: UUID
     let label: String
     let account: String

@@ -180,7 +180,7 @@ class OTPDataStore: ObservableObject {
 
 // MARK: - Export Data Structure
 
-struct ExportData: Codable {
+nonisolated struct ExportData: Codable, Sendable {
     let version: String
     let timestamp: Date
     let tokens: [OTPCode]

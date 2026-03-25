@@ -198,15 +198,18 @@ struct QRScannerView: UIViewControllerRepresentable {
         detailLabel.frame = CGRect(x: 20, y: 150, width: viewController.view.bounds.width - 40, height: 80)
         viewController.view.addSubview(detailLabel)
         
-        // Add request permission button
-        let requestButton = UIButton(type: .system)
-        requestButton.setTitle("Allow Camera Access", for: .normal)
-        requestButton.setTitleColor(.white, for: .normal)
-        requestButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        requestButton.backgroundColor = UIColor.systemBlue
-        requestButton.layer.cornerRadius = 12
-        requestButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 24, bottom: 12, right: 24)
-        
+        var requestConfig = UIButton.Configuration.filled()
+        requestConfig.title = "Allow Camera Access"
+        requestConfig.baseForegroundColor = .white
+        requestConfig.baseBackgroundColor = .systemBlue
+        requestConfig.background.cornerRadius = 12
+        requestConfig.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24)
+        requestConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var out = incoming
+            out.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+            return out
+        }
+        let requestButton = UIButton(configuration: requestConfig)
         requestButton.addTarget(context.coordinator, action: #selector(Coordinator.requestPermission), for: .touchUpInside)
         
         requestButton.translatesAutoresizingMaskIntoConstraints = false
@@ -241,15 +244,18 @@ struct QRScannerView: UIViewControllerRepresentable {
         detailLabel.frame = CGRect(x: 20, y: 150, width: viewController.view.bounds.width - 40, height: 80)
         viewController.view.addSubview(detailLabel)
         
-        // Add open settings button
-        let settingsButton = UIButton(type: .system)
-        settingsButton.setTitle("Open Settings", for: .normal)
-        settingsButton.setTitleColor(.white, for: .normal)
-        settingsButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        settingsButton.backgroundColor = UIColor.systemBlue
-        settingsButton.layer.cornerRadius = 12
-        settingsButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 24, bottom: 12, right: 24)
-        
+        var settingsConfig = UIButton.Configuration.filled()
+        settingsConfig.title = "Open Settings"
+        settingsConfig.baseForegroundColor = .white
+        settingsConfig.baseBackgroundColor = .systemBlue
+        settingsConfig.background.cornerRadius = 12
+        settingsConfig.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24)
+        settingsConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var out = incoming
+            out.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+            return out
+        }
+        let settingsButton = UIButton(configuration: settingsConfig)
         settingsButton.addTarget(context.coordinator, action: #selector(Coordinator.openSettings), for: .touchUpInside)
         
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
@@ -266,14 +272,18 @@ struct QRScannerView: UIViewControllerRepresentable {
     }
     
     private func addCancelButton(to viewController: UIViewController, coordinator: Coordinator) {
-        let cancelButton = UIButton(type: .system)
-        cancelButton.setTitle("Cancel", for: .normal)
-        cancelButton.setTitleColor(.white, for: .normal)
-        cancelButton.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
-        cancelButton.backgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
-        cancelButton.layer.cornerRadius = 12
-        cancelButton.contentEdgeInsets = UIEdgeInsets(top: 12, left: 24, bottom: 12, right: 24)
-        
+        var cancelConfig = UIButton.Configuration.filled()
+        cancelConfig.title = "Cancel"
+        cancelConfig.baseForegroundColor = .white
+        cancelConfig.baseBackgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
+        cancelConfig.background.cornerRadius = 12
+        cancelConfig.contentInsets = NSDirectionalEdgeInsets(top: 12, leading: 24, bottom: 12, trailing: 24)
+        cancelConfig.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var out = incoming
+            out.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+            return out
+        }
+        let cancelButton = UIButton(configuration: cancelConfig)
         cancelButton.addTarget(coordinator, action: #selector(Coordinator.handleCancel), for: .touchUpInside)
         
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
@@ -331,7 +341,6 @@ struct QRScannerView: UIViewControllerRepresentable {
     
     private func addCornerMarkers(to view: UIView, scanningRect: CGRect) {
         let cornerLength: CGFloat = 30
-        let cornerWidth: CGFloat = 4
         
         // Top left corner
         addCornerLine(to: view,

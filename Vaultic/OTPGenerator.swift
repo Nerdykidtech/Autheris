@@ -1,13 +1,13 @@
 import Foundation
 import CryptoKit
 
-struct OTPGenerator {
+nonisolated struct OTPGenerator {
     static func generateOTP(secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30) -> String {
         let key = decodeBase32(secret)
         let counter = UInt64(Date().timeIntervalSince1970 / Double(period))
         
         // Convert counter to 8-byte big-endian data
-        var counterBytes = withUnsafeBytes(of: counter.bigEndian) { Array($0) }
+        let counterBytes = withUnsafeBytes(of: counter.bigEndian) { Array($0) }
         
         // Generate HMAC
         let hmac: [UInt8]
