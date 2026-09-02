@@ -14,7 +14,10 @@
 		18F890EE2F5F36FB00E85B77 /* Exceptions for "Vaultic" folder in "Vaultic" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				".mcp.json",
+				CLAUDE.md,
 				Info.plist,
+				backend,
 			);
 			target = 18BDC6FC2F5D320E00198CC5 /* Vaultic */;
 		};
