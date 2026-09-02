@@ -55,9 +55,19 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "1.2",
+            version: "1.2",
+            date: "September 2026",
+            changes: [
+                "Long-press a token and choose “View Secret” to see its setup key. The key is masked by default — tap it (or use the eye icon) to reveal, with Copy to grab it quickly.",
+                "Secret edits happen in the same sheet and require an explicit Save; changes are validated as a Base32 key first, and canceling with unsaved edits asks before discarding.",
+                "The Edit sheet keeps its original scope — service name, account, and ring color — with the same unsaved-changes guard."
+            ]
+        ),
+        ChangelogRelease(
             id: "1.1",
             version: "1.1",
-            date: "March 2025",
+            date: "March 2026",
             changes: [
                 "QR export uses compact JSON (no extra whitespace) and QR error-correction level L so more accounts fit in a single code.",
                 "If the encoded URL still exceeds what a QR code can hold, the app stops loading indefinitely and explains the limit, with guidance to use Backup for file-based transfer.",

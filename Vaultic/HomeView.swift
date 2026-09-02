@@ -438,6 +438,7 @@ struct OTPCardView: View {
     @State private var isCopied = false
     @State private var showDeleteConfirmation = false
     @State private var showEditSheet = false
+    @State private var showSecretSheet = false
     
     // Haptic feedback generators
     private let copyHaptic = UIImpactFeedbackGenerator(style: .light)
@@ -609,6 +610,10 @@ struct OTPCardView: View {
             showActionSheet()
         }
         .confirmationDialog("Manage Token", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+            Button("View Secret", role: .none) {
+                showSecretSheet = true
+            }
+            
             Button("Edit", role: .none) {
                 showEditSheet = true
             }
@@ -625,6 +630,9 @@ struct OTPCardView: View {
         }
         .sheet(isPresented: $showEditSheet) {
             EditTokenView(code: code, dataStore: dataStore)
+        }
+        .sheet(isPresented: $showSecretSheet) {
+            TokenSecretView(code: code, dataStore: dataStore)
         }
         .onAppear {
             updateRemainingSeconds()
@@ -685,12 +693,19 @@ struct EditTokenView: View {
     @State private var ringColor: Color
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var showDiscardConfirmation = false
     
     // Haptic feedback for save
     private let saveHaptic = UINotificationFeedbackGenerator()
     
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
+    }
+    
+    private var isDirty: Bool {
+        label != code.label ||
+        account != code.account ||
+        ringHexForSave() != code.timerRingHex
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
@@ -747,10 +762,9 @@ struct EditTokenView: View {
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Countdown ring")
+                            Text("Countdown ring")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
                         VStack(alignment: .leading, spacing: 10) {
                             ColorPicker(selection: $ringColor, supportsOpacity: false) {
                                 HStack(spacing: 14) {
@@ -800,11 +814,11 @@ struct EditTokenView: View {
                         .frame(maxWidth: .infinity)
                         .background(
                             Capsule()
-                                .fill(Color.accentColor)
+                                .fill(isDirty ? Color.accentColor : Color.accentColor.opacity(0.4))
                         )
                         .foregroundColor(.white)
                 }
-                .disabled(label.isEmpty)
+                .disabled(!isDirty)
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
@@ -813,9 +827,26 @@ struct EditTokenView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
-                        dismiss()
+                        if isDirty {
+                            showDiscardConfirmation = true
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
+            }
+            .interactiveDismissDisabled(isDirty)
+            .confirmationDialog(
+                "Unsaved Changes",
+                isPresented: $showDiscardConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Discard Changes", role: .destructive) {
+                    dismiss()
+                }
+                Button("Keep Editing", role: .cancel) { }
+            } message: {
+                Text("Your edits have not been saved.")
             }
             .alert("Error", isPresented: $showingAlert) {
                 Button("OK", role: .cancel) { }

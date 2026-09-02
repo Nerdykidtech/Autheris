@@ -17,6 +17,7 @@
 ## Features
 
 - 🔐 **Privacy-First Design**: Blur app content when backgrounded, hide codes in app switcher
+- 👁️ **Setup Key Access**: View, copy, or edit a token's secret — masked by default, tap to reveal
 - 📱 **iOS Native**: Built with SwiftUI for the best native experience
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
 - 📤 **Export & Backup**: Encrypted backups you control
