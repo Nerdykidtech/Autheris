@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 @main
 struct AutherisApp: App {
@@ -11,6 +12,7 @@ struct AutherisApp: App {
     @State private var importData: Data?
     @State private var isAppActive = true
     @State private var showPrivacyOverlay = false
+    @State private var syncTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
     
     var body: some Scene {
         WindowGroup {
@@ -97,6 +99,10 @@ struct AutherisApp: App {
                 if newValue && dataStore.isCloudSyncEnabled {
                     dataStore.retryCloudSync()
                 }
+            }
+            .onReceive(syncTimer) { _ in
+                guard isAppActive && dataStore.isCloudSyncEnabled else { return }
+                dataStore.retryCloudSync()
             }
             .onChange(of: hideCodesInAppSwitcher) { oldValue, newValue in
                 // Update privacy overlay when setting changes
