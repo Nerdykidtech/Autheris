@@ -94,6 +94,9 @@ struct AutherisApp: App {
                 #endif
                 // Update privacy overlay based on app state and settings
                 updatePrivacyOverlay()
+                if newValue && dataStore.isCloudSyncEnabled {
+                    dataStore.retryCloudSync()
+                }
             }
             .onChange(of: hideCodesInAppSwitcher) { oldValue, newValue in
                 // Update privacy overlay when setting changes
@@ -251,4 +254,3 @@ struct PrivacyOverlay: View {
         }
     }
 }
-

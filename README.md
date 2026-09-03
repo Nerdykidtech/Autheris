@@ -22,6 +22,7 @@
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
 - 📤 **Export & Backup**: Encrypted backups you control
 - 📥 **Easy Migration**: Import from Google Authenticator
+- ☁️ **Optional iCloud Sync**: Keep tokens and privacy settings in your private iCloud account (off by default)
 - 🔍 **Quick Search**: Find tokens instantly
 - 🎨 **Clean Interface**: Simple, distraction-free design
 
@@ -40,7 +41,7 @@ Autheris is designed with security at its core:
 - Tokens stored in iOS Keychain with highest security class
 - No account required — fully offline by default
 - No analytics or tracking
-- No cloud storage unless explicitly enabled
+- No cloud storage unless explicitly enabled — optional iCloud sync can be enabled in Settings and deleted separately
 - Open source for transparency
 
 ## Installation
@@ -52,6 +53,21 @@ open Vaultic.xcodeproj
 ```
 
 Requires Xcode 15.0+ and iOS 16.0+.
+
+### iCloud sync
+
+iCloud sync is opt-in and uses the app's private CloudKit database. It syncs OTP
+tokens and the two privacy settings, including offline changes and deletions.
+Turning sync off leaves cloud records untouched; **Delete iCloud Data** removes
+only cloud records after confirmation and leaves local tokens and settings intact.
+Backups and QR imports remain local and continue to work independently of sync.
+
+Before using sync, create and deploy the `AutherisSyncRecord` record type in
+CloudKit Dashboard for the `iCloud.com.eddingtontech.autheris` container. The
+app cannot create production schemas automatically. Deploy the Development
+schema to Production before distributing through TestFlight or the App Store.
+Sensitive token fields (`label`, `account`, and `secret`) use CloudKit encrypted
+values; `timerRingHex` remains a regular String because it is display metadata.
 
 ## Download
 

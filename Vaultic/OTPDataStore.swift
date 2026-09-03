@@ -1,12 +1,19 @@
 import Foundation
 import Combine
 
-class OTPDataStore: ObservableObject {
+@MainActor
+final class OTPDataStore: ObservableObject {
     @Published var codes: [OTPCode] = []
+    @Published private(set) var syncStatus: CloudSyncStatus = .disabled
     private let saveKey = "otpCodes"
     private let backupDirectory: URL
+    private let syncService: CloudKitSyncService
+
+    var isCloudSyncEnabled: Bool { syncService.isEnabled }
+    var syncStatusTitle: String { syncStatus.title }
     
     init() {
+        syncService = CloudKitSyncService()
         // Create backup directory if it doesn't exist
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         backupDirectory = documentsDirectory.appendingPathComponent("OTPBackups")
@@ -14,11 +21,22 @@ class OTPDataStore: ObservableObject {
         try? FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
         
         loadCodes()
+        syncStatus = syncService.status
+        syncService.onStatusChange = { [weak self] status in
+            self?.syncStatus = status
+        }
+        syncService.onSyncCompleted = { [weak self] result in
+            self?.applySyncResult(result)
+        }
+        if syncService.isEnabled {
+            syncService.syncNow(codes: codes, settings: currentSettings)
+        }
     }
     
     func saveCodes() {
         if let encoded = try? JSONEncoder().encode(codes) {
             UserDefaults.standard.set(encoded, forKey: saveKey)
+            syncService.noteLocalState(codes: codes, settings: currentSettings)
             // Force UI update by publishing changes
             objectWillChange.send()
         }
@@ -51,6 +69,57 @@ class OTPDataStore: ObservableObject {
     func updateCode(_ code: OTPCode, at index: Int) {
         codes[index] = code
         saveCodes()
+    }
+
+    // MARK: - iCloud Sync
+
+    private var currentSettings: [String: Bool] {
+        Dictionary(uniqueKeysWithValues: CloudKitSyncService.privacySettingKeys.map {
+            ($0, UserDefaults.standard.object(forKey: $0) as? Bool ?? true)
+        })
+    }
+
+    func setCloudSyncEnabled(_ enabled: Bool) {
+        syncService.setEnabled(enabled, codes: codes, settings: currentSettings)
+        syncStatus = syncService.status
+    }
+
+    func retryCloudSync() {
+        syncService.syncNow(codes: codes, settings: currentSettings)
+    }
+
+    /// Called by Settings after either per-key privacy setting changes.
+    func privacySettingsDidChange() {
+        syncService.noteLocalState(codes: codes, settings: currentSettings)
+    }
+
+    /// Deletes only the private CloudKit records. Local tokens and settings are
+    /// intentionally untouched; sync is disabled after deletion to avoid an
+    /// immediate re-upload.
+    func deleteCloudSyncData(completion: @escaping (Result<Void, Error>) -> Void) {
+        syncService.deleteAllCloudData { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if case .success = result {
+                    self.syncService.setEnabled(false, codes: self.codes, settings: self.currentSettings)
+                    self.syncStatus = self.syncService.status
+                }
+                completion(result)
+            }
+        }
+    }
+
+    private func applySyncResult(_ result: CloudSyncResult) {
+        codes = result.codes
+        if let encoded = try? JSONEncoder().encode(codes) {
+            UserDefaults.standard.set(encoded, forKey: saveKey)
+        }
+        for key in CloudKitSyncService.privacySettingKeys {
+            if let value = result.settings[key] {
+                UserDefaults.standard.set(value, forKey: key)
+            }
+        }
+        objectWillChange.send()
     }
     
     // MARK: - Backup Functions
@@ -185,4 +254,3 @@ nonisolated struct ExportData: Codable, Sendable {
     let timestamp: Date
     let tokens: [OTPCode]
 }
-
