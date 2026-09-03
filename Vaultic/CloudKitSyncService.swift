@@ -54,6 +54,7 @@ final class CloudKitSyncService {
         var updatedAt: Date
         var deleted: Bool
         var contentHash: String
+        var serverModifiedAt: Date? = nil
     }
 
     private let defaults: UserDefaults
@@ -270,9 +271,15 @@ final class CloudKitSyncService {
             guard let remote = decode(record) else { continue }
             let key = record.recordID.recordName
             let remoteDate = remote.updatedAt
-            let localDate = metadata[key]?.updatedAt ?? .distantPast
-            if remoteDate > localDate {
-                metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted, contentHash: remote.contentHash)
+            let localMetadata = metadata[key]
+            let localDate = localMetadata?.updatedAt ?? .distantPast
+            let remoteServerDate = record.modificationDate ?? .distantPast
+            let localServerDate = localMetadata?.serverModifiedAt ?? .distantPast
+            let remoteIsNewer = remoteServerDate > localServerDate ||
+                (remoteServerDate == localServerDate && remoteDate > (localMetadata?.updatedAt ?? .distantPast))
+            if remoteIsNewer {
+                metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted,
+                                         contentHash: remote.contentHash, serverModifiedAt: record.modificationDate)
                 if remote.kind == "token" {
                     mergedCodes.removeAll { $0.id.uuidString == key }
                     if !remote.deleted, let token = remote.token { mergedCodes.append(token) }
@@ -381,7 +388,13 @@ final class CloudKitSyncService {
                 } else {
                     for record in saved ?? [] {
                         if let item = self.decode(record) {
-                            self.metadata[record.recordID.recordName] = Metadata(kind: item.kind, updatedAt: item.updatedAt, deleted: item.deleted, contentHash: item.contentHash)
+                            self.metadata[record.recordID.recordName] = Metadata(
+                                kind: item.kind,
+                                updatedAt: item.updatedAt,
+                                deleted: item.deleted,
+                                contentHash: item.contentHash,
+                                serverModifiedAt: record.modificationDate
+                            )
                         }
                     }
                     self.persistMetadata()
