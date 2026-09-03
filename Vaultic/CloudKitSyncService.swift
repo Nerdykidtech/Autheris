@@ -236,11 +236,11 @@ final class CloudKitSyncService {
         if let cursor {
             operation = CKQueryOperation(cursor: cursor)
         } else {
-            fetchAnchor = defaults.object(forKey: Self.syncAnchorKey) as? Date
-            let predicate = fetchAnchor.map {
-                NSPredicate(format: "modificationDate > %@", $0 as NSDate)
-            } ?? NSPredicate(value: true)
-            operation = CKQueryOperation(query: CKQuery(recordType: Self.recordType, predicate: predicate))
+            // Fetch the complete private dataset. Using a local wall-clock
+            // timestamp as a CloudKit modification anchor can miss changes
+            // when device and server clocks differ.
+            fetchAnchor = nil
+            operation = CKQueryOperation(query: CKQuery(recordType: Self.recordType, predicate: NSPredicate(value: true)))
         }
         var records = accumulated
         operation.recordFetchedBlock = { records.append($0) }
@@ -303,12 +303,7 @@ final class CloudKitSyncService {
                 continue
             }
             if remoteByID[key] == nil {
-                // Records not returned by the incremental query have not
-                // changed remotely. Push only local changes newer than the
-                // query anchor; this avoids replacing a server change tag.
-                if fetchAnchor == nil || localDate > fetchAnchor! {
-                    recordsToSave.append(encode(local))
-                }
+                recordsToSave.append(encode(local))
             } else if localDate >= (decode(remoteByID[key]!)?.updatedAt ?? .distantPast) {
                 if !recordsToSave.contains(where: { $0.recordID.recordName == key }) {
                     recordsToSave.append(encode(local, into: remoteByID[key]))
