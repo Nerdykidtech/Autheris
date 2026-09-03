@@ -91,7 +91,18 @@ final class CloudKitSyncService {
         self.status = isEnabled ? .idle : .disabled
         if let data = defaults.data(forKey: Self.metadataKey),
            let decoded = try? JSONDecoder().decode([String: Metadata].self, from: data) {
-            metadata = decoded
+            var migratedMetadata = false
+            metadata = decoded.mapValues { value in
+                guard value.lastSyncedContentHash == nil else { return value }
+                migratedMetadata = true
+                return Metadata(kind: value.kind, updatedAt: value.updatedAt, deleted: value.deleted,
+                                contentHash: value.contentHash, serverModifiedAt: value.serverModifiedAt,
+                                lastSyncedContentHash: value.contentHash,
+                                lastSyncedDeleted: value.deleted)
+            }
+            if migratedMetadata {
+                persistMetadata()
+            }
         }
     }
 
@@ -283,6 +294,7 @@ final class CloudKitSyncService {
         var mergedSettings = currentSettings
         var recordsToSave: [CKRecord] = []
         var remoteWins = Set<String>()
+        var appliedRemoteCount = 0
 
         for record in remoteRecords {
             guard let remote = decode(record) else { continue }
@@ -308,6 +320,7 @@ final class CloudKitSyncService {
             let remoteChanged = syncedHash != remote.contentHash || syncedDeleted != remote.deleted
             if !localIsDirty && (remoteIsNewer || remoteChanged) {
                 remoteWins.insert(key)
+                appliedRemoteCount += 1
                 metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted,
                                          contentHash: remote.contentHash, serverModifiedAt: record.modificationDate,
                                          lastSyncedContentHash: remote.contentHash, lastSyncedDeleted: remote.deleted)
@@ -363,6 +376,9 @@ final class CloudKitSyncService {
         currentCodes = mergedCodes.sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
         currentSettings = mergedSettings
         persistMetadata()
+        #if DEBUG
+        print("CloudKit sync: fetched \(remoteRecords.count), applied \(appliedRemoteCount), uploading \(recordsToSave.count)")
+        #endif
         if recordsToSave.isEmpty {
             finish(codes: currentCodes, settings: currentSettings)
         } else {
