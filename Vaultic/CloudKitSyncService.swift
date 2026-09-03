@@ -364,13 +364,19 @@ final class CloudKitSyncService {
         }
     }
 
-    private func push(records: [CKRecord]) {
+    private func push(records: [CKRecord], retryCount: Int = 0) {
         let operation = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: nil)
         operation.savePolicy = .changedKeys
         operation.modifyRecordsCompletionBlock = { [weak self] saved, _, error in
             DispatchQueue.main.async {
                 guard let self else { return }
                 if let error {
+                    if retryCount == 0, self.isRetryableModifyError(error) {
+                        self.fetchExistingRecordsBeforePush(records) { [weak self] refreshedRecords in
+                            self?.push(records: refreshedRecords, retryCount: 1)
+                        }
+                        return
+                    }
                     self.finishWith(error: error)
                 } else {
                     for record in saved ?? [] {
@@ -384,6 +390,23 @@ final class CloudKitSyncService {
             }
         }
         database.add(operation)
+    }
+
+    private func isRetryableModifyError(_ error: Error) -> Bool {
+        guard let cloudError = error as? CKError else { return false }
+        if cloudError.code == .serverRejectedRequest || cloudError.code == .batchRequestFailed {
+            return true
+        }
+        guard cloudError.code == .partialFailure,
+              let partialErrors = cloudError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: Error] else {
+            return false
+        }
+        return partialErrors.values.contains { itemError in
+            guard let itemCloudError = itemError as? CKError else { return false }
+            return itemCloudError.code == .serverRejectedRequest ||
+                itemCloudError.code == .batchRequestFailed ||
+                itemCloudError.code == .changeTokenExpired
+        }
     }
 
     private func fetchAllRemoteIDs(completion: @escaping (Result<[CKRecord.ID], Error>) -> Void) {
