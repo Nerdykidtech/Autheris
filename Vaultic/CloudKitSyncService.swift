@@ -282,7 +282,6 @@ final class CloudKitSyncService {
         var mergedCodes = currentCodes
         var mergedSettings = currentSettings
         var recordsToSave: [CKRecord] = []
-        var remoteWins = Set<String>()
 
         for record in remoteRecords {
             guard let remote = decode(record) else { continue }
@@ -301,13 +300,7 @@ final class CloudKitSyncService {
             } ?? false
             let remoteIsNewer = remoteServerDate > localServerDate ||
                 (remoteServerDate == localServerDate && remoteDate > (localMetadata?.updatedAt ?? .distantPast))
-            let syncedHash = localMetadata?.lastSyncedContentHash ??
-                (localMetadata?.serverModifiedAt == nil ? nil : localMetadata?.contentHash)
-            let syncedDeleted = localMetadata?.lastSyncedDeleted ??
-                (localMetadata?.serverModifiedAt == nil ? nil : localMetadata?.deleted)
-            let remoteChanged = syncedHash != remote.contentHash || syncedDeleted != remote.deleted
-            if !localIsDirty && (remoteIsNewer || remoteChanged) {
-                remoteWins.insert(key)
+            if remoteIsNewer && !localIsDirty {
                 metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted,
                                          contentHash: remote.contentHash, serverModifiedAt: record.modificationDate,
                                          lastSyncedContentHash: remote.contentHash, lastSyncedDeleted: remote.deleted)
@@ -331,9 +324,6 @@ final class CloudKitSyncService {
             guard localMetadata.kind == "token" || localMetadata.kind == "setting" else { continue }
             let localDate = localMetadata.updatedAt
             let remoteMetadata = remoteByID[key].flatMap(decode)
-            if remoteWins.contains(key) {
-                continue
-            }
             let syncedHash = localMetadata.lastSyncedContentHash ??
                 (localMetadata.serverModifiedAt == nil ? nil : localMetadata.contentHash)
             let syncedDeleted = localMetadata.lastSyncedDeleted ??
