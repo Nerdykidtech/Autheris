@@ -55,11 +55,6 @@ final class CloudKitSyncService {
         var deleted: Bool
         var contentHash: String
         var serverModifiedAt: Date? = nil
-        // The local hash at the last successful CloudKit read or write.
-        // Keeping this separate from contentHash lets us distinguish a stale
-        // remote copy from a genuine unsynced local edit.
-        var lastSyncedContentHash: String? = nil
-        var lastSyncedDeleted: Bool? = nil
     }
 
     private let defaults: UserDefaults
@@ -135,11 +130,7 @@ final class CloudKitSyncService {
             seen.insert(key)
             let hash = tokenHash(code)
             if metadata[key]?.contentHash != hash || metadata[key]?.deleted == true {
-                let previous = metadata[key]
-                metadata[key] = Metadata(kind: "token", updatedAt: now, deleted: false, contentHash: hash,
-                                         serverModifiedAt: previous?.serverModifiedAt,
-                                         lastSyncedContentHash: previous?.lastSyncedContentHash,
-                                         lastSyncedDeleted: previous?.lastSyncedDeleted)
+                metadata[key] = Metadata(kind: "token", updatedAt: now, deleted: false, contentHash: hash)
             } else if metadata[key] == nil {
                 metadata[key] = Metadata(kind: "token", updatedAt: now, deleted: false, contentHash: hash)
             }
@@ -152,10 +143,7 @@ final class CloudKitSyncService {
         }
         for key in deletedTokenKeys {
             guard let value = metadata[key] else { continue }
-            metadata[key] = Metadata(kind: "token", updatedAt: now, deleted: true, contentHash: value.contentHash,
-                                     serverModifiedAt: value.serverModifiedAt,
-                                     lastSyncedContentHash: value.lastSyncedContentHash,
-                                     lastSyncedDeleted: value.lastSyncedDeleted)
+            metadata[key] = Metadata(kind: "token", updatedAt: now, deleted: true, contentHash: value.contentHash)
         }
 
         for key in Self.privacySettingKeys {
@@ -163,11 +151,7 @@ final class CloudKitSyncService {
             let recordKey = settingRecordName(key)
             let hash = settingHash(setting)
             if metadata[recordKey]?.contentHash != hash || metadata[recordKey]?.deleted == true {
-                let previous = metadata[recordKey]
-                metadata[recordKey] = Metadata(kind: "setting", updatedAt: now, deleted: false, contentHash: hash,
-                                               serverModifiedAt: previous?.serverModifiedAt,
-                                               lastSyncedContentHash: previous?.lastSyncedContentHash,
-                                               lastSyncedDeleted: previous?.lastSyncedDeleted)
+                metadata[recordKey] = Metadata(kind: "setting", updatedAt: now, deleted: false, contentHash: hash)
             } else if metadata[recordKey] == nil {
                 metadata[recordKey] = Metadata(kind: "setting", updatedAt: now, deleted: false, contentHash: hash)
             }
@@ -291,19 +275,14 @@ final class CloudKitSyncService {
             let localDate = localMetadata?.updatedAt ?? .distantPast
             let remoteServerDate = record.modificationDate ?? .distantPast
             let localServerDate = localMetadata?.serverModifiedAt ?? .distantPast
-            let localIsDirty = localMetadata.map { metadata in
-                let syncedHash = metadata.lastSyncedContentHash ??
-                    (metadata.serverModifiedAt == nil ? nil : metadata.contentHash)
-                let syncedDeleted = metadata.lastSyncedDeleted ??
-                    (metadata.serverModifiedAt == nil ? nil : metadata.deleted)
-                return syncedHash != metadata.contentHash || syncedDeleted != metadata.deleted
+            let localIsDirty = localMetadata.map {
+                $0.contentHash != remote.contentHash || $0.deleted != remote.deleted
             } ?? false
             let remoteIsNewer = remoteServerDate > localServerDate ||
                 (remoteServerDate == localServerDate && remoteDate > (localMetadata?.updatedAt ?? .distantPast))
             if remoteIsNewer && !localIsDirty {
                 metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted,
-                                         contentHash: remote.contentHash, serverModifiedAt: record.modificationDate,
-                                         lastSyncedContentHash: remote.contentHash, lastSyncedDeleted: remote.deleted)
+                                         contentHash: remote.contentHash, serverModifiedAt: record.modificationDate)
                 if remote.kind == "token" {
                     mergedCodes.removeAll { $0.id.uuidString == key }
                     if !remote.deleted, let token = remote.token { mergedCodes.append(token) }
@@ -324,12 +303,9 @@ final class CloudKitSyncService {
             guard localMetadata.kind == "token" || localMetadata.kind == "setting" else { continue }
             let localDate = localMetadata.updatedAt
             let remoteMetadata = remoteByID[key].flatMap(decode)
-            let syncedHash = localMetadata.lastSyncedContentHash ??
-                (localMetadata.serverModifiedAt == nil ? nil : localMetadata.contentHash)
-            let syncedDeleted = localMetadata.lastSyncedDeleted ??
-                (localMetadata.serverModifiedAt == nil ? nil : localMetadata.deleted)
-            let localIsDirty = syncedHash != localMetadata.contentHash ||
-                syncedDeleted != localMetadata.deleted
+            let localIsDirty = remoteMetadata.map {
+                localMetadata.contentHash != $0.contentHash || localMetadata.deleted != $0.deleted
+            } ?? true
             guard let local = localItem(for: key, codes: mergedCodes, settings: mergedSettings) else {
                 // The item is a local tombstone. If CloudKit did not return an
                 // existing record, create one so the deletion can propagate.
@@ -425,9 +401,7 @@ final class CloudKitSyncService {
                                 updatedAt: item.updatedAt,
                                 deleted: item.deleted,
                                 contentHash: item.contentHash,
-                                serverModifiedAt: record.modificationDate,
-                                lastSyncedContentHash: item.contentHash,
-                                lastSyncedDeleted: item.deleted
+                                serverModifiedAt: record.modificationDate
                             )
                         }
                     }
