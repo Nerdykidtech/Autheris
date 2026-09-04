@@ -275,12 +275,9 @@ final class CloudKitSyncService {
             let localDate = localMetadata?.updatedAt ?? .distantPast
             let remoteServerDate = record.modificationDate ?? .distantPast
             let localServerDate = localMetadata?.serverModifiedAt ?? .distantPast
-            let localIsDirty = localMetadata.map {
-                $0.contentHash != remote.contentHash || $0.deleted != remote.deleted
-            } ?? false
             let remoteIsNewer = remoteServerDate > localServerDate ||
                 (remoteServerDate == localServerDate && remoteDate > (localMetadata?.updatedAt ?? .distantPast))
-            if remoteIsNewer && !localIsDirty {
+            if remoteIsNewer {
                 metadata[key] = Metadata(kind: remote.kind, updatedAt: remoteDate, deleted: remote.deleted,
                                          contentHash: remote.contentHash, serverModifiedAt: record.modificationDate)
                 if remote.kind == "token" {
@@ -290,8 +287,7 @@ final class CloudKitSyncService {
                           Self.privacySettingKeys.contains(key), let value = remote.setting, !remote.deleted {
                     mergedSettings[key] = value
                 }
-            } else if (localIsDirty || localDate >= remoteDate),
-                      let local = localItem(for: key, codes: mergedCodes, settings: mergedSettings) {
+            } else if localDate >= remoteDate, let local = localItem(for: key, codes: mergedCodes, settings: mergedSettings) {
                 // Reuse the fetched record so CloudKit can safely apply its
                 // change tag; this is important when two devices edited offline.
                 recordsToSave.append(encode(local, into: record))
@@ -302,16 +298,12 @@ final class CloudKitSyncService {
         for (key, localMetadata) in metadata {
             guard localMetadata.kind == "token" || localMetadata.kind == "setting" else { continue }
             let localDate = localMetadata.updatedAt
-            let remoteMetadata = remoteByID[key].flatMap(decode)
-            let localIsDirty = remoteMetadata.map {
-                localMetadata.contentHash != $0.contentHash || localMetadata.deleted != $0.deleted
-            } ?? true
             guard let local = localItem(for: key, codes: mergedCodes, settings: mergedSettings) else {
                 // The item is a local tombstone. If CloudKit did not return an
                 // existing record, create one so the deletion can propagate.
                 if remoteByID[key] == nil {
                     recordsToSave.append(encode(SyncItem.tombstone(key: key, metadata: localMetadata)))
-                } else if localIsDirty || localDate >= (remoteMetadata?.updatedAt ?? .distantPast),
+                } else if localDate >= (decode(remoteByID[key]!)?.updatedAt ?? .distantPast),
                           !recordsToSave.contains(where: { $0.recordID.recordName == key }) {
                     recordsToSave.append(encode(SyncItem.tombstone(key: key, metadata: localMetadata), into: remoteByID[key]))
                 }
@@ -319,7 +311,7 @@ final class CloudKitSyncService {
             }
             if remoteByID[key] == nil {
                 recordsToSave.append(encode(local))
-            } else if localIsDirty || localDate >= (remoteMetadata?.updatedAt ?? .distantPast) {
+            } else if localDate >= (decode(remoteByID[key]!)?.updatedAt ?? .distantPast) {
                 if !recordsToSave.contains(where: { $0.recordID.recordName == key }) {
                     recordsToSave.append(encode(local, into: remoteByID[key]))
                 }
