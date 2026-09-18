@@ -342,8 +342,10 @@ struct AddTokenView: View {
     }
     
     private func parseQRCode(_ qrCode: String) {
+        // Deliberately not logging `qrCode`: it is usually an otpauth:// URI that
+        // embeds the TOTP secret, and a secret must never reach the system log.
         #if DEBUG
-        print("Scanned QR code: \(qrCode)")
+        print("Scanned QR payload: \(qrCode.count) chars")
         #endif
         
         // First, check if it's our custom Autheris URL scheme

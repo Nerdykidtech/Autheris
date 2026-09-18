@@ -3,6 +3,7 @@ import SwiftUI
 @main
 struct AutherisApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
@@ -50,7 +51,9 @@ struct AutherisApp: App {
             }
             .onOpenURL { url in
                 #if DEBUG
-                print("App received URL: \(url.absoluteString)")
+                // Only scheme and host: an `autheris://import` URL carries the
+                // exported tokens (including their secrets) in its `data` item.
+                print("App received URL: \(url.scheme ?? "?")://\(url.host ?? "")")
                 #endif
                 handleIncomingURL(url)
             }
@@ -99,12 +102,22 @@ struct AutherisApp: App {
                 // Update privacy overlay when setting changes
                 updatePrivacyOverlay()
             }
+            .onChange(of: scenePhase) { _, newPhase in
+                // Foregrounding is the cheapest reliable moment to pick up anything
+                // a silent push may have missed, and to re-check the iCloud account.
+                guard newPhase == .active, hasCompletedOnboarding else { return }
+                Task {
+                    await dataStore.refreshSyncAvailability()
+                    await dataStore.syncNow()
+                }
+            }
         }
     }
     
     private func handleIncomingURL(_ url: URL) {
         #if DEBUG
-        print("Handling incoming URL: \(url.absoluteString)")
+        // Redacted for the same reason as above: the payload is in the query.
+        print("Handling incoming URL: \(url.scheme ?? "?")://\(url.host ?? "")")
         #endif
         
         guard url.scheme == "autheris" && url.host == "import" else {

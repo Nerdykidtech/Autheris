@@ -1,3 +1,4 @@
+import CloudKit
 import UIKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -9,7 +10,38 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         // Clear any old pending data
         UserDefaults.standard.removeObject(forKey: "pendingImportData")
         UserDefaults.standard.synchronize()
-        
+
+        // Silent pushes carry iCloud sync changes. Registering unconditionally is
+        // harmless: nothing is delivered until a CloudKit subscription exists, and
+        // that is only created once the user turns sync on.
+        application.registerForRemoteNotifications()
+
         return true
+    }
+
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        #if DEBUG
+        print("Registered for remote notifications")
+        #endif
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        #if DEBUG
+        print("Remote notification registration failed: \(error.localizedDescription)")
+        #endif
+    }
+
+    /// Silent push from the sync service's `CKDatabaseSubscription`, so a change
+    /// made on another device is applied without the user reopening the app.
+    ///
+    /// The sync is awaited before calling the completion handler, so the system is
+    /// told what actually happened instead of being told "new data" optimistically.
+    func application(_ application: UIApplication,
+                     didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+                     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+        Task { @MainActor in
+            let handled = await SyncRemoteNotificationRouter.deliver(userInfo: userInfo)
+            completionHandler(handled ? .newData : .noData)
+        }
     }
 }

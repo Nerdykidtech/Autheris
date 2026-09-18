@@ -27,5 +27,9 @@
 	</array>
 	<key>LOGODEV_PUBLISHABLE_KEY</key>
 	<string>pk_HF9Whmm6RiyndClKLP8Ddg</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

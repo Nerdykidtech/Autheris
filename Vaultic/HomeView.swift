@@ -203,7 +203,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingSettings) {
-                SettingsView()
+                SettingsView(dataStore: dataStore)
             }
             .sheet(isPresented: $showingChangelog) {
                 ChangelogView()
