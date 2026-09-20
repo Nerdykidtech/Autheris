@@ -7,20 +7,32 @@ struct AutherisApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
+    @AppStorage("accentTheme") private var accentThemeRaw = ""
     @StateObject private var dataStore = OTPDataStore()
+    @StateObject private var appLock = AppLockManager()
     @State private var showingImportSheet = false
     @State private var importData: Data?
+    @State private var otpSetupResult: (title: String, body: String)?
     @State private var isAppActive = true
     @State private var showPrivacyOverlay = false
+
+    private var selectedAccent: AccentTheme? {
+        AccentTheme(rawValue: accentThemeRaw)
+    }
     
     var body: some Scene {
         WindowGroup {
             ZStack {
                 if hasCompletedOnboarding {
-                    ContentView()
-                        .environmentObject(dataStore)
-                        .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
-                        .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
+                    if appLock.isLocked {
+                        AppLockView(manager: appLock)
+                            .transition(.opacity)
+                    } else {
+                        ContentView()
+                            .environmentObject(dataStore)
+                            .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
+                            .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
+                    }
                 } else {
                     WelcomeView()
                         .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
@@ -57,14 +69,35 @@ struct AutherisApp: App {
                 #endif
                 handleIncomingURL(url)
             }
+            .alert(
+                Text(otpSetupResult?.title ?? "Autheris"),
+                isPresented: Binding(
+                    get: { otpSetupResult != nil },
+                    set: { if !$0 { otpSetupResult = nil } }
+                ),
+                presenting: otpSetupResult
+            ) { _ in
+                Button("OK") { otpSetupResult = nil }
+            } message: { result in
+                Text(result.body)
+            }
             .animation(.easeInOut(duration: 0.3), value: showingImportSheet)
             .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
             .animation(.easeInOut(duration: 0.3), value: isAppActive)
             .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
+            .tint(selectedAccent?.color ?? .accentColor)
             .onAppear {
                 #if DEBUG
                 print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
                 #endif
+
+                // Reinstall wipes UserDefaults but not the Keychain, so a user can
+                // end up with existing tokens and a reset onboarding flag. In that
+                // case skip onboarding and keep their tokens visible.
+                if !hasCompletedOnboarding && !dataStore.codes.isEmpty {
+                    hasCompletedOnboarding = true
+                }
+
                 // Check for pending import data
                 if let data = UserDefaults.standard.data(forKey: "pendingImportData") {
                     #if DEBUG
@@ -103,6 +136,15 @@ struct AutherisApp: App {
                 updatePrivacyOverlay()
             }
             .onChange(of: scenePhase) { _, newPhase in
+                switch newPhase {
+                case .background:
+                    appLock.appDidEnterBackground()
+                case .active:
+                    appLock.appDidBecomeActive()
+                default:
+                    break
+                }
+
                 // Foregrounding is the cheapest reliable moment to pick up anything
                 // a silent push may have missed, and to re-check the iCloud account.
                 guard newPhase == .active, hasCompletedOnboarding else { return }
@@ -119,7 +161,17 @@ struct AutherisApp: App {
         // Redacted for the same reason as above: the payload is in the query.
         print("Handling incoming URL: \(url.scheme ?? "?")://\(url.host ?? "")")
         #endif
-        
+
+        if url.scheme?.lowercased() == "otpauth" {
+            handleOTPAuthSetup(url)
+            return
+        }
+
+        if url.scheme?.lowercased() == "otpauth-migration" {
+            handleMigrationSetup(url)
+            return
+        }
+
         guard url.scheme == "autheris" && url.host == "import" else {
             #if DEBUG
             print("Not an autheris import URL")
@@ -174,8 +226,90 @@ struct AutherisApp: App {
             #endif
         }
     }
-    
+
+    /// Handles the `otpauth://` setup links iOS delivers when the user chooses
+    /// "Set Up Codes In → Autheris" (or opens an OTP link directly).
+    private func handleOTPAuthSetup(_ url: URL) {
+        guard let parsed = OTPAuthURLParser.parse(url) else {
+            otpSetupResult = (
+                "Couldn't Add Code",
+                "That verification-code link isn't in the expected otpauth format."
+            )
+            return
+        }
+
+        guard OTPGenerator.isValidSecret(parsed.secret) else {
+            otpSetupResult = (
+                "Couldn't Add Code",
+                "The setup key in that link isn't a valid Base32 secret."
+            )
+            return
+        }
+
+        if dataStore.codes.contains(where: {
+            $0.label == parsed.label && $0.account == parsed.account
+        }) {
+            otpSetupResult = (
+                "Already Added",
+                "\(parsed.label) is already in Autheris."
+            )
+            return
+        }
+
+        let code = OTPCode(
+            label: parsed.label,
+            account: parsed.account,
+            secret: parsed.secret,
+            algorithm: parsed.algorithm,
+            digits: parsed.digits,
+            period: parsed.period
+        )
+
+        // Defer the mutation so it never lands in the middle of a SwiftUI List
+        // update cycle (which can trigger an "Invalid update" exception).
+        DispatchQueue.main.async {
+            self.dataStore.addCode(code)
+            self.otpSetupResult = (
+                "Verification Code Added",
+                "\(parsed.label) was added to Autheris."
+            )
+        }
+    }
+
+    /// Handles Google Authenticator migration links (a set of codes in one URL).
+    private func handleMigrationSetup(_ url: URL) {
+        let payload = url.absoluteString
+        guard let tokens = GoogleMigrationParser.parseMigrationURL(payload), !tokens.isEmpty else {
+            otpSetupResult = (
+                "Couldn't Add Codes",
+                "Could not parse this Google Authenticator export."
+            )
+            return
+        }
+
+        let count = tokens.count
+        DispatchQueue.main.async {
+            for token in tokens {
+                self.dataStore.addCode(token)
+            }
+            self.otpSetupResult = (
+                "Verification Codes Added",
+                "Imported \(count) code\(count == 1 ? "" : "s") to Autheris."
+            )
+        }
+    }
+
     private func setupAppStateObservers() {
+        // Persist preferences to the Keychain whenever UserDefaults changes, so
+        // they survive an app reinstall.
+        NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            PreferencesStore.persist()
+        }
+
         // Observe app state changes
         NotificationCenter.default.addObserver(
             forName: UIApplication.willResignActiveNotification,

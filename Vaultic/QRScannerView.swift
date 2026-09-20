@@ -161,8 +161,8 @@ struct QRScannerView: UIViewControllerRepresentable {
             
             context.coordinator.captureSession = captureSession
             
-            // Start session on main thread
-            DispatchQueue.main.async {
+            // startRunning is blocking; keep it off the main thread so the UI stays responsive.
+            DispatchQueue.global(qos: .userInitiated).async {
                 if !captureSession.isRunning {
                     captureSession.startRunning()
                 }

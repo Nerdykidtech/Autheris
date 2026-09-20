@@ -31,7 +31,7 @@
 - **Language**: Swift 5.9+
 - **Framework**: SwiftUI
 - **Architecture**: MVVM with Combine
-- **Storage**: JSON in `UserDefaults` (device-local, app sandbox). See [Security](#security) for what this does and does not protect
+- **Storage**: JSON in the iOS Keychain (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`). See [Security](#security) for what this does and does not protect
 - **Sync**: CloudKit private database (optional, opt-in per device)
 - **Backend**: Cloudflare Workers (optional, used for issuer logo lookups only)
 
@@ -46,9 +46,9 @@ Autheris is designed with security in mind:
 
 ### Where tokens actually live
 
-Tokens (including their TOTP secrets) are persisted locally as JSON in `UserDefaults`, inside the app sandbox. This protects them from other apps and from anyone without the device passcode, but it is **not** hardware-backed encryption — `UserDefaults` is readable from a decrypted device backup, so treat a full compromise of the device as a compromise of the tokens. Backups written by the in-app Backup screen go to the app's Documents directory and inherit the same protection.
+Tokens (including their TOTP secrets) are persisted locally as JSON in the iOS **Keychain** with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`. The Keychain protects the data from other apps, keeps it device-only (it does not migrate with iCloud Keychain or an encrypted backup), and only exposes it while the device is unlocked. A full compromise of the device — including a forensic extraction — should still be treated as a compromise of the tokens. Backups written by the in-app Backup screen go to the app's Documents directory; unlike the Keychain, those files are plain JSON and inherit only the app-sandbox/device-passcode protection.
 
-A Keychain-backed store with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` would be a strict improvement, but it is a storage-layer migration and is deliberately **not** part of the sync change described below.
+A first launch after upgrading migrates any legacy `UserDefaults` copy into the Keychain and deletes the plaintext copy.
 
 ### What iCloud Sync sends, and how
 

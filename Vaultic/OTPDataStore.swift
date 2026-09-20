@@ -33,6 +33,9 @@ final class OTPDataStore: ObservableObject {
     /// - Parameter syncService: injectable so tests can drive the merge path with
     ///   a fake. Defaults to CloudKit, or to a no-op when iCloud Sync is off.
     init(syncService: TokenSyncService? = nil) {
+        // Restore Keychain-backed preferences before anything reads UserDefaults.
+        PreferencesStore.restoreIntoUserDefaults()
+
         // Create backup directory if it doesn't exist
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         backupDirectory = documentsDirectory.appendingPathComponent("OTPBackups")
@@ -66,19 +69,33 @@ final class OTPDataStore: ObservableObject {
     }
 
     func saveCodes() {
-        if let encoded = try? JSONEncoder().encode(codes) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-            // Force UI update by publishing changes
-            objectWillChange.send()
+        // Persist a deduplicated copy, but don't reassign `codes` here:
+        // reassigning during a delete/insert turns one user action into
+        // two array mutations, which can make SwiftUI's List diff assert.
+        let deduped = Self.deduplicated(codes)
+        if let encoded = try? JSONEncoder().encode(deduped) {
+            if KeychainStore.save(encoded, account: "otpCodes") {
+                // Once the encrypted copy is in place, don't leave a plaintext
+                // legacy copy behind.
+                UserDefaults.standard.removeObject(forKey: saveKey)
+            } else {
+                #if DEBUG
+                print("Failed to save tokens to Keychain")
+                #endif
+            }
         }
     }
 
     func loadCodes() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
+        // Keychain is authoritative. Fall back to the pre-Keychain UserDefaults
+        // blob exactly once, then migrate it and delete the plaintext copy.
+        if let data = KeychainStore.load(account: "otpCodes"),
            let decoded = try? JSONDecoder().decode([OTPCode].self, from: data) {
-            codes = decoded
-            // Force UI update
-            objectWillChange.send()
+            codes = Self.deduplicated(decoded)
+        } else if let legacyData = UserDefaults.standard.data(forKey: saveKey),
+                  let decoded = try? JSONDecoder().decode([OTPCode].self, from: legacyData) {
+            codes = Self.deduplicated(decoded)
+            saveCodes()
         } else {
             // First-time user: no demo or sample tokens
             codes = []
@@ -87,6 +104,14 @@ final class OTPDataStore: ObservableObject {
     }
 
     func addCode(_ code: OTPCode) {
+        // Don't let the same token (or the same id) enter twice; SwiftUI's List
+        // diffing crashes on duplicate row identities, and a re-added token
+        // would otherwise fight with sync.
+        let isDuplicate = codes.contains {
+            $0.id == code.id || ($0.label == code.label && $0.account == code.account)
+        }
+        guard !isDuplicate else { return }
+
         codes.append(code)
         // A re-added token must not stay tombstoned, or sync would delete it again.
         tombstones.removeValue(forKey: code.id.uuidString)
@@ -95,10 +120,34 @@ final class OTPDataStore: ObservableObject {
         scheduleSync()
     }
 
-    func removeCode(at index: Int) {
-        guard codes.indices.contains(index) else { return }
-        let removed = codes.remove(at: index)
-        tombstones[removed.id.uuidString] = Date()
+    /// Keeps the first token per id and per label+account pair.
+    private static func deduplicated(_ tokens: [OTPCode]) -> [OTPCode] {
+        var seenIDs = Set<UUID>()
+        var seenKeys = Set<String>()
+        var result: [OTPCode] = []
+        for token in tokens {
+            let key = "\(token.label.lowercased())|\(token.account.lowercased())"
+            guard seenIDs.insert(token.id).inserted, seenKeys.insert(key).inserted else { continue }
+            result.append(token)
+        }
+        return result
+    }
+
+    /// Deletes the tapped token and any duplicate copies of it — either sharing
+    /// the same id or the same label+account. Users see duplicates as "the same
+    /// token", so deleting one should remove them all.
+    func removeCode(_ code: OTPCode) {
+        let removed = codes.filter {
+            $0.id == code.id || ($0.label == code.label && $0.account == code.account)
+        }
+        guard !removed.isEmpty else { return }
+
+        codes.removeAll {
+            $0.id == code.id || ($0.label == code.label && $0.account == code.account)
+        }
+        for token in removed {
+            tombstones[token.id.uuidString] = Date()
+        }
         saveCodes()
         persistTombstones()
         scheduleSync()
@@ -193,8 +242,16 @@ final class OTPDataStore: ObservableObject {
     /// Folds a merge result back into local storage.
     private func apply(_ outcome: SyncMergeOutcome) {
         if outcome.didAdoptRemoteChanges {
-            // Never write a partial result: adopt the merged list wholesale.
-            codes = outcome.tokens
+            // The sync snapshot was taken before this apply ran; a token added or
+            // edited locally in the meantime is not in `outcome.tokens`. Preserve
+            // those local changes instead of clobbering them with the older
+            // snapshot (and giving SwiftUI an insert-then-delete diff).
+            var merged = outcome.tokens
+            let outcomeIDs = Set(outcome.tokens.map { $0.id })
+            for local in codes where !outcomeIDs.contains(local.id) {
+                merged.append(local)
+            }
+            codes = merged
         }
         tombstones = outcome.tombstones
         persistTombstones()
@@ -246,13 +303,34 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
+    /// Creates a password-encrypted `.autheris` backup with current codes.
+    func createEncryptedBackup(password: String) -> URL? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        let backupName = "otp_backup_\(timestamp).autheris"
+        let backupURL = backupDirectory.appendingPathComponent(backupName)
+
+        do {
+            let plaintext = try JSONEncoder().encode(codes)
+            let encrypted = try BackupCrypto.encrypt(plaintext: plaintext, password: password)
+            try encrypted.write(to: backupURL)
+            return backupURL
+        } catch {
+            #if DEBUG
+            print("Failed to create encrypted backup: \(error)")
+            #endif
+            return nil
+        }
+    }
+
     /// Lists all available backup files
     func listBackups() -> [URL] {
         do {
             let fileURLs = try FileManager.default.contentsOfDirectory(at: backupDirectory,
                                                                        includingPropertiesForKeys: [.creationDateKey],
                                                                        options: .skipsHiddenFiles)
-            return fileURLs.filter { $0.pathExtension == "json" }
+            return fileURLs.filter { ["json", "autheris"].contains($0.pathExtension.lowercased()) }
                 .sorted { url1, url2 in
                     let date1 = try? url1.resourceValues(forKeys: [.creationDateKey]).creationDate
                     let date2 = try? url2.resourceValues(forKeys: [.creationDateKey]).creationDate
@@ -266,11 +344,19 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
-    /// Restores codes from a backup file
-    func restoreFromBackup(at url: URL) -> Bool {
+    /// Restores codes from a backup file. Pass the password for `.autheris`
+    /// encrypted backups; plain `.json` backups ignore it.
+    func restoreFromBackup(at url: URL, password: String? = nil) -> Bool {
         do {
-            let data = try Data(contentsOf: url)
-            let restoredCodes = try JSONDecoder().decode([OTPCode].self, from: data)
+            let fileData = try Data(contentsOf: url)
+            let plaintext: Data
+            if url.pathExtension.lowercased() == "autheris" {
+                guard let password else { return false }
+                plaintext = try BackupCrypto.decrypt(data: fileData, password: password)
+            } else {
+                plaintext = fileData
+            }
+            let restoredCodes = try JSONDecoder().decode([OTPCode].self, from: plaintext)
             // A restore replaces local state wholesale, so a token the backup does
             // not contain has effectively been deleted and must propagate as a
             // deletion rather than silently reappearing from iCloud later.

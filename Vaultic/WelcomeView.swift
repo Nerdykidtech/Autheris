@@ -1,662 +1,289 @@
 import SwiftUI
 
+private struct OnboardingFeature: Identifiable {
+    let id = UUID()
+    let icon: String
+    let title: String
+    let description: String
+}
+
 struct WelcomeView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var currentPage = 0
-    @Environment(\.colorScheme) private var colorScheme
-    
-    // Animated gradient state
-    @State private var gradientStart = UnitPoint(x: 0, y: 0)
-    @State private var gradientEnd = UnitPoint(x: 1, y: 1)
-    @State private var gradientColors: [Color] = []
-    
-    // Animation states for entrance effects
-    @State private var isContentVisible = false
-    @State private var logoScale: CGFloat = 0.8
-    @State private var logoOpacity: Double = 0
-    @State private var textOffsetY: CGFloat = 20
-    
-    // Pulsing animation state for "Autheris" text
-    @State private var pulseScale: CGFloat = 1.0
-    @State private var pulseOpacity: Double = 0.0 // Start at 0
-    @State private var isPulsing = false
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private let totalPages = 3
-    private let animationDuration = 8.0
-    private let pulseDuration = 3.0
-    
-    init() {
-        // Initialize gradient colors based on system appearance
-        _gradientColors = State(initialValue: Self.defaultGradientColors(for: .light))
-    }
-    
+
+    private let features: [OnboardingFeature] = [
+        OnboardingFeature(
+            icon: "qrcode.viewfinder",
+            title: "Instant QR Import",
+            description: "Add accounts in seconds by scanning the same QR code you'd use with Google Authenticator."
+        ),
+        OnboardingFeature(
+            icon: "lock.shield.fill",
+            title: "Stored in Your Keychain",
+            description: "Tokens live in the device Keychain, protected by your passcode and Face ID / Touch ID."
+        ),
+        OnboardingFeature(
+            icon: "timer",
+            title: "Live Codes & Timers",
+            description: "One-tap copy with a clear countdown, so you always know when the next code is ready."
+        ),
+        OnboardingFeature(
+            icon: "magnifyingglass",
+            title: "Search & Organize",
+            description: "Find the right token instantly, with a clean list built for fast scanning."
+        ),
+        OnboardingFeature(
+            icon: "lock.doc.fill",
+            title: "Encrypted Backups",
+            description: "Export password-encrypted backups you control, stored right on your device."
+        ),
+        OnboardingFeature(
+            icon: "hand.raised.fill",
+            title: "No Account Required",
+            description: "No sign-up, no tracking, no ads. Just a focused 2FA manager that respects your privacy."
+        )
+    ]
+
     var body: some View {
         ZStack {
-            // Animated gradient background
-            animatedGradientBackground
-                .ignoresSafeArea()
-                .blur(radius: 40)
-                .overlay(
-                    Color(.systemBackground)
-                        .opacity(colorScheme == .dark ? 0.85 : 0.7)
-                        .ignoresSafeArea()
-                )
-            
+            LinearGradient(
+                colors: [
+                    Color(.systemBackground),
+                    Color.accentColor.opacity(0.08)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
             VStack(spacing: 0) {
-                // Content area - Centered properly
                 TabView(selection: $currentPage) {
-                    // Page 1: Welcome
-                    welcomePage
-                        .tag(0)
-                    
-                    // Page 2: Features
-                    featuresPage
-                        .tag(1)
-                    
-                    // Page 3: Get Started
-                    getStartedPage
-                        .tag(2)
+                    welcomePage.tag(0)
+                    featuresPage.tag(1)
+                    getStartedPage.tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(maxHeight: .infinity)
+
+                VStack(spacing: 20) {
+                    pageDots
+                    navigationButtons
+                }
                 .padding(.horizontal, 24)
-                
-                // Bottom controls
-                VStack(spacing: 24) {
-                    // Page indicators (modern dots with animation)
-                    HStack(spacing: 12) {
-                        ForEach(0..<totalPages, id: \.self) { index in
-                            Capsule()
-                                .fill(index == currentPage ? Color.accentColor : Color.secondary.opacity(0.3))
-                                .frame(width: index == currentPage ? 28 : 8, height: 8)
-                                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: currentPage)
-                        }
-                    }
-                    
-                    // Navigation buttons
-                    HStack(spacing: 16) {
-                        if currentPage > 0 {
-                            Button(action: {
-                                // Haptic feedback
-                                let impactLight = UIImpactFeedbackGenerator(style: .light)
-                                impactLight.impactOccurred()
-                                
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    currentPage -= 1
-                                }
-                            }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.caption.weight(.semibold))
-                                    Text("Back")
-                                        .font(.headline)
-                                }
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 14)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    Capsule()
-                                        .fill(.ultraThinMaterial)
-                                )
-                                .foregroundColor(.primary)
-                            }
-                        }
-                        
-                        Button(action: {
-                            // Haptic feedback
-                            let impactMed = UIImpactFeedbackGenerator(style: .medium)
-                            impactMed.impactOccurred()
-                            
-                            if currentPage < totalPages - 1 {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    currentPage += 1
-                                }
-                            } else {
-                                // Final page - complete onboarding
-                                let successHaptic = UINotificationFeedbackGenerator()
-                                successHaptic.notificationOccurred(.success)
-                                hasCompletedOnboarding = true
-                            }
-                        }) {
-                            HStack(spacing: 8) {
-                                Text(currentPage < totalPages - 1 ? "Next" : "Get Started")
-                                    .font(.headline)
-                                if currentPage < totalPages - 1 {
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption.weight(.semibold))
-                                }
-                            }
-                            .padding(.horizontal, 32)
-                            .padding(.vertical, 14)
-                            .frame(maxWidth: currentPage > 0 ? .infinity : nil)
-                            .background(
-                                Capsule()
-                                    .fill(Color.accentColor)
-                            )
-                            .foregroundColor(.white)
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                }
-                .padding(.top, 20)
-                .padding(.bottom, 48)
-            }
-        }
-        .onAppear {
-            // Set initial gradient colors based on current color scheme
-            gradientColors = Self.gradientColors(for: colorScheme)
-            startGradientAnimation()
-            
-            // Start entrance animation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                    logoScale = 1.0
-                    logoOpacity = 1.0
-                    textOffsetY = 0
-                    isContentVisible = true
-                }
-                
-                // Start pulsing animation for "Autheris" text after entrance animation
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    startPulsingAnimation()
-                }
-            }
-        }
-        .onChange(of: colorScheme) { _, newColorScheme in
-            withAnimation(.easeInOut(duration: 1.0)) {
-                gradientColors = Self.gradientColors(for: newColorScheme)
+                .padding(.bottom, 40)
             }
         }
     }
-    
-    // MARK: - Animated Gradient Background
-    private var animatedGradientBackground: some View {
-        LinearGradient(
-            gradient: Gradient(colors: gradientColors),
-            startPoint: gradientStart,
-            endPoint: gradientEnd
-        )
-        .onAppear {
-            startGradientAnimation()
-        }
-    }
-    
-    // MARK: - Gradient Animation
-    private func startGradientAnimation() {
-        withAnimation(
-            Animation.easeInOut(duration: animationDuration)
-                .repeatForever(autoreverses: true)
-        ) {
-            gradientStart = UnitPoint(x: 1, y: 0)
-            gradientEnd = UnitPoint(x: 0, y: 1)
-        }
-        
-        // Also animate the gradient points back and forth
-        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-            withAnimation(
-                Animation.easeInOut(duration: animationDuration)
-                    .repeatForever(autoreverses: true)
-            ) {
-                gradientStart = UnitPoint(x: 0, y: 1)
-                gradientEnd = UnitPoint(x: 1, y: 0)
-            }
-        }
-    }
-    
-    // MARK: - Pulsing Animation for "Autheris" Text
-    private func startPulsingAnimation() {
-        isPulsing = true
-        
-        // First, fade in the pulsing effects
-        withAnimation(.easeInOut(duration: 0.5)) {
-            pulseOpacity = 1.0
-        }
-        
-        // Then start the continuous pulsing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Create a gentle, repeating pulse animation
-            let basePulse = Animation
-                .easeInOut(duration: pulseDuration)
-                .repeatForever(autoreverses: true)
-            
-            withAnimation(basePulse) {
-                pulseScale = 1.08 // Gentle scale up
-            }
-            
-            // Add a subtle opacity pulse for a more premium feel
-            let opacityPulse = Animation
-                .easeInOut(duration: pulseDuration * 0.8)
-                .repeatForever(autoreverses: true)
-                .delay(pulseDuration * 0.3)
-            
-            withAnimation(opacityPulse) {
-                pulseOpacity = 0.8
-            }
-        }
-    }
-    
-    // MARK: - Gradient Colors for Different Color Schemes
-    private static func gradientColors(for colorScheme: ColorScheme) -> [Color] {
-        switch colorScheme {
-        case .dark:
-            // Dark mode: Deep, professional blues and purples
-            return [
-                Color(red: 0.05, green: 0.1, blue: 0.3),   // Deep navy
-                Color(red: 0.15, green: 0.1, blue: 0.35),  // Deep purple
-                Color(red: 0.1, green: 0.2, blue: 0.4),    // Midnight blue
-                Color(red: 0.2, green: 0.15, blue: 0.45)   // Royal purple
-            ]
-        default:
-            // Light mode: Soft, professional pastels
-            return [
-                Color(red: 0.9, green: 0.95, blue: 1.0),   // Soft blue
-                Color(red: 0.95, green: 0.9, blue: 1.0),   // Soft lavender
-                Color(red: 0.9, green: 1.0, blue: 0.95),   // Soft mint
-                Color(red: 1.0, green: 0.95, blue: 0.9)    // Soft peach
-            ]
-        }
-    }
-    
-    private static func defaultGradientColors(for colorScheme: ColorScheme) -> [Color] {
-        gradientColors(for: colorScheme)
-    }
-    
-    // MARK: - Page 1: Welcome (Enhanced Professional Design)
+
+    // MARK: - Pages
+
     private var welcomePage: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 40) {
-                    // Vertical spacer to center content
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 3))
-                    
-                    // Premium logo with enhanced effects
-                    ZStack {
-                        // Outer glow ring
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.accentColor.opacity(0.4),
-                                        Color.accentColor.opacity(0.1),
-                                        Color.accentColor.opacity(0.05)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                            .frame(width: 200, height: 200)
-                            .blur(radius: 8)
-                            .scaleEffect(logoScale)
-                            .opacity(logoOpacity)
-                        
-                        // Main logo container — Autheris logo, rounded and fitted
-                        ZStack {
-                            // Brand gradient background (Autheris accent)
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.accentColor.opacity(0.25),
-                                            Color.accentColor.opacity(0.12),
-                                            Color.accentColor.opacity(0.04)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 180, height: 180)
-                                .shadow(
-                                    color: Color.accentColor.opacity(0.35),
-                                    radius: 36,
-                                    x: 0,
-                                    y: 12
-                                )
-                            
-                            // Inner stroke for depth
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.white.opacity(0.2),
-                                            Color.clear,
-                                            Color.black.opacity(0.08)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
-                                .frame(width: 178, height: 178)
-                            
-                            // Autheris logo — rounded, aspect-fit inside circle
-                            Image("Logo")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 120, height: 120)
-                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                                .shadow(color: Color.accentColor.opacity(0.2), radius: 12, x: 0, y: 6)
-                        }
-                        .scaleEffect(logoScale)
-                        .opacity(logoOpacity)
-                    }
-                    .animation(.spring(response: 0.8, dampingFraction: 0.7), value: logoScale)
-                    
-                    // Professional text content with entrance animation
-                    VStack(spacing: 24) {
-                        // Welcome text with subtle animation
-                        Text("WELCOME TO")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(.secondary)
-                            .tracking(3)
-                            .opacity(isContentVisible ? 1 : 0)
-                            .offset(y: isContentVisible ? 0 : 10)
-                            .animation(.easeOut(duration: 0.5).delay(0.3), value: isContentVisible)
-                        
-                        // Main app name with professional pulsing animation
-                        ZStack {
-                            // Subtle glow behind the text (only visible when pulsing starts)
-                            Text("Autheris")
-                                .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                .foregroundColor(.clear)
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.accentColor.opacity(0.7),
-                                            Color.accentColor.opacity(0.3)
-                                        ]),
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                    .mask(
-                                        Text("Autheris")
-                                            .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                            .blur(radius: 8)
-                                    )
-                                    .offset(y: 2)
-                                )
-                                .scaleEffect(pulseScale * 1.05) // Slightly larger glow pulse
-                                .opacity(pulseOpacity * 0.7)
-                                .opacity(isPulsing ? pulseOpacity * 0.7 : 0)
-                                .animation(
-                                    .easeInOut(duration: pulseDuration)
-                                        .repeatForever(autoreverses: true),
-                                    value: pulseScale
-                                )
-                            
-                            // Pulsing outline effect (only visible when pulsing starts)
-                            Text("Autheris")
-                                .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                .foregroundColor(.clear)
-                                .overlay(
-                                    Color.accentColor
-                                        .opacity(0.2)
-                                        .mask(
-                                            Text("Autheris")
-                                                .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                        )
-                                )
-                                .scaleEffect(pulseScale)
-                                .opacity(pulseOpacity * 0.4)
-                                .opacity(isPulsing ? pulseOpacity * 0.4 : 0)
-                                .animation(
-                                    .easeInOut(duration: pulseDuration * 0.9)
-                                        .repeatForever(autoreverses: true)
-                                        .delay(0.1),
-                                    value: pulseScale
-                                )
-                            
-                            // Main text with metallic gradient
-                            Text("Autheris")
-                                .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                .foregroundColor(.primary)
-                                .overlay(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [
-                                            Color.accentColor,
-                                            Color.accentColor.opacity(0.7)
-                                        ]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                    .mask(
-                                        Text("Autheris")
-                                            .font(.system(size: 62, weight: .heavy, design: .rounded))
-                                    )
-                                )
-                                .shadow(color: Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
-                                .scaleEffect(isPulsing ? pulseScale : 1.0)
-                                .animation(
-                                    isPulsing ? 
-                                        .easeInOut(duration: pulseDuration)
-                                            .repeatForever(autoreverses: true) :
-                                        .default,
-                                    value: isPulsing ? pulseScale : 1.0
-                                )
-                                .opacity(isContentVisible ? 1 : 0)
-                                .offset(y: isContentVisible ? 0 : textOffsetY)
-                                .animation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.5), value: isContentVisible)
-                        }
-                        
-                        // Autheris tagline — on-brand
-                        Text("Secure 2FA Token Manager")
-                            .font(.system(size: 20, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(6)
-                            .padding(.horizontal, 40)
-                            .opacity(isContentVisible ? 1 : 0)
-                            .offset(y: isContentVisible ? 0 : textOffsetY)
-                            .animation(.easeOut(duration: 0.5).delay(0.6), value: isContentVisible)
-                        Text("Your accounts, protected on device")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary.opacity(0.9))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                            .opacity(isContentVisible ? 1 : 0)
-                            .offset(y: isContentVisible ? 0 : textOffsetY)
-                            .animation(.easeOut(duration: 0.5).delay(0.7), value: isContentVisible)
-                    }
-                    .padding(.horizontal, 32)
-                    
-                    // Bottom spacer
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 3))
-                }
-                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
-            }
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                .shadow(color: Color.accentColor.opacity(0.25), radius: 16, x: 0, y: 8)
+
+            Text("Autheris")
+                .font(.system(size: 46, weight: .heavy, design: .rounded))
+
+            Text("Secure 2FA token manager")
+                .font(.title3.weight(.medium))
+                .foregroundColor(.secondary)
+
+            Text("Your accounts, protected on device.")
+                .font(.subheadline)
+                .foregroundColor(.secondary.opacity(0.9))
+                .multilineTextAlignment(.center)
+
+            Spacer()
+            Spacer()
         }
+        .padding(.horizontal, 32)
     }
-    
-    // MARK: - Page 2: Features (In-depth Autheris feature overview)
+
     private var featuresPage: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 28) {
-                    Spacer(minLength: 24)
-                    
-                    Text("Why Autheris")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
-                    Text("Everything you need to manage 2FA — private, simple, and reliable")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                    
-                    VStack(spacing: 24) {
-                        featureRow(
-                            icon: "qrcode.viewfinder",
-                            title: "Instant QR Import",
-                            description: "Add accounts in seconds by scanning the same QR code you’d use with Google Authenticator or any other app. No typing codes by hand — just point your camera and go."
-                        )
-                        featureRow(
-                            icon: "lock.shield.fill",
-                            title: "Encrypted on Your Device",
-                            description: "All tokens are encrypted and stored only on this device. Nothing is sent to the cloud or to our servers — we never see your codes. Your keys stay yours."
-                        )
-                        featureRow(
-                            icon: "timer",
-                            title: "Live Codes & Timers",
-                            description: "See one-time passwords update in real time with clear countdown timers. Copy a code with one tap and know exactly when the next one is ready."
-                        )
-                        featureRow(
-                            icon: "square.grid.2x2",
-                            title: "Organized by Account",
-                            description: "Group and label tokens by service (email, banking, work, etc.). Search and scroll through your accounts quickly so you’re never hunting for the right code."
-                        )
-                        featureRow(
-                            icon: "arrow.triangle.2.circlepath",
-                            title: "Backup & Restore",
-                            description: "Export an encrypted backup to restore tokens on a new device or keep a safe copy. You stay in control of your 2FA data with industry-standard encryption."
-                        )
-                        featureRow(
-                            icon: "hand.raised.fill",
-                            title: "No Account Required",
-                            description: "Use Autheris without signing up or giving an email. No tracking, no ads, no subscriptions — just a focused 2FA manager that respects your privacy."
-                        )
-                    }
-                    .padding(.horizontal, 24)
-                    
-                    Spacer(minLength: 32)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Why Autheris")
+                    .font(.largeTitle.weight(.bold))
+
+                Text("Private, simple, and reliable two-factor authentication.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 6)
+
+                ForEach(features) { feature in
+                    FeatureRow(feature: feature)
                 }
-                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
             }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            .padding(.bottom, 24)
         }
     }
-    
-    // MARK: - Page 3: Get Started
+
     private var getStartedPage: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 40) {
-                    // Vertical spacer to center content
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 4))
-                    
-                    // Animated checkmark with pulse effect
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.accentColor.opacity(0.15),
-                                        Color.accentColor.opacity(0.05)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 140, height: 140)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 30, x: 0, y: 15)
-                            .overlay(
-                                Circle()
-                                    .stroke(
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [
-                                                Color.accentColor.opacity(0.3),
-                                                Color.accentColor.opacity(0.1)
-                                            ]),
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        ),
-                                        lineWidth: 1
-                                    )
-                            )
-                        
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(.system(size: 56, weight: .regular))
-                            .foregroundColor(.accentColor)
-                            .symbolRenderingMode(.hierarchical)
-                            .shadow(color: Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                    
-                    VStack(spacing: 16) {
-                        Text("Ready to Begin")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                            .multilineTextAlignment(.center)
-                        
-                        Text("Start securing your accounts with military-grade encryption and a beautiful interface")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.horizontal, 32)
-                    }
-                    
-                    // Feature highlights
-                    VStack(spacing: 16) {
-                        featureHighlight("100% Local Storage")
-                        featureHighlight("End-to-End Encryption")
-                        featureHighlight("No Account Required")
-                    }
-                    .padding(.horizontal, 32)
-                    
-                    // Bottom spacer
-                    Spacer(minLength: max(0, (geometry.size.height - 500) / 4))
-                }
-                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
-            }
-        }
-    }
-    
-    // MARK: - Helper Views
-    private func featureRow(icon: String, title: String, description: String) -> some View {
-        HStack(alignment: .top, spacing: 20) {
-            // Icon container with subtle glow
+        VStack(spacing: 24) {
+            Spacer()
+
             ZStack {
                 Circle()
-                    .fill(Color.accentColor.opacity(0.1))
-                    .frame(width: 56, height: 56)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
-                    )
-                
-                Image(systemName: icon)
-                    .font(.system(size: 22))
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 140, height: 140)
+
+                Circle()
+                    .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
+                    .frame(width: 140, height: 140)
+
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.system(size: 56))
                     .foregroundColor(.accentColor)
                     .symbolRenderingMode(.hierarchical)
             }
-            .padding(.top, 4)
-            
-            // Text content with flexible width
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .lineSpacing(2)
+
+            Text("Ready to Begin")
+                .font(.largeTitle.weight(.bold))
+                .multilineTextAlignment(.center)
+
+            Text("Start securing your accounts. Your codes stay on your device.")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            VStack(spacing: 12) {
+                highlight("100% local storage")
+                highlight("Face ID / Touch ID lock")
+                highlight("Encrypted backups")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 32)
+
+            Spacer()
         }
-        .frame(maxWidth: .infinity)
     }
-    
-    private func featureHighlight(_ text: String) -> some View {
-        HStack(spacing: 12) {
+
+    // MARK: - Bottom controls
+
+    private var pageDots: some View {
+        HStack(spacing: 10) {
+            ForEach(0..<totalPages, id: \.self) { index in
+                Capsule()
+                    .fill(index == currentPage ? Color.accentColor : Color.secondary.opacity(0.3))
+                    .frame(width: index == currentPage ? 24 : 8, height: 8)
+                    .animation(
+                        reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7),
+                        value: currentPage
+                    )
+            }
+        }
+    }
+
+    private var navigationButtons: some View {
+        HStack(spacing: 16) {
+            if currentPage > 0 {
+                Button {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    currentPage -= 1
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.caption.weight(.semibold))
+                        Text("Back")
+                            .font(.headline)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity)
+                    .background(Capsule().fill(Color(.secondarySystemBackground)))
+                    .foregroundColor(.primary)
+                }
+            }
+
+            Button {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                if currentPage < totalPages - 1 {
+                    currentPage += 1
+                } else {
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    hasCompletedOnboarding = true
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Text(currentPage < totalPages - 1 ? "Next" : "Get Started")
+                        .font(.headline)
+                    if currentPage < totalPages - 1 {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.vertical, 14)
+                .frame(maxWidth: currentPage > 0 ? .infinity : nil)
+                .background(Capsule().fill(Color.accentColor))
+                .foregroundColor(.white)
+            }
+        }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentPage)
+    }
+
+    private func highlight(_ text: String) -> some View {
+        HStack(spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16))
+                .font(.subheadline)
                 .foregroundColor(.accentColor)
-                .symbolRenderingMode(.hierarchical)
-            
+
             Text(text)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-            
+
             Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+    }
+}
+
+private struct FeatureRow: View {
+    let feature: OnboardingFeature
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: feature.icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.accentColor)
+                .frame(width: 40, height: 40)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.12))
+                )
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(feature.title)
+                    .font(.headline)
+
+                Text(feature.description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
         )
     }
 }
@@ -666,10 +293,9 @@ struct WelcomeView_Previews: PreviewProvider {
         Group {
             WelcomeView()
                 .preferredColorScheme(.light)
-            
+
             WelcomeView()
                 .preferredColorScheme(.dark)
         }
     }
 }
-

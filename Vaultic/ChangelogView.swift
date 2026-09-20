@@ -55,6 +55,24 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.0",
+            version: "2.0",
+            date: "September 2026",
+            changes: [
+                "Redesigned home screen: cleaner token cards with larger issuer icons, glanceable countdowns, and native search.",
+                "Reorganized navigation: Settings is a full-screen hub for Privacy, iCloud Sync, Appearance, Data, Help, and About.",
+                "Add Token is rebuilt with a native form, PhotosPicker for QR screenshots, and standard alerts.",
+                "App Lock with Face ID / Touch ID — locks on launch and after 30 seconds in the background, with passcode fallback.",
+                "Tokens and preferences now live in the Keychain, so your accounts and settings survive reinstalling the app.",
+                "Password-encrypted backups: AES-GCM files protected by your own password, alongside the existing plain backup option.",
+                "Import from more authenticators: unencrypted Aegis, andOTP, and 2FAS backup files.",
+                "Copied codes and setup keys automatically clear from the clipboard after 60 seconds.",
+                "Optional accent tints keep the default Autheris look unless you pick a theme.",
+                "Fresh onboarding that matches the new design, with Reduce Motion support.",
+                "Polish pass: dark-mode contrast fixes, Dynamic Type, and accessibility improvements."
+            ]
+        ),
+        ChangelogRelease(
             id: "1.3",
             version: "1.3",
             date: "September 2026",

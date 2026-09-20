@@ -182,8 +182,8 @@ struct IssuerIconView: View {
     @State private var cachedImage: UIImage?
     @State private var isLoading = false
     
-    // Circle size (matches OTPCardView)
-    private let circleSize: CGFloat = 28
+    // Icon diameter; the token card passes 44, other callers use the default.
+    var size: CGFloat = 28
     
     var body: some View {
         ZStack {
@@ -196,28 +196,28 @@ struct IssuerIconView: View {
                 Image(uiImage: cachedImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: circleSize, height: circleSize)
+                    .frame(width: size, height: size)
                     .clipShape(Circle())
             } else if isLoading {
                 // Loading state - centered in circle
                 ProgressView()
-                    .scaleEffect(0.7)
-                    .frame(width: circleSize, height: circleSize)
+                    .controlSize(size >= 44 ? .regular : .small)
+                    .frame(width: size, height: size)
             } else if LogoCacheManager.shared.hasCachedLogo(for: branding),
                       let image = LogoCacheManager.shared.getCachedLogo(for: branding) {
                 // Load from cache if available - fill the entire circle
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: circleSize, height: circleSize)
+                    .frame(width: size, height: size)
                     .clipShape(Circle())
             } else {
                 // Fallback monogram - centered in circle
                 fallbackMonogram
-                    .frame(width: circleSize, height: circleSize)
+                    .frame(width: size, height: size)
             }
         }
-        .frame(width: circleSize, height: circleSize)
+        .frame(width: size, height: size)
         .overlay(
             Circle()
                 .stroke(branding.color.opacity(0.18), lineWidth: 1)
@@ -247,7 +247,7 @@ struct IssuerIconView: View {
             
             // Monogram letter
             Text(String(branding.displayName.prefix(1)).uppercased())
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(size: size * 0.5, weight: .semibold, design: .rounded))
                 .foregroundColor(branding.color)
         }
     }
@@ -323,7 +323,7 @@ extension IssuerBranding {
         
         // Common issuers for domain-based color matching
         if normalized.contains("github") {
-            return IssuerBranding(displayName: label, domain: "github.com", color: .black)
+            return IssuerBranding(displayName: label, domain: "github.com", color: hex(0x8E8E93))
         }
         if normalized.contains("google") || normalized.contains("gmail") {
             return IssuerBranding(displayName: label, domain: "google.com", color: hex(0x4285F4))
@@ -344,7 +344,7 @@ extension IssuerBranding {
             return IssuerBranding(displayName: label, domain: "slack.com", color: hex(0x4A154B))
         }
         if normalized.contains("notion") {
-            return IssuerBranding(displayName: label, domain: "notion.so", color: .black)
+            return IssuerBranding(displayName: label, domain: "notion.so", color: hex(0x8E8E93))
         }
         if normalized.contains("gitlab") {
             return IssuerBranding(displayName: label, domain: "gitlab.com", color: hex(0xFC6D26))

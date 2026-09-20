@@ -17,8 +17,12 @@ struct AddTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isScanning = false
-    @State private var showingImagePicker = false
+    @State private var selectedPhoto: PhotosPickerItem?
     @State private var isProcessingImage = false
+
+    private var isFormValid: Bool {
+        !label.isEmpty && !account.isEmpty && !secret.isEmpty
+    }
     
     var body: some View {
         NavigationStack {
@@ -67,7 +71,7 @@ struct AddTokenView: View {
                                     .background(Capsule().fill(Color.accentColor))
                                     .foregroundColor(.white)
                             }
-                            Button(action: { showingImagePicker = true }) {
+                            PhotosPicker(selection: $selectedPhoto, matching: .images) {
                                 Label("Upload QR", systemImage: "photo.on.rectangle.angled")
                                     .font(.subheadline.weight(.semibold))
                                     .padding(.vertical, 12)
@@ -75,6 +79,7 @@ struct AddTokenView: View {
                                     .background(Capsule().fill(Color.accentColor.opacity(0.2)))
                                     .foregroundColor(.accentColor)
                             }
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 32)
                         
@@ -111,90 +116,36 @@ struct AddTokenView: View {
                     .allowsHitTesting(!isProcessingImage)
                 } else {
                     // Manual Entry Form
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            Spacer()
-                                .frame(height: 8)
-                            
-                            // Form Fields
-                            VStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Service Name")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    
-                                    TextField("e.g., GitHub", text: $label)
-                                        .padding(10)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color(.secondarySystemBackground))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(.separator), lineWidth: 1)
-                                        )
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Account")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    
-                                    TextField("e.g., user@example.com", text: $account)
-                                        .padding(10)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color(.secondarySystemBackground))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(.separator), lineWidth: 1)
-                                        )
-                                }
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Setup Key")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    
-                                    TextField("Enter your setup key", text: $secret)
-                                        .autocapitalization(.none)
-                                        .disableAutocorrection(true)
-                                        .textContentType(.password)
-                                        .padding(10)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .fill(Color(.secondarySystemBackground))
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color(.separator), lineWidth: 1)
-                                        )
-                                }
-                            }
-                            .padding(.horizontal, 32)
-                            
-                            Spacer()
-                            
+                    Form {
+                        Section("Token details") {
+                            TextField("Service name", text: $label)
+
+                            TextField("Account", text: $account)
+                                .textContentType(.username)
+                                .autocapitalization(.none)
+
+                            SecureField("Setup key", text: $secret)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .textContentType(.password)
+                        }
+
+                        Section {
                             Button(action: {
                                 validateAndSave()
                             }) {
-                                Label("Add Token", systemImage: "plus.circle.fill")
+                                Text("Add Token")
                                     .font(.headline)
-                                    .padding(.vertical, 12)
                                     .frame(maxWidth: .infinity)
-                                    .background(
-                                        Capsule()
-                                            .fill(Color.accentColor)
-                                    )
-                                    .foregroundColor(.white)
                             }
-                            .disabled(label.isEmpty || account.isEmpty || secret.isEmpty)
-                            .padding(.horizontal, 32)
-                            .padding(.bottom, 24)
+                            .disabled(!isFormValid)
+                            .listRowBackground(isFormValid ? Color.accentColor : Color.accentColor.opacity(0.4))
+                            .foregroundStyle(.white)
+                        } footer: {
+                            Text("Enter the same setup key you received when enabling two-factor authentication.")
                         }
                     }
-                    .frame(maxHeight: .infinity)
+                    .formStyle(.grouped)
                 }
             }
             .navigationTitle("Add Token")
@@ -206,50 +157,11 @@ struct AddTokenView: View {
                     }
                 }
             }
-            .overlay(alignment: .center) {
-                if showingAlert {
-                    ZStack {
-                        Color.black.opacity(0.4)
-                            .ignoresSafeArea()
-                        VStack(spacing: 0) {
-                            VStack(spacing: 12) {
-                                Text("Something Went Wrong")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                    .multilineTextAlignment(.center)
-                                Text(alertMessage)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 20)
-                            .padding(.bottom, 16)
-                            Divider()
-                            Button {
-                                showingAlert = false
-                            } label: {
-                                Text("OK")
-                                    .font(.body)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(Color.accentColor)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .frame(maxWidth: 270)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-                        )
-                        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .zIndex(1)
-                    }
-                }
+            .alert("Something Went Wrong", isPresented: $showingAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(alertMessage)
             }
-            .animation(.easeOut(duration: 0.25), value: showingAlert)
             .sheet(isPresented: $isScanning) {
                 QRScannerView(isScanning: $isScanning, onCodeScanned: { qrCode in
                     if let qrCode = qrCode {
@@ -258,12 +170,32 @@ struct AddTokenView: View {
                 })
                 .edgesIgnoringSafeArea(.all)
             }
-            .sheet(isPresented: $showingImagePicker) {
-                QRImagePickerView { image in
-                    showingImagePicker = false
-                    if let image = image {
-                        isProcessingImage = true
-                        readQRFromImage(image)
+            .onChange(of: selectedPhoto) { _, newItem in
+                guard let newItem else { return }
+                selectedPhoto = nil
+                isProcessingImage = true
+
+                Task {
+                    do {
+                        if let data = try await newItem.loadTransferable(type: Data.self),
+                           let image = UIImage(data: data) {
+                            await MainActor.run {
+                                isProcessingImage = false
+                                readQRFromImage(image)
+                            }
+                        } else {
+                            await MainActor.run {
+                                isProcessingImage = false
+                                alertMessage = "Could not read the selected image."
+                                showingAlert = true
+                            }
+                        }
+                    } catch {
+                        await MainActor.run {
+                            isProcessingImage = false
+                            alertMessage = "Could not read the selected image: \(error.localizedDescription)"
+                            showingAlert = true
+                        }
                     }
                 }
             }
@@ -774,52 +706,8 @@ struct AddTokenView: View {
     }
 }
 
-// MARK: - Image Picker for QR upload (screenshot / Google export)
-struct QRImagePickerView: UIViewControllerRepresentable {
-    var onImagePicked: (UIImage?) -> Void
-    
-    func makeUIViewController(context: Context) -> PHPickerViewController {
-        var config = PHPickerConfiguration()
-        config.filter = .images
-        config.selectionLimit = 1
-        let picker = PHPickerViewController(configuration: config)
-        picker.delegate = context.coordinator
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: PHPickerViewController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, PHPickerViewControllerDelegate {
-        let parent: QRImagePickerView
-        
-        init(_ parent: QRImagePickerView) {
-            self.parent = parent
-        }
-        
-        func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            picker.dismiss(animated: true)
-            guard let result = results.first else {
-                parent.onImagePicked(nil)
-                return
-            }
-            let parent = self.parent
-            result.itemProvider.loadObject(ofClass: UIImage.self) { object, _ in
-                DispatchQueue.main.async {
-                    parent.onImagePicked(object as? UIImage)
-                }
-            }
-        }
-    }
-}
-
 struct AddTokenView_Previews: PreviewProvider {
     static var previews: some View {
         AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil))
     }
 }
-
-

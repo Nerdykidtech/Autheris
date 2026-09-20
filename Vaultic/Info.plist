@@ -22,11 +22,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>otpauth</string>
+				<string>otpauth-migration</string>
 			</array>
 		</dict>
 	</array>
 	<key>LOGODEV_PUBLISHABLE_KEY</key>
 	<string>pk_HF9Whmm6RiyndClKLP8Ddg</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Autheris uses Face ID to unlock your tokens.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

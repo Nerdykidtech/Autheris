@@ -117,7 +117,7 @@ struct SecretKeySection: View {
     private func copySecret() {
         guard !secret.isEmpty else { return }
         copyHaptic.impactOccurred()
-        UIPasteboard.general.string = secret
+        ClipboardHelper.copy(secret)
         withAnimation(.easeInOut(duration: 0.2)) {
             isCopied = true
         }

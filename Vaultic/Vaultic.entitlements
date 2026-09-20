@@ -2,7 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Must match CloudKitTokenSyncService.containerIdentifier. -->
+	<key>aps-environment</key>
+	<string>$(APS_ENVIRONMENT)</string>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
 		<string>iCloud.com.eddingtontech.autheris</string>
@@ -11,10 +12,9 @@
 	<array>
 		<string>CloudKit</string>
 	</array>
-	<!-- Required so the CKDatabaseSubscription can wake the app silently.
-	     Resolved per configuration (development for Debug, production for
-	     Release) so a distribution build is not signed with a dev value. -->
-	<key>aps-environment</key>
-	<string>$(APS_ENVIRONMENT)</string>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.eddingtontech.autheris</string>
+	</array>
 </dict>
 </plist>
