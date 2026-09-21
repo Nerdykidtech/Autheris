@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @main
 struct AutherisApp: App {
@@ -7,6 +8,7 @@ struct AutherisApp: App {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
+    @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     @StateObject private var dataStore = OTPDataStore()
     @StateObject private var appLock = AppLockManager()
@@ -14,10 +16,28 @@ struct AutherisApp: App {
     @State private var importData: Data?
     @State private var otpSetupResult: (title: String, body: String)?
     @State private var isAppActive = true
+    @State private var isScreenCaptured = false
     @State private var showPrivacyOverlay = false
 
     private var selectedAccent: AccentTheme? {
         AccentTheme(rawValue: accentThemeRaw)
+    }
+
+    /// What the device is doing right now, and what the user asked for. Both are
+    /// handed to `PrivacyShield`, which owns the actual rules so that they can be
+    /// unit tested without a simulator.
+    private var privacyConditions: PrivacyShield.Conditions {
+        PrivacyShield.Conditions(appIsActive: isAppActive, screenIsCaptured: isScreenCaptured)
+    }
+
+    private var privacyPreferences: PrivacyShield.Preferences {
+        PrivacyShield.Preferences(blurWhenBackgrounded: enablePrivacyBlur,
+                                  hideInAppSwitcher: hideCodesInAppSwitcher,
+                                  hideWhenScreenCaptured: hideCodesWhenScreenCaptured)
+    }
+
+    private var shouldBlurContent: Bool {
+        PrivacyShield.shouldBlur(privacyConditions, privacyPreferences)
     }
     
     var body: some Scene {
@@ -30,13 +50,13 @@ struct AutherisApp: App {
                     } else {
                         ContentView()
                             .environmentObject(dataStore)
-                            .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
-                            .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
+                            .blur(radius: shouldBlurContent ? 10 : 0)
+                            .opacity(shouldBlurContent ? 0.7 : 1)
                     }
                 } else {
                     WelcomeView()
-                        .blur(radius: enablePrivacyBlur && !isAppActive ? 10 : 0)
-                        .opacity(enablePrivacyBlur && !isAppActive ? 0.7 : 1)
+                        .blur(radius: shouldBlurContent ? 10 : 0)
+                        .opacity(shouldBlurContent ? 0.7 : 1)
                 }
                 
                 // Import sheet overlay - shows on top of everything
@@ -54,8 +74,10 @@ struct AutherisApp: App {
                     }
                 }
                 
-                // Privacy overlay for app switcher and when backgrounded
-                if showPrivacyOverlay && hideCodesInAppSwitcher {
+                // Privacy screen: covers the app switcher and the home screen,
+                // and a screen that is being recorded or mirrored.
+                // `showPrivacyOverlay` already folds in the relevant settings.
+                if showPrivacyOverlay {
                     PrivacyOverlay()
                         .transition(.opacity)
                         .zIndex(1) // Ensure it's on top
@@ -110,8 +132,10 @@ struct AutherisApp: App {
                     }
                 }
                 
-                // Set up app state observers
+                // Set up app state observers, then take an initial reading of the
+                // capture state in case the app launched into an active recording.
                 setupAppStateObservers()
+                refreshScreenCaptureState()
             }
             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
                 #if DEBUG
@@ -135,6 +159,10 @@ struct AutherisApp: App {
                 // Update privacy overlay when setting changes
                 updatePrivacyOverlay()
             }
+            .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
+                // Update privacy overlay when setting changes
+                updatePrivacyOverlay()
+            }
             .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {
                 case .background:
@@ -148,6 +176,9 @@ struct AutherisApp: App {
                 // Foregrounding is the cheapest reliable moment to pick up anything
                 // a silent push may have missed, and to re-check the iCloud account.
                 guard newPhase == .active, hasCompletedOnboarding else { return }
+                // Foregrounding is also the cheapest reliable moment to retire any
+                // trashed codes that have passed their retention window.
+                dataStore.purgeExpiredTrash()
                 Task {
                     await dataStore.refreshSyncAvailability()
                     await dataStore.syncNow()
@@ -332,7 +363,18 @@ struct AutherisApp: App {
             print("App did become active")
             #endif
             isAppActive = true
-            updatePrivacyOverlay()
+            refreshScreenCaptureState()
+        }
+
+        // Recording or mirroring can begin while the app stays frontmost, which
+        // never resigns active and is therefore invisible to every notification
+        // above. This is the only signal iOS gives for it.
+        NotificationCenter.default.addObserver(
+            forName: UIScreen.capturedDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            refreshScreenCaptureState()
         }
         
         NotificationCenter.default.addObserver(
@@ -356,16 +398,26 @@ struct AutherisApp: App {
             print("App will enter foreground")
             #endif
             isAppActive = true
-            updatePrivacyOverlay()
+            refreshScreenCaptureState()
         }
     }
     
     private func updatePrivacyOverlay() {
-        // Show privacy overlay when app is not active AND the setting is enabled
-        showPrivacyOverlay = !isAppActive && hideCodesInAppSwitcher
+        showPrivacyOverlay = PrivacyShield.shouldShowOverlay(privacyConditions, privacyPreferences)
         #if DEBUG
-        print("Privacy overlay: \(showPrivacyOverlay), isAppActive: \(isAppActive), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher)")
+        print("Privacy overlay: \(showPrivacyOverlay), appIsActive: \(isAppActive), screenIsCaptured: \(isScreenCaptured), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher), hideCodesWhenScreenCaptured: \(hideCodesWhenScreenCaptured)")
         #endif
+    }
+
+    /// Re-reads whether the screen is being recorded or mirrored.
+    ///
+    /// Called on became-active as well as on the capture notification: a
+    /// recording that began while the app was in the background may have posted
+    /// its change before the observer existed, and there is no way to ask "was it
+    /// already recording when you started?" after the fact.
+    private func refreshScreenCaptureState() {
+        isScreenCaptured = ScreenCaptureMonitor.isCaptured
+        updatePrivacyOverlay()
     }
 }
 

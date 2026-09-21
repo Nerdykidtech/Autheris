@@ -6,14 +6,9 @@ import Foundation
 /// we mirror these values into a single Keychain item and restore them into
 /// UserDefaults on launch. The live views keep using `@AppStorage`, so
 /// reactivity is unchanged.
-private struct AppPreferences: Codable {
-    var hasCompletedOnboarding: Bool
-    var enablePrivacyBlur: Bool
-    var hideCodesInAppSwitcher: Bool
-    var accentTheme: String
-    var enableAppLock: Bool
-    var isICloudSyncEnabled: Bool
-}
+///
+/// The mirrored shape — and the rule for decoding a blob written by an older
+/// release — lives in `AppPreferences.swift`.
 
 enum PreferencesStore {
     private static let account = "appPreferences"
@@ -24,6 +19,7 @@ enum PreferencesStore {
             hasCompletedOnboarding: defaults.bool(forKey: "hasCompletedOnboarding"),
             enablePrivacyBlur: defaults.bool(forKey: "enablePrivacyBlur"),
             hideCodesInAppSwitcher: defaults.bool(forKey: "hideCodesInAppSwitcher"),
+            hideCodesWhenScreenCaptured: defaults.bool(forKey: "hideCodesWhenScreenCaptured"),
             accentTheme: defaults.string(forKey: "accentTheme") ?? "",
             enableAppLock: defaults.bool(forKey: AppLockEnabledKey),
             isICloudSyncEnabled: defaults.bool(forKey: OTPDataStore.syncEnabledKey)
@@ -46,6 +42,7 @@ enum PreferencesStore {
         defaults.set(prefs.hasCompletedOnboarding, forKey: "hasCompletedOnboarding")
         defaults.set(prefs.enablePrivacyBlur, forKey: "enablePrivacyBlur")
         defaults.set(prefs.hideCodesInAppSwitcher, forKey: "hideCodesInAppSwitcher")
+        defaults.set(prefs.hideCodesWhenScreenCaptured, forKey: "hideCodesWhenScreenCaptured")
         defaults.set(prefs.accentTheme, forKey: "accentTheme")
         defaults.set(prefs.enableAppLock, forKey: AppLockEnabledKey)
         defaults.set(prefs.isICloudSyncEnabled, forKey: OTPDataStore.syncEnabledKey)

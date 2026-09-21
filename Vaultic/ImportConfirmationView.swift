@@ -364,6 +364,12 @@ struct ImportConfirmationView: View {
         print("Starting import process...")
         debugInfo = "Parsing QR code data..."
         #endif
+
+        // Snapshot the existing tokens while still on the main actor. The parsing
+        // below runs on a global queue, and store state is main-actor isolated, so
+        // it cannot be read from there. The import sheet is modal, so nothing can
+        // change the store while the parse is in flight.
+        let existingTokens = dataStore.codes
         
         DispatchQueue.global(qos: .userInitiated).async {
             do {
@@ -380,7 +386,6 @@ struct ImportConfirmationView: View {
                     }
                     
                     // Check for duplicates
-                    let existingTokens = self.dataStore.codes
                     #if DEBUG
                     print("Existing tokens count: \(existingTokens.count)")
                     #endif
@@ -445,7 +450,6 @@ struct ImportConfirmationView: View {
                     }
                     
                     // Check for duplicates
-                    let existingTokens = self.dataStore.codes
                     #if DEBUG
                     print("Existing tokens count: \(existingTokens.count)")
                     #endif

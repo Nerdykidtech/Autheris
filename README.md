@@ -16,13 +16,15 @@
 
 ## Features
 
-- 🔐 **Privacy-First Design**: Blur app content when backgrounded, hide codes in app switcher
+- 🔐 **Privacy-First Design**: Blur app content when backgrounded, hide codes in app switcher, and cover them while the screen is being recorded or mirrored
 - 👁️ **Setup Key Access**: View, copy, or edit a token's secret — masked by default, tap to reveal
 - ☁️ **Optional iCloud Sync**: Off by default. When enabled, tokens sync across your own devices through your private iCloud database, with secret keys end-to-end encrypted
 - 📱 **iOS Native**: Built with SwiftUI for the best native experience
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
 - 📤 **Export & Backup**: Local backup files and QR exports you control (stored in the app sandbox, protected by the device passcode, not additionally encrypted)
 - 📥 **Easy Migration**: Import from Google Authenticator
+- 🗑️ **Recently Deleted**: A deleted code stays recoverable on your device for 7 days before it is removed for good
+- 📌 **Pin and Reorder**: Pin the codes you use most to the top, and drag the rest into whatever order suits you
 - 🔍 **Quick Search**: Find tokens instantly
 - 🎨 **Clean Interface**: Simple, distraction-free design
 
@@ -50,11 +52,34 @@ Tokens (including their TOTP secrets) are persisted locally as JSON in the iOS *
 
 A first launch after upgrading migrates any legacy `UserDefaults` copy into the Keychain and deletes the plaintext copy.
 
+Deletion tombstones are stored in the Keychain too, under their own account. They used to live in `UserDefaults`, which was the wrong home for them: `UserDefaults` is wiped when the app is deleted while the Keychain is not, so a reinstall lost the tombstones that suppress deleted tokens *while the tokens themselves came back* — and the next sync would re-import from iCloud everything the user had deleted. That is exactly the guarantee tombstones exist to provide, so losing them is not a cosmetic bug. The legacy tombstone copy is migrated on the same first launch, and only removed once the Keychain write has succeeded.
+
+### What the privacy screen covers
+
+The rule lives in `Vaultic/PrivacyShield.swift`, which is pure so it can be unit tested. Content is shielded when either of two things is true:
+
+- **The app is not frontmost** — the app switcher and the home screen. Controlled by *Hide codes in app switcher* (a full cover) and *Blur when backgrounded* (a softer treatment).
+- **The screen is being recorded or mirrored**, while the app is still frontmost. This is the case that produces no `scenePhase` change and no "will resign active", so there is nothing for the existing app-lifecycle notifications to hang off. It is observed through `UIScreen.capturedDidChangeNotification` in `Vaultic/ScreenCaptureMonitor.swift` and controlled by *Hide codes while recording or mirroring*.
+
+The two reasons are OR-ed rather than exclusive: a device can be recording while the app sits in the background, and honouring only the app-switcher setting there would leave the recording with a visible — merely blurred — token list. All three toggles default to on.
+
+One thing this cannot cover: **a screenshot**. iOS posts no notification for one, because it is a single frame taken without the app's involvement, so the capture protection does not apply to it and the app does not claim otherwise.
+
+### Recently Deleted
+
+Deleting a code moves a copy into **Recently Deleted** (**Settings → Data → Recently Deleted**), where it stays recoverable for **7 days** and is then removed for good. The window and the restore rules live in `Vaultic/TrashBin.swift`, which is pure so both can be unit tested.
+
+The trash is deliberately **local to the device and never synced**. A delete still writes a tombstone immediately, so the code disappears from the user's other devices straight away — the trash does not delay or soften that. Restoring puts the code back stamped with a fresh `modifiedAt`, which is what makes the restore a *newer write* than the tombstone it is undoing; without that, the next sync would delete it again.
+
+It is stored in the Keychain under its own account, with the same protection as live codes. The trade-off is explicit: a deleted code's secret stays on the device for those 7 days instead of being gone the moment you tap delete. Use **Delete Now** (swipe a row) or **Delete All** to remove it immediately.
+
+Known gap: `restoreFromBackup` replaces the token list wholesale and does **not** route the replaced codes through the trash, so restoring a backup is still irreversible.
+
 ### What iCloud Sync sends, and how
 
 Sync is opt-in and only ever uses the **private** CloudKit database, which is scoped to the signed-in iCloud account and is not readable by the developer.
 
-- `label`, `account`, `secret` and `timerRingHex` are written exclusively through `CKRecord.encryptedValues`, so CloudKit encrypts them end to end with keys it manages on the user's behalf. They never appear as readable fields and are not visible in the CloudKit dashboard.
+- `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written exclusively through `CKRecord.encryptedValues`, so CloudKit encrypts them end to end with keys it manages on the user's behalf. They never appear as readable fields and are not visible in the CloudKit dashboard. (`isPinned` is not a secret, but it is still a statement about which accounts matter to this user, so it is encrypted alongside the label rather than left readable on Apple's servers.)
 - Only `modifiedAt`, `deleted`, `fingerprint`, `algorithm`, `digits` and `period` are plain fields. None of them reveal a secret: `fingerprint` is a SHA-256 over the record content (including the token id, so identical secrets on two records never collide) and is a one-way hash of a high-entropy base32 secret.
 - Deleting a token replaces its record with a **tombstone** whose encrypted fields are explicitly cleared, so the secret does not linger in iCloud after a delete.
 
@@ -63,10 +88,11 @@ Sync is opt-in and only ever uses the **private** CloudKit database, which is sc
 Sync is a per-device setting in **Settings → iCloud Sync**. When it is off, CloudKit is never contacted. When it is on:
 
 - **Add / edit** a token on one device and it appears on the others; the newest edit wins (`OTPCode.modifiedAt`), with a deterministic tie-break if two devices edited at the same instant.
-- **Delete** a token anywhere and it is removed everywhere. Deletes are tombstones rather than record removals, so a delete always beats an older edit from a device that was offline. The one exception: a device that stayed offline longer than the 30-day tombstone retention and still holds a live copy can reintroduce the token — the deliberate trade-off for not carrying deletion bookkeeping on every device forever.
+- **Delete** a token anywhere and it is removed everywhere. Deletes are tombstones rather than record removals, so a delete always beats an older edit from a device that was offline, and the tombstones themselves are kept in the Keychain so they survive an app reinstall. The one exception: a device that stayed offline longer than the 30-day tombstone retention and still holds a live copy can reintroduce the token — the deliberate trade-off for not carrying deletion bookkeeping on every device forever.
 - **Status** is shown in Settings: `Synced` (with a relative "last updated"), `Syncing…`, `Sync Paused` when offline, `Sign in to iCloud`, or `Sync unavailable` when the build or container is not configured.
 - **Failures never block the app.** Local tokens are always authoritative for the device on screen; a failed sync is retried on the next edit, on foreground, or on a silent push.
 - **Turning sync off** asks what to do: keep the tokens on this device (default) or delete the iCloud copy first, which also removes them from the other devices. That deletion sweeps every record type the app has ever written, including the [legacy one](#the-legacy-autherissyncrecord-type).
+- **Pinning syncs; the manual order does not.** A pin is a property of the code (`OTPCode.isPinned`) and travels like any other edit. The order you drag codes into is per-device, like arranging app icons — the rules live in `Vaultic/TokenOrdering.swift`. Syncing the order would mean a `sortIndex` field, and a single drag would then rewrite many records at once, bumping each `modifiedAt` and letting a concurrent edit on another device silently drop the reorder.
 
 Remote changes arrive via a `CKDatabaseSubscription` silent push (`AppDelegate` → `SyncRemoteNotificationRouter` → `OTPDataStore`), with a foreground sync as the fallback for anything missed.
 
@@ -89,11 +115,23 @@ The container identifier in `Vaultic.entitlements` is tied to the `com.eddington
 Records use the record type **`AutherisToken`** in the private database. In development, CloudKit creates the schema implicitly on the first successful save — no manual setup is needed to run from Xcode. Before shipping, or if `/usr/bin/log` shows `did not find record type: AutherisToken`:
 
 1. Open the CloudKit Console for the container.
-2. Confirm `AutherisToken` exists with fields `modifiedAt` (Date), `deleted` (Int64), `fingerprint` (String), `algorithm` (String), `digits` (Int64), `period` (Int64), plus the encrypted fields `label`, `account`, `secret`, `timerRingHex`. In the app these names live in exactly one place — the nested `CloudKitTokenSyncService.Field` enum, whose `plain` / `encrypted` / `all` lists are the authoritative form of this table. Compare the Console against *that*, not against a copy of this README: a CloudKit field name is a string, so a typo silently creates a new field instead of failing to compile, and a field that should be encrypted but is written plainly ends up readable on Apple's servers.
+2. Confirm `AutherisToken` exists with fields `modifiedAt` (Date), `deleted` (Int64), `fingerprint` (String), `algorithm` (String), `digits` (Int64), `period` (Int64), plus the encrypted fields `label`, `account`, `secret`, `timerRingHex`, `isPinned`. In the app these names live in exactly one place — the nested `CloudKitTokenSyncService.Field` enum, whose `plain` / `encrypted` / `all` lists are the authoritative form of this table. Compare the Console against *that*, not against a copy of this README: a CloudKit field name is a string, so a typo silently creates a new field instead of failing to compile, and a field that should be encrypted but is written plainly ends up readable on Apple's servers.
+
+**Every encrypted field holds a String.** `label`, `account`, `secret`, `timerRingHex` and `isPinned` are all String-typed in the Console — including `isPinned`, which stores `"1"` / `"0"` (see `EncryptedBool`). Give the new field the same type the Console already shows for `timerRingHex` rather than a numeric one for the boolean: that is the only encrypted shape exercised against the production container, and CloudKit fixes a field's type once it exists, so a wrong choice can only be undone by picking a different field name.
 3. **Add a Queryable index on `recordName`** — see below. This is not optional and is the step most likely to be missed.
 4. Deploy the schema from the development environment to production.
 
 A first sync against a container that has never stored a record is expected to find no record type; `CloudKitTokenSyncService` treats that as "no records" rather than an error, so the very first sync still bootstraps.
+
+#### Upgrading a container that already holds records
+
+Adding `isPinned` changes the `AutherisToken` schema, so an existing container needs the new encrypted field deployed (step 2 above covers what to check). Three consequences worth expecting, none of which needs code changes:
+
+- **The field is absent from existing records, which reads as `false`.** `CloudKitTokenSyncService.decode` treats a missing `isPinned` as unpinned, and `OTPCode`'s hand-written decoder does the same for a local token persisted before pinning existed. Nothing has to be back-filled.
+- **The value is a String (`"1"` / `"0"`), not a number.** `EncryptedBool` owns both directions and reads leniently, so an integer-typed field left over from a development experiment still reads correctly rather than reporting every pin as `false`.
+- **`SyncFingerprint`'s canonical version moved from `v1` to `v2`**, because a fingerprint has to see every field the user can change — otherwise toggling a pin would look like "no change" and never sync. Every token's fingerprint therefore differs from the `v1` value its iCloud record still carries, so the first sync after upgrading re-exchanges each record once and settles. That is expected and one-time.
+
+If `isPinned` already exists in your development container with the wrong type, delete the field and let the next save recreate it — CloudKit will not change a field's type in place.
 
 #### The `recordName` index is required
 
@@ -117,18 +155,16 @@ The current app never reads or migrates it — the merge engine only ever sees `
 
 ## Tests
 
-There is no test target in this project yet. The conflict-resolution rules, which are where the interesting correctness lives, are isolated in `Vaultic/Sync/SyncMergeEngine.swift` as a pure enum with no I/O and no clock reads (`now` and `tombstoneRetention` are parameters). To exercise it standalone, compile it with the model files and a small harness:
+`VaulticTests` (XCTest) covers the logic that is easy to get wrong and cheap to assert: the iCloud conflict-resolution rules, the tombstone and Recently-Deleted bookkeeping, pinned-first ordering and drag-to-reorder, `OTPCode`'s backward-compatible decoding, the mirrored preferences, the privacy-shield rules, and `BackupCrypto`. Each of those rule sets lives in a pure, dependency-free type — `SyncMergeEngine`, `SyncTombstoneStore`, `TrashBin`, `TokenOrdering`, `AppPreferences`, `PrivacyShield` — precisely so it can be asserted without a simulator.
 
 ```bash
-REPO=/path/to/Autheris
-WORK=$(mktemp -d)
-cp "$REPO/Vaultic/OTPAlgorithm.swift" "$REPO/Vaultic/OTPCode.swift" \
-   "$REPO/Vaultic/OTPGenerator.swift" "$REPO/Vaultic/Sync/SyncMergeEngine.swift" "$WORK/"
-# add your own main.swift in $WORK, then:
-xcrun swiftc -o "$WORK/checks" "$WORK"/*.swift && "$WORK/checks"
+xcodebuild test -project Vaultic.xcodeproj -scheme Vaultic \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
-Cases worth asserting, all of which follow directly from `SyncMergeEngine.merge`:
+Or press ⌘U in Xcode. The shared `Vaultic` scheme's Test action runs the whole `VaulticTests` target, which is hosted by the app because the tests use `@testable import Vaultic`.
+
+The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`. They are deterministic because `SyncMergeEngine.merge` is pure by construction — no I/O and no clock reads (`now` and `tombstoneRetention` are parameters) — so each case pins both rather than reading the real clock. The rules they assert:
 
 | Case | Expected |
 | --- | --- |
@@ -145,7 +181,7 @@ Cases worth asserting, all of which follow directly from `SyncMergeEngine.merge`
 | Tombstone older than 30 days | Not uploaded, dropped locally, and ignored when seen remotely |
 | Round-trip of the previous outcome | No further work (fixed point) |
 
-`OTPCode`'s hand-written `init(from:)` is what keeps pre-sync JSON decodable; keep a case that decodes JSON with no `modifiedAt` key whenever that type changes.
+`OTPCode`'s hand-written `init(from:)` is what keeps pre-sync JSON decodable; `VaulticTests/OTPCodeCodableTests.swift` holds that case, so keep it passing whenever that type changes. `VaulticTests/BackupCryptoTests.swift` additionally pins the `.autheris` envelope against wrong passwords, tampered ciphertext, and a tampered salt.
 
 ## Installation
 

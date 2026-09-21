@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		A17E570B2F5D320E00198CC7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 18BDC6F52F5D320E00198CC5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 18BDC6FC2F5D320E00198CC5;
+			remoteInfo = Vaultic;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		18BDC6FD2F5D320E00198CC5 /* Vaultic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vaultic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A17E57022F5D320E00198CC7 /* VaulticTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaulticTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -29,10 +40,22 @@
 			path = Vaultic;
 			sourceTree = "<group>";
 		};
+		A17E57062F5D320E00198CC7 /* VaulticTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = VaulticTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		18BDC6FA2F5D320E00198CC5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A17E57042F5D320E00198CC7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -46,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				18BDC6FF2F5D320E00198CC5 /* Vaultic */,
+				A17E57062F5D320E00198CC7 /* VaulticTests */,
 				18BDC6FE2F5D320E00198CC5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -54,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				18BDC6FD2F5D320E00198CC5 /* Vaultic.app */,
+				A17E57022F5D320E00198CC7 /* VaulticTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -83,6 +108,29 @@
 			productReference = 18BDC6FD2F5D320E00198CC5 /* Vaultic.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A17E57012F5D320E00198CC7 /* VaulticTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A17E57092F5D320E00198CC7 /* Build configuration list for PBXNativeTarget "VaulticTests" */;
+			buildPhases = (
+				A17E57032F5D320E00198CC7 /* Sources */,
+				A17E57042F5D320E00198CC7 /* Frameworks */,
+				A17E57052F5D320E00198CC7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A17E570A2F5D320E00198CC7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A17E57062F5D320E00198CC7 /* VaulticTests */,
+			);
+			name = VaulticTests;
+			packageProductDependencies = (
+			);
+			productName = VaulticTests;
+			productReference = A17E57022F5D320E00198CC7 /* VaulticTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -107,6 +155,10 @@
 							};
 						};
 					};
+					A17E57012F5D320E00198CC7 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 18BDC6FC2F5D320E00198CC5;
+					};
 				};
 			};
 			buildConfigurationList = 18BDC6F82F5D320E00198CC5 /* Build configuration list for PBXProject "Vaultic" */;
@@ -124,12 +176,20 @@
 			projectRoot = "";
 			targets = (
 				18BDC6FC2F5D320E00198CC5 /* Vaultic */,
+				A17E57012F5D320E00198CC7 /* VaulticTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		18BDC6FB2F5D320E00198CC5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A17E57052F5D320E00198CC7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -146,7 +206,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A17E57032F5D320E00198CC7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A17E570A2F5D320E00198CC7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 18BDC6FC2F5D320E00198CC5 /* Vaultic */;
+			targetProxy = A17E570B2F5D320E00198CC7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		18BDC7062F5D320F00198CC5 /* Debug */ = {
@@ -358,6 +433,58 @@
 			};
 			name = Release;
 		};
+		A17E57072F5D320E00198CC7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vaultic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vaultic";
+			};
+			name = Debug;
+		};
+		A17E57082F5D320E00198CC7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vaultic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vaultic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -375,6 +502,15 @@
 			buildConfigurations = (
 				18BDC7092F5D320F00198CC5 /* Debug */,
 				18BDC70A2F5D320F00198CC5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A17E57092F5D320E00198CC7 /* Build configuration list for PBXNativeTarget "VaulticTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A17E57072F5D320E00198CC7 /* Debug */,
+				A17E57082F5D320E00198CC7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

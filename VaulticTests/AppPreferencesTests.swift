@@ -1,0 +1,77 @@
+import XCTest
+@testable import Vaultic
+
+/// `AppPreferences` is what carries settings across a reinstall, and its decode
+/// path is the fragile part: `PreferencesStore.restoreIntoUserDefaults` uses
+/// `try?`, so a single unrecognised key would discard every preference at once.
+final class AppPreferencesTests: XCTestCase {
+
+    /// A blob exactly as an earlier release wrote it — no
+    /// `hideCodesWhenScreenCaptured` key.
+    private let blobFromBeforeCaptureProtection = """
+    {
+      "hasCompletedOnboarding": true,
+      "enablePrivacyBlur": false,
+      "hideCodesInAppSwitcher": false,
+      "accentTheme": "purple",
+      "enableAppLock": true,
+      "isICloudSyncEnabled": true
+    }
+    """
+
+    func testDecodesABlobWrittenBeforeTheNewPreferenceExisted() throws {
+        let prefs = try JSONDecoder().decode(AppPreferences.self,
+                                            from: Data(blobFromBeforeCaptureProtection.utf8))
+
+        // Everything that was stored has to survive...
+        XCTAssertTrue(prefs.hasCompletedOnboarding)
+        XCTAssertFalse(prefs.enablePrivacyBlur)
+        XCTAssertFalse(prefs.hideCodesInAppSwitcher)
+        XCTAssertEqual(prefs.accentTheme, "purple")
+        XCTAssertTrue(prefs.enableAppLock)
+        XCTAssertTrue(prefs.isICloudSyncEnabled)
+        // ...and the key that did not exist yet falls back to its secure default
+        // instead of failing the decode and taking the others down with it.
+        XCTAssertTrue(prefs.hideCodesWhenScreenCaptured)
+    }
+
+    func testDecodesAnEmptyBlobToEveryDefault() throws {
+        let prefs = try JSONDecoder().decode(AppPreferences.self, from: Data("{}".utf8))
+
+        XCTAssertEqual(prefs, AppPreferences(hasCompletedOnboarding: false,
+                                             enablePrivacyBlur: true,
+                                             hideCodesInAppSwitcher: true,
+                                             hideCodesWhenScreenCaptured: true,
+                                             accentTheme: "",
+                                             enableAppLock: false,
+                                             isICloudSyncEnabled: false))
+    }
+
+    func testRoundTripPreservesEveryPreference() throws {
+        let original = AppPreferences(hasCompletedOnboarding: true,
+                                      enablePrivacyBlur: false,
+                                      hideCodesInAppSwitcher: false,
+                                      hideCodesWhenScreenCaptured: false,
+                                      accentTheme: "teal",
+                                      enableAppLock: true,
+                                      isICloudSyncEnabled: true)
+
+        let decoded = try JSONDecoder().decode(AppPreferences.self,
+                                               from: JSONEncoder().encode(original))
+
+        XCTAssertEqual(decoded, original)
+    }
+
+    func testUnknownFutureKeysAreIgnoredRatherThanFatal() throws {
+        // A newer build can write keys this one has never heard of; decoding must
+        // not become fatal in that direction either.
+        let future = """
+        { "hasCompletedOnboarding": true, "someFuturePreference": 42 }
+        """
+
+        let prefs = try JSONDecoder().decode(AppPreferences.self, from: Data(future.utf8))
+
+        XCTAssertTrue(prefs.hasCompletedOnboarding)
+        XCTAssertTrue(prefs.hideCodesWhenScreenCaptured)
+    }
+}

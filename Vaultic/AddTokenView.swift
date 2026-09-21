@@ -20,8 +20,21 @@ struct AddTokenView: View {
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var isProcessingImage = false
 
+    /// Only used by the manual-entry form.
+    ///
+    /// Manual entry has nothing to read these from — there is no QR or link — so
+    /// they start at the otpauth spec's defaults and the user can change them. That
+    /// matters for issuers that need something other than SHA-1 and hand you a bare
+    /// setup key, which is the case that prompted this (myGov).
+    @State private var algorithm: OTPAlgorithm = .sha1
+    @State private var digits = 6
+    @State private var period = 30
+
+    /// Account is deliberately optional: plenty of people never fill it in, and the
+    /// edit screen has always allowed it to be blank. Requiring it here only meant
+    /// the token had to be created and then immediately edited to clear it.
     private var isFormValid: Bool {
-        !label.isEmpty && !account.isEmpty && !secret.isEmpty
+        !label.isEmpty && !secret.isEmpty
     }
     
     var body: some View {
@@ -120,7 +133,7 @@ struct AddTokenView: View {
                         Section("Token details") {
                             TextField("Service name", text: $label)
 
-                            TextField("Account", text: $account)
+                            TextField("Account (optional)", text: $account)
                                 .textContentType(.username)
                                 .autocapitalization(.none)
 
@@ -128,6 +141,24 @@ struct AddTokenView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .textContentType(.password)
+                        }
+
+                        Section {
+                            // Defaults to SHA-1, which is what the otpauth spec
+                            // assumes when it says nothing. Only worth changing if
+                            // the service's setup instructions name another one.
+                            Picker("Algorithm", selection: $algorithm) {
+                                ForEach(OTPAlgorithm.allCases, id: \.self) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            }
+
+                            Stepper("Digits: \(digits)", value: $digits, in: 6...10)
+                            Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+                        } header: {
+                            Text("Advanced")
+                        } footer: {
+                            Text("Most services use SHA-1 and 30 seconds. If the service gave you a QR code, scan it instead — the QR carries these settings. Only change the algorithm if your codes are rejected, and your service says which it uses.")
                         }
 
                         Section {
@@ -696,9 +727,9 @@ struct AddTokenView: View {
             label: label,
             account: account,
             secret: secret,
-            algorithm: .sha1, // Default
-            digits: 6, // Default
-            period: 30 // Default
+            algorithm: algorithm,
+            digits: digits,
+            period: period
         )
         
         dataStore.addCode(newCode)

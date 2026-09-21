@@ -61,14 +61,19 @@ struct ChangelogRelease: Identifiable, Sendable {
             changes: [
                 "Redesigned home screen: cleaner token cards with larger issuer icons, glanceable countdowns, and native search.",
                 "Reorganized navigation: Settings is a full-screen hub for Privacy, iCloud Sync, Appearance, Data, Help, and About.",
-                "Add Token is rebuilt with a native form, PhotosPicker for QR screenshots, and standard alerts.",
+                "Add Token and Edit Token are rebuilt as native forms, with PhotosPicker for QR screenshots and standard alerts. Account is optional, and the code on the Edit screen updates live as you change its settings.",
+                "SHA-256 and SHA-512 can now be selected when adding or editing a code, not just SHA-1 — some services (myGov, for example) require SHA-256 and would previously reject every code.",
                 "App Lock with Face ID / Touch ID — locks on launch and after 30 seconds in the background, with passcode fallback.",
-                "Tokens and preferences now live in the Keychain, so your accounts and settings survive reinstalling the app.",
+                "Codes are covered while the screen is being recorded or mirrored to another display, alongside the existing app-switcher and background protection.",
+                "Tokens, preferences, and pending deletions now live in the Keychain, so your accounts and settings survive reinstalling the app — and a code you deleted cannot come back afterwards.",
                 "Password-encrypted backups: AES-GCM files protected by your own password, alongside the existing plain backup option.",
                 "Import from more authenticators: unencrypted Aegis, andOTP, and 2FAS backup files.",
                 "Copied codes and setup keys automatically clear from the clipboard after 60 seconds.",
+                "Pin the codes you use most to the top of the list, and drag the rest into whatever order suits you.",
+                "A deleted code is kept in “Recently Deleted” for 7 days, so a wrong tap is recoverable — restore it, or remove it for good straight away.",
                 "Optional accent tints keep the default Autheris look unless you pick a theme.",
                 "Fresh onboarding that matches the new design, with Reduce Motion support.",
+                "Fixed a crash a malformed setup link or backup file could trigger, by validating a code's digit count and refresh period rather than trusting them.",
                 "Polish pass: dark-mode contrast fixes, Dynamic Type, and accessibility improvements."
             ]
         ),

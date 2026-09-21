@@ -2,13 +2,57 @@ import Foundation
 import CryptoKit
 
 nonisolated struct OTPGenerator {
-    static func generateOTP(secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30) -> String {
+
+    /// The digit count a code is actually generated with.
+    ///
+    /// Callers can pass anything: the value arrives from an `otpauth://` URL or a
+    /// foreign backup and is not validated at every entry point, and tokens saved
+    /// by earlier builds may already hold a bad one. This clamps into a range that
+    /// is both meaningful and representable, so generation can never trap.
+    ///
+    /// The upper bound is 19 rather than the RFC's 8: dynamic truncation yields 31
+    /// bits, so anything up to ten digits is genuinely producible, and `10^19` is
+    /// the largest power of ten that fits the `UInt64` the modulus is computed in.
+    static func effectiveDigits(_ digits: Int) -> Int {
+        min(max(digits, 1), 19)
+    }
+
+    /// The period a code is actually generated with.
+    ///
+    /// A non-positive period is malformed input, and dividing by it traps. It
+    /// falls back to the RFC default, which is also the value essentially every
+    /// issuer uses — so a token whose period was damaged is a 30-second token in
+    /// practice, and the user gets a usable code rather than a crash.
+    static func effectivePeriod(_ period: Int) -> Int {
+        period > 0 ? period : 30
+    }
+
+    /// `10^digits` as an integer.
+    ///
+    /// Deliberately *not* `pow(10, Float(digits))`. That is what this replaced:
+    /// `Float` is inexact past 10^10, and `UInt32(...)` traps as soon as the result
+    /// passes `UInt32.max`, so a token asking for ten digits crashed the app —
+    /// including on every subsequent launch, because the token was already saved.
+    private static func modulus(digits: Int) -> UInt64 {
+        (0..<digits).reduce(UInt64(1)) { value, _ in value * 10 }
+    }
+
+    /// - Parameter now: The moment to generate for. Injectable so the RFC 6238
+    ///   reference vectors can be asserted without waiting for the clock, for the
+    ///   same reason `SyncMergeEngine.merge` takes `now`. Defaulted, so no caller
+    ///   has to know about it.
+    static func generateOTP(secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30, now: Date = Date()) -> String {
         let key = decodeBase32(secret)
-        let counter = UInt64(Date().timeIntervalSince1970 / Double(period))
-        
+        let safeDigits = effectiveDigits(digits)
+        let safePeriod = effectivePeriod(period)
+
+        // `max(0,)` so a pre-1970 date cannot trap converting a negative value to
+        // `UInt64`.
+        let counter = UInt64(max(0, now.timeIntervalSince1970) / Double(safePeriod))
+
         // Convert counter to 8-byte big-endian data
         let counterBytes = withUnsafeBytes(of: counter.bigEndian) { Array($0) }
-        
+
         // Generate HMAC
         let hmac: [UInt8]
         switch algorithm {
@@ -22,18 +66,18 @@ nonisolated struct OTPGenerator {
             let hmacData = HMAC<SHA512>.authenticationCode(for: Data(counterBytes), using: SymmetricKey(data: key))
             hmac = Array(hmacData)
         }
-        
+
         // Dynamic truncation
         let offset = Int(hmac.last! & 0x0F)
         let truncatedHash = ((UInt32(hmac[offset]) & 0x7F) << 24) |
                            ((UInt32(hmac[offset + 1]) & 0xFF) << 16) |
                            ((UInt32(hmac[offset + 2]) & 0xFF) << 8) |
                            (UInt32(hmac[offset + 3]) & 0xFF)
-        
-        let otpValue = truncatedHash % UInt32(pow(10, Float(digits)))
-        
+
+        let otpValue = UInt64(truncatedHash) % modulus(digits: safeDigits)
+
         // Format with leading zeros
-        return String(format: "%0\(digits)d", otpValue)
+        return String(format: "%0\(safeDigits)llu", otpValue)
     }
     
     private static func decodeBase32(_ string: String) -> Data {

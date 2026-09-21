@@ -4,13 +4,17 @@ import Foundation
 /// Syncs tokens through the user's **private** CloudKit database.
 ///
 /// ### Where the secrets live
-/// `label`, `account`, `secret` and `timerRingHex` are written to
+/// `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written to
 /// `record.encryptedValues`, so CloudKit encrypts them end to end with keys Apple
 /// manages on the user's behalf. They are never stored as readable fields, and
 /// the developer cannot read them from the CloudKit dashboard. Only `modifiedAt`,
 /// `deleted`, `fingerprint`, `algorithm`, `digits` and `period` are plain fields —
 /// none of which reveal a secret (`fingerprint` is a SHA-256; see
 /// `SyncFingerprint`).
+///
+/// `isPinned` is not a secret, but it is still a statement about *which accounts
+/// matter to this user*, so it is encrypted alongside the label rather than left
+/// readable on Apple's servers. It must never be written as a plain field.
 ///
 /// ### How records evolve
 /// - Add / edit → the record is saved with a fresh `modifiedAt` and fingerprint.
@@ -34,7 +38,11 @@ import Foundation
 @MainActor
 final class CloudKitTokenSyncService: TokenSyncService {
     /// Container declared by `Vaultic.entitlements`.
-    static let containerIdentifier = "iCloud.com.eddingtontech.autheris"
+    ///
+    /// `nonisolated` because it is read as the default value of `init`'s
+    /// `containerIdentifier` parameter, and a default argument is evaluated
+    /// outside the actor — the same reason `OTPDataStore.syncEnabledKey` is.
+    nonisolated static let containerIdentifier = "iCloud.com.eddingtontech.autheris"
     static let recordType = "AutherisToken"
     static let subscriptionID = "autheris-tokens-changed"
 
@@ -71,13 +79,20 @@ final class CloudKitTokenSyncService: TokenSyncService {
         static let period = "period"
 
         // End-to-end encrypted — read and written via `record.encryptedValues` only.
+        //
+        // Every field here holds a **String**, including the boolean `isPinned`
+        // (see `EncryptedBool`). Keep it that way: this is the only encrypted field
+        // shape proven against the production container, and a CloudKit field's
+        // type is fixed once it exists, so a different type cannot be corrected
+        // later — only replaced with a new field name.
         static let label = "label"
         static let account = "account"
         static let secret = "secret"
         static let timerRingHex = "timerRingHex"
+        static let isPinned = "isPinned"
 
         static let plain = [modifiedAt, deleted, fingerprint, algorithm, digits, period]
-        static let encrypted = [label, account, secret, timerRingHex]
+        static let encrypted = [label, account, secret, timerRingHex, isPinned]
 
         /// The complete field set the `AutherisToken` schema must define.
         static var all: [String] { plain + encrypted }
@@ -392,6 +407,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
             digits: digits,
             period: period,
             timerRingHex: record.encryptedValues[Field.timerRingHex] as? String,
+            // Absent on every record written before pinning existed, which is
+            // exactly what `false` means. See `EncryptedBool` for why this is a
+            // string rather than a number.
+            isPinned: EncryptedBool.value(record.encryptedValues[Field.isPinned]),
             modifiedAt: modifiedAt
         )
         return SyncRecord(id: id,
@@ -422,6 +441,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
             } else {
                 record.encryptedValues[Field.timerRingHex] = nil
             }
+            record.encryptedValues[Field.isPinned] = EncryptedBool.text(token.isPinned) as CKRecordValue
             record[Field.algorithm] = token.algorithm.rawValue as CKRecordValue
             record[Field.digits] = NSNumber(value: token.digits)
             record[Field.period] = NSNumber(value: token.period)

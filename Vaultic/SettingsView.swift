@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var dataStore: OTPDataStore
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
+    @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage(AppLockEnabledKey) private var enableAppLock = false
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
@@ -96,6 +97,9 @@ struct SettingsView: View {
                     Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
                         .toggleStyle(SwitchToggleStyle(tint: .accentColor))
 
+                    Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
+                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+
                     Toggle("Require Face ID / Touch ID", isOn: $enableAppLock)
                         .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                 } header: {
@@ -104,6 +108,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
                         Text("• **Hide codes in app switcher**: Shows a privacy screen instead of your OTP codes when using the app switcher.")
+                        Text("• **Hide codes while recording or mirroring**: Shows a privacy screen while the screen is being recorded or sent to another display.")
                         Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
                     }
                     .font(.caption)
@@ -218,10 +223,23 @@ struct SettingsView: View {
                     } label: {
                         Label("Transfer via QR Code", systemImage: "qrcode")
                     }
+
+                    NavigationLink {
+                        RecentlyDeletedView(dataStore: dataStore)
+                    } label: {
+                        HStack {
+                            Label("Recently Deleted", systemImage: "trash")
+                            Spacer()
+                            if !dataStore.trash.isEmpty {
+                                Text("\(dataStore.trash.count)")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
                 } header: {
                     Text("Data")
                 } footer: {
-                    Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files.")
+                    Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files. Deleted codes stay recoverable on this device for \(TrashBin.retentionDays) days.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .padding(.top, 4)

@@ -130,16 +130,9 @@ struct TokenSecretView: View {
             return
         }
         
-        let updatedCode = OTPCode(
-            id: code.id,
-            label: code.label,
-            account: code.account,
-            secret: secret,
-            algorithm: code.algorithm,
-            digits: code.digits,
-            period: code.period,
-            timerRingHex: code.timerRingHex
-        )
+        // `edited()` keeps every field this screen does not touch — including the
+        // pin, which rebuilding the token by hand used to reset.
+        let updatedCode = code.edited(secret: secret)
         
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
             dataStore.updateCode(updatedCode, at: index)

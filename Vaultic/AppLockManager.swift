@@ -73,20 +73,25 @@ final class AppLockManager: ObservableObject {
         }
 
         context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { [weak self] success, authError in
+            // Bind the weak capture to a plain local *before* the task: the task
+            // body runs concurrently, and reading the closure's own mutable weak
+            // storage from there is what Swift 6 rejects. `AppLockManager` is
+            // main-actor isolated, so the binding is Sendable.
+            let manager = self
             Task { @MainActor in
-                guard let self else { return }
+                guard let manager else { return }
                 if success {
-                    self.unlock()
+                    manager.unlock()
                 } else if let laError = authError as? LAError {
                     switch laError.code {
                     case .userCancel, .systemCancel, .appCancel:
                         // The user dismissed the prompt; leave the lock in place quietly.
                         break
                     default:
-                        self.errorMessage = laError.localizedDescription
+                        manager.errorMessage = laError.localizedDescription
                     }
                 } else {
-                    self.errorMessage = authError?.localizedDescription ?? "Authentication failed."
+                    manager.errorMessage = authError?.localizedDescription ?? "Authentication failed."
                 }
             }
         }

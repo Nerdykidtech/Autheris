@@ -10,6 +10,9 @@ final class OTPDataStore: ObservableObject {
     @Published private(set) var isSyncEnabled = false
     /// Whether iCloud is usable right now, so Settings can explain itself.
     @Published private(set) var isSyncAvailable = false
+    /// The "Recently Deleted" buffer, newest first is applied by the view. Local
+    /// to this device and never synced; see `TrashBin`.
+    @Published private(set) var trash: [TrashBin.Entry] = []
 
     /// `@AppStorage` key shared with Settings. Owned here so the store and the
     /// view cannot drift apart.
@@ -19,7 +22,14 @@ final class OTPDataStore: ObservableObject {
     nonisolated static let syncEnabledKey = "isICloudSyncEnabled"
 
     private let saveKey = "otpCodes"
+    /// Keychain account for the deletion tombstones — and the `UserDefaults` key
+    /// they used to live under, still read once so an upgrade can migrate them.
+    /// One constant for both because it is the same logical item; see
+    /// `SyncTombstoneStore` for why it had to move.
     private let tombstonesKey = "otpSyncTombstones"
+    /// Keychain account for the "Recently Deleted" buffer. Local to this device:
+    /// a delete still writes a tombstone, so it propagates as it always did.
+    private let trashKey = "otpTrash"
     private let backupDirectory: URL
 
     /// Deletion tombstones awaiting propagation, keyed by token UUID string.
@@ -48,6 +58,7 @@ final class OTPDataStore: ObservableObject {
 
         loadCodes()
         loadSyncMetadata()
+        loadTrash()
 
         self.syncService.onStatusChange = { [weak self] status in
             self?.syncStatus = status
@@ -107,10 +118,7 @@ final class OTPDataStore: ObservableObject {
         // Don't let the same token (or the same id) enter twice; SwiftUI's List
         // diffing crashes on duplicate row identities, and a re-added token
         // would otherwise fight with sync.
-        let isDuplicate = codes.contains {
-            $0.id == code.id || ($0.label == code.label && $0.account == code.account)
-        }
-        guard !isDuplicate else { return }
+        guard !TrashBin.collides(code, with: codes) else { return }
 
         codes.append(code)
         // A re-added token must not stay tombstoned, or sync would delete it again.
@@ -133,6 +141,15 @@ final class OTPDataStore: ObservableObject {
         return result
     }
 
+    /// The list the token screen renders: pinned first, then everything else, each
+    /// group in this device's own order.
+    ///
+    /// De-duplicated here rather than in the view, because `move` reorders *this*
+    /// same array — so the offsets SwiftUI hands back always line up with it.
+    var orderedCodes: [OTPCode] {
+        TokenOrdering.displayed(Self.deduplicated(codes))
+    }
+
     /// Deletes the tapped token and any duplicate copies of it — either sharing
     /// the same id or the same label+account. Users see duplicates as "the same
     /// token", so deleting one should remove them all.
@@ -145,12 +162,82 @@ final class OTPDataStore: ObservableObject {
         codes.removeAll {
             $0.id == code.id || ($0.label == code.label && $0.account == code.account)
         }
+        let deletedAt = Date()
         for token in removed {
-            tombstones[token.id.uuidString] = Date()
+            tombstones[token.id.uuidString] = deletedAt
+            // Keep a recoverable copy for this device. The tombstone above still
+            // carries the deletion to the user's other devices straight away —
+            // the trash never delays or softens that.
+            trash.append(TrashBin.Entry(code: token, deletedAt: deletedAt))
         }
         saveCodes()
         persistTombstones()
+        persistTrash()
         scheduleSync()
+    }
+
+    // MARK: - Recently Deleted
+
+    /// Puts a trashed token back.
+    ///
+    /// Returns `.collides` when something already holds the token's id or
+    /// label+account, in which case nothing is changed and the caller should say
+    /// so rather than leaving a silent no-op.
+    @discardableResult
+    func restoreFromTrash(_ entry: TrashBin.Entry) -> TrashBin.RestoreOutcome {
+        let outcome = TrashBin.restore(entry, into: codes, at: Date())
+        guard case .restored(let restored) = outcome else { return outcome }
+
+        codes.append(restored)
+        // The token is live again, so the deletion it was carrying must not be
+        // replayed by the next sync.
+        tombstones.removeValue(forKey: restored.id.uuidString)
+        trash.removeAll { $0.id == entry.id }
+
+        saveCodes()
+        persistTombstones()
+        persistTrash()
+        scheduleSync()
+        return outcome
+    }
+
+    /// Drops one entry from the trash for good.
+    ///
+    /// The tombstone is deliberately left alone: that is what keeps the deletion
+    /// propagated, and the user has now confirmed they meant it.
+    func deletePermanently(_ entry: TrashBin.Entry) {
+        trash.removeAll { $0.id == entry.id }
+        persistTrash()
+    }
+
+    func emptyTrash() {
+        guard !trash.isEmpty else { return }
+        trash.removeAll()
+        persistTrash()
+    }
+
+    /// Drops anything past the retention window. Called on launch, on foreground,
+    /// and when the trash is opened, so an entry cannot outlive its window just
+    /// because the app happened to stay running.
+    func purgeExpiredTrash(now: Date = Date()) {
+        let sweep = TrashBin.sweep(trash, now: now)
+        guard sweep.didExpireAnything else { return }
+        trash = sweep.kept
+        persistTrash()
+    }
+
+    private func loadTrash() {
+        trash = TrashBin.decode(KeychainStore.load(account: trashKey))
+        purgeExpiredTrash()
+    }
+
+    private func persistTrash() {
+        guard let data = TrashBin.encode(trash) else { return }
+        if !KeychainStore.save(data, account: trashKey) {
+            #if DEBUG
+            print("Failed to save the trash to Keychain")
+            #endif
+        }
     }
 
     func updateCode(_ code: OTPCode, at index: Int) {
@@ -160,6 +247,37 @@ final class OTPDataStore: ObservableObject {
         codes[index] = code.modifiedAt > codes[index].modifiedAt ? code : code.edited()
         saveCodes()
         scheduleSync()
+    }
+
+    // MARK: - Pin and order
+
+    /// Pins or unpins a code.
+    ///
+    /// Pinning syncs — it is a property of the code, so it goes through `edited()`
+    /// and gets a fresh `modifiedAt` like any other edit. The result is normalised,
+    /// which is what keeps an unpinned code where the user left it instead of
+    /// teleporting it to the bottom of the list.
+    func setPinned(_ isPinned: Bool, for code: OTPCode) {
+        guard let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
+        guard codes[index].isPinned != isPinned else { return }
+
+        codes[index] = codes[index].edited(isPinned: isPinned)
+        codes = TokenOrdering.displayed(codes)
+        saveCodes()
+        scheduleSync()
+    }
+
+    /// Applies a drag-to-reorder from the token list.
+    ///
+    /// `offsets` and `destination` index `orderedCodes`, which is what the `List`
+    /// was rendered from. Deliberately does **not** call `scheduleSync()`: manual
+    /// order is per-device, and syncing it would mean every drag rewrites many
+    /// records. See `TokenOrdering`.
+    func move(offsets: IndexSet, destination: Int) {
+        let reordered = TokenOrdering.moving(orderedCodes, offsets: offsets, destination: destination)
+        guard reordered != codes else { return }
+        codes = reordered
+        saveCodes()
     }
 
     // MARK: - iCloud Sync
@@ -267,15 +385,31 @@ final class OTPDataStore: ObservableObject {
     }
 
     private func loadSyncMetadata() {
-        if let data = UserDefaults.standard.data(forKey: tombstonesKey),
-           let decoded = try? JSONDecoder().decode([String: Date].self, from: data) {
-            tombstones = decoded
+        let resolution = SyncTombstoneStore.resolve(
+            keychain: KeychainStore.load(account: tombstonesKey),
+            legacyDefaults: UserDefaults.standard.data(forKey: tombstonesKey)
+        )
+        tombstones = resolution.tombstones
+
+        if resolution.removeLegacyCopy {
+            // Finishes the upgrade to Keychain-backed tombstones — or retries it,
+            // if an earlier attempt could not write to the Keychain.
+            persistTombstones()
         }
     }
 
     private func persistTombstones() {
-        if let data = try? JSONEncoder().encode(tombstones) {
-            UserDefaults.standard.set(data, forKey: tombstonesKey)
+        guard let data = SyncTombstoneStore.encode(tombstones) else { return }
+
+        // The legacy `UserDefaults` copy is only dropped once the Keychain write
+        // has succeeded, so a failure leaves the data recoverable instead of
+        // destroying the only copy of a tombstone.
+        if KeychainStore.save(data, account: tombstonesKey) {
+            UserDefaults.standard.removeObject(forKey: tombstonesKey)
+        } else {
+            #if DEBUG
+            print("Failed to save sync tombstones to Keychain")
+            #endif
         }
     }
 

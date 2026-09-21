@@ -11,69 +11,88 @@ struct HomeView: View {
     @State private var searchText = ""
     @State private var showingSettings = false
     
+    /// The codes to show, in display order.
+    ///
+    /// `orderedCodes` already applies pinned-first ordering and de-duplication
+    /// (SwiftUI's `List` diffing asserts when two rows share an id), so this only
+    /// narrows by the search term.
     var filteredCodes: [OTPCode] {
-        let source = searchText.isEmpty
-            ? dataStore.codes
-            : dataStore.codes.filter { code in
-                code.label.localizedCaseInsensitiveContains(searchText) ||
-                code.account.localizedCaseInsensitiveContains(searchText)
-            }
+        let ordered = dataStore.orderedCodes
+        guard !searchText.isEmpty else { return ordered }
 
-        // Defensive: SwiftUI's List diffing asserts when two rows share an id,
-        // so guarantee uniqueness before handing the array to ForEach.
-        var seen = Set<UUID>()
-        return source.filter { seen.insert($0.id).inserted }
+        return ordered.filter { code in
+            code.label.localizedCaseInsensitiveContains(searchText) ||
+            code.account.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    /// Reordering a filtered list cannot be mapped back onto the stored order, so
+    /// dragging is only offered while the whole list is on screen.
+    private var canReorder: Bool {
+        searchText.isEmpty && !filteredCodes.isEmpty
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            if searchText.isEmpty {
+                Image(systemName: "lock.shield")
+                    .font(.system(size: 40))
+                    .foregroundColor(.accentColor)
+                    .opacity(0.5)
+
+                Text("No Tokens Yet")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+
+                Text("Add your first authentication token to get started")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 40))
+                    .foregroundColor(.secondary)
+                    .opacity(0.5)
+
+                Text("No Results")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+
+                Text("No tokens match \"\(searchText)\"")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                    ForEach(filteredCodes) { code in
-                        OTPCardView(code: code, dataStore: dataStore)
-                    }
-
-                    // Empty state when no tokens or no search results
-                    if filteredCodes.isEmpty {
-                        VStack(spacing: 12) {
-                            if searchText.isEmpty {
-                                Image(systemName: "lock.shield")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.accentColor)
-                                    .opacity(0.5)
-
-                                Text("No Tokens Yet")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-
-                                Text("Add your first authentication token to get started")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 40)
-                            } else {
-                                Image(systemName: "magnifyingglass")
-                                    .font(.system(size: 40))
-                                    .foregroundColor(.secondary)
-                                    .opacity(0.5)
-
-                                Text("No Results")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-
-                                Text("No tokens match \"\(searchText)\"")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary.opacity(0.8))
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 40)
-                            }
+            Group {
+                if filteredCodes.isEmpty {
+                    emptyState
+                } else {
+                    // The cards themselves are untouched; `List` is what makes them
+                    // reorderable, and these row modifiers are what keep their
+                    // existing plain look.
+                    List {
+                        ForEach(filteredCodes) { code in
+                            OTPCardView(code: code, dataStore: dataStore)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 50)
+                        .onMove { offsets, destination in
+                            dataStore.move(offsets: offsets, destination: destination)
+                        }
+                        .moveDisabled(!canReorder)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tokens")
             .navigationTitle("Autheris")
@@ -88,7 +107,13 @@ struct HomeView: View {
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    // Reordering needs edit mode; hiding it while a search is
+                    // active avoids a mode that would offer no handles.
+                    if canReorder {
+                        EditButton()
+                    }
+
                     // Add token button on the right (standard iOS pattern)
                     Button(action: {
                         showingAddToken = true
@@ -142,7 +167,7 @@ struct OTPCardView: View {
     
     // Compute warning threshold based on period
     private var warningThreshold: Int {
-        return max(5, Int(Double(code.period) * 0.1667)) // 5 seconds or 1/6 of period
+        return max(5, Int(Double(code.effectivePeriod) * 0.1667)) // 5 seconds or 1/6 of period
     }
 
     private var branding: IssuerBranding {
@@ -161,8 +186,9 @@ struct OTPCardView: View {
     }
 
     private var countdownProgress: Double {
-        guard code.period > 0 else { return 0 }
-        return min(max(Double(remainingSeconds) / Double(code.period), 0), 1)
+        // `effectivePeriod` is always positive, so this cannot divide by zero even
+        // for a token whose stored period is malformed.
+        return min(max(Double(remainingSeconds) / Double(code.effectivePeriod), 0), 1)
     }
     
     var body: some View {
@@ -170,9 +196,19 @@ struct OTPCardView: View {
             IssuerIconView(branding: branding, size: 40)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(code.label)
-                    .font(.subheadline.weight(.semibold))
-                    .lineLimit(1)
+                HStack(spacing: 4) {
+                    if code.isPinned {
+                        Image(systemName: "pin.fill")
+                            .font(.caption2)
+                            .foregroundColor(.accentColor)
+                    }
+
+                    Text(code.label)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(code.isPinned ? "\(code.label), pinned" : code.label)
 
                 if !code.account.isEmpty {
                     Text(code.account)
@@ -226,6 +262,13 @@ struct OTPCardView: View {
         }
         .contextMenu {
             Button {
+                dataStore.setPinned(!code.isPinned, for: code)
+            } label: {
+                Label(code.isPinned ? "Unpin" : "Pin",
+                      systemImage: code.isPinned ? "pin.slash" : "pin")
+            }
+
+            Button {
                 copyToClipboard()
             } label: {
                 Label("Copy", systemImage: "doc.on.doc")
@@ -269,7 +312,7 @@ struct OTPCardView: View {
     
     private func updateRemainingSeconds() {
         let currentTime = Date().timeIntervalSince1970
-        let period = Double(code.period)
+        let period = Double(code.effectivePeriod)
         let elapsed = currentTime.truncatingRemainder(dividingBy: period)
         let newRemainingSeconds = Int(period - elapsed)
         
@@ -308,6 +351,12 @@ struct EditTokenView: View {
     @State private var label: String
     @State private var account: String
     @State private var ringColor: Color
+    /// Seeded from the *effective* values, so opening this screen on a token whose
+    /// stored digits or period is malformed shows something sane, and saving repairs
+    /// it. `OTPGenerator` decides what "effective" means.
+    @State private var algorithm: OTPAlgorithm
+    @State private var digits: Int
+    @State private var period: Int
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
@@ -322,6 +371,9 @@ struct EditTokenView: View {
     private var isDirty: Bool {
         label != code.label ||
         account != code.account ||
+        algorithm != code.algorithm ||
+        digits != code.effectiveDigits ||
+        period != code.effectivePeriod ||
         ringHexForSave() != code.timerRingHex
     }
     
@@ -330,6 +382,11 @@ struct EditTokenView: View {
         self.dataStore = dataStore
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
+        _algorithm = State(initialValue: code.algorithm)
+        // Clamped into the ranges the steppers offer, so a malformed stored value
+        // opens as a usable one rather than leaving a control out of range.
+        _digits = State(initialValue: min(max(code.effectiveDigits, 6), 10))
+        _period = State(initialValue: min(max(code.effectivePeriod, 15), 300))
         let branding = IssuerBranding.forLabel(code.label)
         if let hex = code.timerRingHex, let c = Color(hex: hex) {
             _ringColor = State(initialValue: c)
@@ -340,109 +397,20 @@ struct EditTokenView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Service Name")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        TextField("e.g., GitHub", text: $label)
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Account")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        TextField("e.g., user@example.com", text: $account)
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color(.separator), lineWidth: 1)
-                            )
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                            Text("Countdown ring")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        VStack(alignment: .leading, spacing: 10) {
-                            ColorPicker(selection: $ringColor, supportsOpacity: false) {
-                                HStack(spacing: 14) {
-                                    ZStack {
-                                        Circle()
-                                            .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
-                                            .frame(width: 44, height: 44)
-                                        Circle()
-                                            .stroke(ringColor, lineWidth: 3.5)
-                                            .frame(width: 36, height: 36)
-                                    }
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text("Ring color")
-                                            .font(.body.weight(.medium))
-                                            .foregroundStyle(.primary)
-                                        Text(ringColorMatchesBranding ? "Automatic (service color)" : "Custom color")
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    Spacer(minLength: 8)
-                                }
-                                .contentShape(Rectangle())
-                            }
-                            
-                            HStack {
-                                Spacer(minLength: 0)
-                                Button("Use service default") {
-                                    ringColor = editBranding.color
-                                }
-                                .font(.footnote.weight(.semibold))
-                                .buttonStyle(.bordered)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 40)
-                
-                Spacer()
-                
-                Button(action: {
-                    saveChanges()
-                }) {
-                    Label("Save Changes", systemImage: "checkmark.circle.fill")
-                        .font(.headline)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            Capsule()
-                                .fill(isDirty ? Color.accentColor : Color.accentColor.opacity(0.4))
-                        )
-                        .foregroundColor(.white)
-                }
-                .disabled(!isDirty)
-                .padding(.horizontal, 40)
-                .padding(.bottom, 40)
+            Form {
+                headerSection
+                identitySection
+                codeSection
+                appearanceSection
             }
+            .formStyle(.grouped)
             .navigationTitle("Edit Token")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                // `.cancellationAction` / `.confirmationAction` are SwiftUI's own
+                // placements for a modal, so the system decides the position and the
+                // emphasis of the confirming action rather than me guessing at it.
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         if isDirty {
                             showDiscardConfirmation = true
@@ -450,6 +418,13 @@ struct EditTokenView: View {
                             dismiss()
                         }
                     }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveChanges()
+                    }
+                    .disabled(!isDirty)
                 }
             }
             .interactiveDismissDisabled(isDirty)
@@ -474,7 +449,117 @@ struct EditTokenView: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }
-    
+
+    // MARK: - Sections
+
+    /// Issuer icon and a live code, so the effect of changing the algorithm or the
+    /// period is visible immediately — and so a token that produces no code at all
+    /// is obvious rather than something to discover later.
+    private var headerSection: some View {
+        Section {
+            HStack(spacing: 14) {
+                IssuerIconView(branding: previewBranding, size: 44)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(label.isEmpty ? code.label : label)
+                        .font(.subheadline.weight(.semibold))
+                        .lineLimit(1)
+
+                    if !account.isEmpty {
+                        Text(account)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                // Ticks, so the preview does not sit frozen on a stale code.
+                TimelineView(.periodic(from: .now, by: 1)) { _ in
+                    Text(previewCode)
+                        .font(.system(.body, design: .monospaced).weight(.semibold))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(.vertical, 2)
+        }
+    }
+
+    private var identitySection: some View {
+        Section {
+            TextField("Service name", text: $label)
+
+            TextField("Account (optional)", text: $account)
+                .textContentType(.username)
+                .autocapitalization(.none)
+        }
+    }
+
+    private var codeSection: some View {
+        Section {
+            Picker("Algorithm", selection: $algorithm) {
+                ForEach(OTPAlgorithm.allCases, id: \.self) { option in
+                    Text(option.rawValue).tag(option)
+                }
+            }
+
+            Stepper("Digits: \(digits)", value: $digits, in: 6...10)
+            Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+        } header: {
+            Text("Code")
+        } footer: {
+            Text("Scanning a service's QR code fills these in. If your codes are rejected, check the service's instructions — most use SHA-1 and 30 seconds, but some (myGov, for example) need SHA-256.")
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section {
+            ColorPicker(selection: $ringColor, supportsOpacity: false) {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color(.separator).opacity(0.35), lineWidth: 1)
+                            .frame(width: 36, height: 36)
+                        Circle()
+                            .stroke(ringColor, lineWidth: 3)
+                            .frame(width: 28, height: 28)
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Ring color")
+                        Text(ringColorMatchesBranding ? "Automatic (service color)" : "Custom color")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                }
+                .contentShape(Rectangle())
+            }
+
+            Button("Use service default") {
+                ringColor = editBranding.color
+            }
+            .disabled(ringColorMatchesBranding)
+        } header: {
+            Text("Appearance")
+        }
+    }
+
+    /// The icon for what is currently typed, so a rename updates it.
+    ///
+    /// `editBranding` stays tied to the stored label, because `ringHexForSave` uses
+    /// it to decide whether the chosen color counts as "automatic".
+    private var previewBranding: IssuerBranding {
+        IssuerBranding.forLabel(label.isEmpty ? code.label : label)
+    }
+
+    /// What the code would be with the values currently on screen, rather than the
+    /// stored ones.
+    private var previewCode: String {
+        OTPGenerator.generateOTP(secret: code.secret, algorithm: algorithm,
+                                 digits: digits, period: period)
+    }
+
     private var ringColorMatchesBranding: Bool {
         guard let picked = ringColor.rgbHexStringForStorage(),
               let brand = editBranding.color.rgbHexStringForStorage() else {
@@ -497,15 +582,16 @@ struct EditTokenView: View {
             return
         }
         
-        let updatedCode = OTPCode(
-            id: code.id,
+        // Goes through `edited()` rather than rebuilding the token field by field,
+        // so a field added later cannot be silently reset by this screen — which is
+        // exactly what adding `isPinned` would otherwise have done.
+        let updatedCode = code.edited(
             label: label,
             account: account,
-            secret: code.secret,
-            algorithm: code.algorithm,
-            digits: code.digits,
-            period: code.period,
-            timerRingHex: ringHexForSave()
+            algorithm: algorithm,
+            digits: digits,
+            period: period,
+            timerRingHex: .some(ringHexForSave())
         )
         
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
