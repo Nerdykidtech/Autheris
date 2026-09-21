@@ -73,6 +73,7 @@ struct ChangelogRelease: Identifiable, Sendable {
                 "A deleted code is kept in “Recently Deleted” for 7 days, so a wrong tap is recoverable — restore it, or remove it for good straight away.",
                 "Optional accent tints keep the default Autheris look unless you pick a theme.",
                 "Fresh onboarding that matches the new design, with Reduce Motion support.",
+                "The app is now named Autheris on your home screen, matching the name it uses in the App Store.",
                 "Fixed a crash a malformed setup link or backup file could trigger, by validating a code's digit count and refresh period rather than trusting them.",
                 "Polish pass: dark-mode contrast fixes, Dynamic Type, and accessibility improvements."
             ]
