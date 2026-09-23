@@ -42,6 +42,7 @@ struct ImportConfirmationView: View {
                 Spacer(minLength: 40)
             }
             .frame(maxWidth: .infinity)
+            .readableWidth(ReadableWidth.prose)
             .frame(height: targetHeight, alignment: .top)
             .background(
                 Color(.systemBackground)

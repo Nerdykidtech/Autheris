@@ -176,4 +176,87 @@ final class TokenOrderingTests: XCTestCase {
                            "from \(from) left the list un-normalised")
         }
     }
+
+    // MARK: - Moving one code by identity (the iPad grid)
+
+    func testACodeDroppedOnTheFirstCardGoesToTheTop() {
+        let tokens = [token("A"), token("B"), token("C")]
+
+        let moved = TokenOrdering.moving(tokens, id: tokens[2].id, to: 0)
+
+        XCTAssertEqual(labels(moved), ["C", "A", "B"])
+    }
+
+    func testACodeDroppedPastTheLastCardGoesToTheBottom() {
+        let tokens = [token("A"), token("B"), token("C")]
+
+        let moved = TokenOrdering.moving(tokens, id: tokens[0].id, to: 3)
+
+        XCTAssertEqual(labels(moved), ["B", "C", "A"])
+    }
+
+    func testDroppingOnTheTrailingHalfOfACardLandsJustAfterIt() {
+        let tokens = [token("A"), token("B"), token("C")]
+
+        // "On the card at index 0, trailing half" is index 1.
+        let moved = TokenOrdering.moving(tokens, id: tokens[2].id, to: 1)
+
+        XCTAssertEqual(labels(moved), ["A", "C", "B"])
+    }
+
+    func testDroppingACodeOntoItsOwnCardChangesNothing() {
+        let tokens = [token("A"), token("B"), token("C")]
+
+        // Its own leading half, then its own trailing half.
+        XCTAssertEqual(labels(TokenOrdering.moving(tokens, id: tokens[1].id, to: 1)), ["A", "B", "C"])
+        XCTAssertEqual(labels(TokenOrdering.moving(tokens, id: tokens[1].id, to: 2)), ["A", "B", "C"])
+    }
+
+    func testACodeCanLandInTheColumnItCameFromOrTheOtherOne() {
+        // The grid fills row by row, so displayed indices 0 and 1 are the two
+        // cards of the first row: index 1 is the second column.
+        let tokens = [token("A"), token("B"), token("C"), token("D")]
+
+        // D dragged from the second row onto the leading half of B.
+        let intoFirstColumn = TokenOrdering.moving(tokens, id: tokens[3].id, to: 1)
+        // C dragged out of the first column, onto the trailing half of B.
+        let intoSecondColumn = TokenOrdering.moving(tokens, id: tokens[2].id, to: 2)
+
+        XCTAssertEqual(labels(intoFirstColumn), ["A", "D", "B", "C"])
+        XCTAssertEqual(labels(intoSecondColumn), ["A", "B", "C", "D"])
+    }
+
+    func testAnUnknownCodeIsIgnored() {
+        let tokens = [token("A"), token("B")]
+
+        XCTAssertEqual(labels(TokenOrdering.moving(tokens, id: UUID(), to: 0)), ["A", "B"])
+    }
+
+    func testACodeDroppedAboveAPinStillSettlesBelowIt() {
+        let tokens = [token("Pinned", pinned: true), token("A"), token("B")]
+
+        let moved = TokenOrdering.moving(tokens, id: tokens[2].id, to: 0)
+
+        XCTAssertEqual(labels(moved), ["Pinned", "B", "A"])
+    }
+
+    /// The same property the offsets path is held to: whatever an id-addressed
+    /// move is aimed at, it can neither lose nor duplicate a code.
+    func testEveryIdAddressedMoveKeepsTheSameSetOfCodes() {
+        let tokens = [token("A"), token("B", pinned: true), token("C"), token("D")]
+        let originalIDs = Set(tokens.map(\.id))
+
+        for code in tokens {
+            for destination in 0...tokens.count {
+                let moved = TokenOrdering.moving(tokens, id: code.id, to: destination)
+
+                XCTAssertEqual(moved.count, tokens.count,
+                               "\(code.label) to \(destination) changed the count")
+                XCTAssertEqual(Set(moved.map(\.id)), originalIDs,
+                               "\(code.label) to \(destination) changed which codes are present")
+                XCTAssertEqual(labels(moved), labels(TokenOrdering.displayed(moved)),
+                               "\(code.label) to \(destination) left the list un-normalised")
+            }
+        }
+    }
 }

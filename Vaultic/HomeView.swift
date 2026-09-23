@@ -5,6 +5,10 @@ import UIKit
 
 struct HomeView: View {
     @EnvironmentObject private var dataStore: OTPDataStore
+    /// Whether the grid is in its rearranging mode — the state `Edit` and `Done`
+    /// switch on the iPad, where the grid is not a `List` and so has no edit mode
+    /// of its own to inherit.
+    @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -70,67 +74,131 @@ struct HomeView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Group {
-                if filteredCodes.isEmpty {
-                    emptyState
-                } else {
-                    // The cards themselves are untouched; `List` is what makes them
-                    // reorderable, and these row modifiers are what keep their
-                    // existing plain look.
-                    List {
-                        ForEach(filteredCodes) { code in
-                            OTPCardView(code: code, dataStore: dataStore)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
+        // Settings is a full-screen hub on iPhone: it takes over the display and
+        // carries its own Done button. Doing the same on an iPad is heavier than
+        // the platform asks of a modal, so there it opens as a sheet, at the
+        // system's form-sheet size.
+        if AdaptiveLayout.isIPad {
+            tokenList.sheet(isPresented: $showingSettings) {
+                SettingsView(dataStore: dataStore)
+            }
+        } else {
+            tokenList.fullScreenCover(isPresented: $showingSettings) {
+                SettingsView(dataStore: dataStore)
+            }
+        }
+    }
+
+    /// The iPad grid: two cards per row, in a `ScrollView` rather than a `List`.
+    ///
+    /// `List` is what makes the one-column list reorderable, but its drag moves a
+    /// whole row — and in a grid a row is two codes. So the grid does its own
+    /// dragging, one card at a time.
+    private func cardGrid(columns: Int, rearranging: Bool) -> some View {
+        ScrollView {
+            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+        }
+        .readableWidth(TokenGrid.maximumContentWidth)
+    }
+
+    /// The list as it has always been: one card per row, reordered by `List`'s own
+    /// drag — which moves exactly one code, because a row is one code.
+    private func singleColumnList() -> some View {
+        List {
+            ForEach(filteredCodes) { code in
+                OTPCardView(code: code, dataStore: dataStore)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
+            .onMove { offsets, destination in
+                dataStore.move(offsets: offsets, destination: destination)
+            }
+            .moveDisabled(!canReorder)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+    }
+
+    /// How many cards fit across, once the grid is capped at the width it draws in.
+    private func columns(forWidth width: CGFloat) -> Int {
+        TokenGrid.columns(forWidth: min(width, TokenGrid.maximumContentWidth))
+    }
+
+    private func isGridLayout(width: CGFloat) -> Bool {
+        columns(forWidth: width) > 1
+    }
+
+    /// The bar's own contents.
+    ///
+    /// The reorder control differs by layout, deliberately. `EditButton` drives
+    /// the edit mode a `List` provides, and the grid is not a `List` — tapping it
+    /// there did nothing at all. The grid therefore has a button and a flag of its
+    /// own.
+    @ToolbarContentBuilder
+    private func toolbarContent(width: CGFloat) -> some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                showingSettings = true
+            } label: {
+                Image(systemName: "gear")
+                    .font(.title3)
+            }
+        }
+
+        ToolbarItemGroup(placement: .navigationBarTrailing) {
+            // Reordering is hidden while a search is active, which avoids a mode
+            // that would offer nothing to rearrange.
+            if canReorder {
+                if isGridLayout(width: width) {
+                    Button(isRearrangingGrid ? "Done" : "Edit") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isRearrangingGrid.toggle()
                         }
-                        .onMove { offsets, destination in
-                            dataStore.move(offsets: offsets, destination: destination)
-                        }
-                        .moveDisabled(!canReorder)
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
+                } else {
+                    EditButton()
                 }
+            }
+
+            // Add token button on the right (standard iOS pattern)
+            Button(action: {
+                showingAddToken = true
+            }) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.accentColor)
+            }
+        }
+    }
+
+    private var tokenList: some View {
+        NavigationStack {
+            // The width decides the layout: two cards across, or the one-column
+            // list. The grid caps and centres itself, and the toolbar needs the
+            // same answer, so it is built in here too.
+            GeometryReader { proxy in
+                Group {
+                    if filteredCodes.isEmpty {
+                        emptyState
+                    } else if isGridLayout(width: proxy.size.width) {
+                        cardGrid(columns: columns(forWidth: proxy.size.width),
+                                 rearranging: isRearrangingGrid && canReorder)
+                    } else {
+                        singleColumnList()
+                    }
+                }
+                .toolbar { toolbarContent(width: proxy.size.width) }
             }
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tokens")
             .navigationTitle("Autheris")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                            .font(.title3)
-                    }
-                }
-                
-                ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    // Reordering needs edit mode; hiding it while a search is
-                    // active avoids a mode that would offer no handles.
-                    if canReorder {
-                        EditButton()
-                    }
-
-                    // Add token button on the right (standard iOS pattern)
-                    Button(action: {
-                        showingAddToken = true
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                            .foregroundColor(.accentColor)
-                    }
-                }
-            }
             .sheet(isPresented: $showingAddToken) {
                 AddTokenView(dataStore: dataStore, importResult: $importResult)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
-            }
-            .fullScreenCover(isPresented: $showingSettings) {
-                SettingsView(dataStore: dataStore)
             }
             .alert(
                 Text(importResult?.title ?? "Import"),
@@ -151,9 +219,158 @@ struct HomeView: View {
     }
 }
 
+/// The iPad grid of cards, and the drag that rearranges it.
+///
+/// While the grid is being rearranged each card carries the same reorder control
+/// `List` draws on an iPhone row, and the grid rearranges *under the finger*: as a
+/// carried card passes over another slot, the codes around it move out of the way,
+/// and letting go settles it into place. That is the iPhone behaviour, at one card
+/// per gesture rather than one row.
+private struct TokenGridView: View {
+    let codes: [OTPCode]
+    let columns: Int
+    let rearranging: Bool
+
+    @EnvironmentObject private var dataStore: OTPDataStore
+
+    /// The grid's own coordinate space. A drag is measured against the grid rather
+    /// than against the card it started on, so a card's offset can be computed from
+    /// where its slot is — which changes as the grid rearranges.
+    static let coordinateSpace = "tokenGrid"
+
+    /// The card under the finger.
+    @State private var draggedID: UUID?
+    /// Where the finger is, in `coordinateSpace`.
+    @State private var finger: CGPoint = .zero
+    /// Where on the card the finger took hold, so picking it up does not make it jump.
+    @State private var grabOffset: CGSize = .zero
+    /// The size of one cell, measured from the first card that reports it. Every
+    /// cell is the same size, which is what makes the slot maths exact.
+    @State private var cellSize: CGSize = .zero
+
+    private var spacing: CGFloat { TokenGrid.cardSpacing }
+
+    var body: some View {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: spacing), count: columns),
+            spacing: spacing
+        ) {
+            ForEach(codes) { code in
+                cell(code)
+            }
+        }
+        .coordinateSpace(name: Self.coordinateSpace)
+    }
+
+    private func cell(_ code: OTPCode) -> some View {
+        let isDragged = draggedID == code.id
+
+        return OTPCardView(code: code, dataStore: dataStore, isRearranging: rearranging)
+            .overlay(alignment: .trailing) {
+                if rearranging {
+                    grabber(for: code)
+                }
+            }
+            .onGeometryChange(for: CGSize.self) { proxy in
+                proxy.size
+            } action: { size in
+                if cellSize != size { cellSize = size }
+            }
+            .scaleEffect(isDragged ? 1.04 : 1)
+            .shadow(color: .black.opacity(isDragged ? 0.18 : 0),
+                    radius: isDragged ? 14 : 0,
+                    y: isDragged ? 8 : 0)
+            .offset(isDragged ? offsetOfDraggedCard() : .zero)
+            .transaction { transaction in
+                // The carried card has to track the finger exactly, so its own
+                // movement is never animated — while everything it displaces is.
+                if isDragged { transaction.animation = nil }
+            }
+            .zIndex(isDragged ? 1 : 0)
+    }
+
+    /// The reorder control — the same grabber `List` draws on an iPhone row.
+    ///
+    /// The drag is offered here and nowhere else, so a finger on the rest of a card
+    /// still scrolls the grid.
+    private func grabber(for code: OTPCode) -> some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 17, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 36, height: 44)
+            .contentShape(Rectangle())
+            .padding(.trailing, 2)
+            .gesture(dragToReorder(code))
+            .accessibilityLabel("Reorder \(code.label)")
+    }
+
+    private func dragToReorder(_ code: OTPCode) -> some Gesture {
+        DragGesture(minimumDistance: 1, coordinateSpace: .named(Self.coordinateSpace))
+            .onChanged { value in
+                if draggedID != code.id, let index = currentIndex(of: code.id) {
+                    // Picked up. Remember where the finger is on the card so it
+                    // carries on from there rather than snapping to the centre.
+                    draggedID = code.id
+                    let origin = origin(ofIndex: index)
+                    grabOffset = CGSize(width: value.startLocation.x - origin.x,
+                                        height: value.startLocation.y - origin.y)
+                }
+
+                finger = value.location
+
+                let slot = TokenGrid.slotIndex(at: value.location,
+                                               cellSize: cellSize,
+                                               columns: columns,
+                                               spacing: spacing,
+                                               count: codes.count)
+                if let current = currentIndex(of: code.id), current != slot {
+                    let destination = TokenGrid.insertionIndex(hoveringSlot: slot,
+                                                               liftedFrom: current)
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) {
+                        dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
+                    }
+                }
+            }
+            .onEnded { _ in
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    draggedID = nil
+                }
+            }
+    }
+
+    // MARK: - Grid geometry
+
+    private func currentIndex(of id: UUID) -> Int? {
+        codes.firstIndex { $0.id == id }
+    }
+
+    /// The top-left of the slot at `index`, in `coordinateSpace`.
+    private func origin(ofIndex index: Int) -> CGPoint {
+        CGPoint(
+            x: CGFloat(index % columns) * (cellSize.width + spacing),
+            y: CGFloat(index / columns) * (cellSize.height + spacing)
+        )
+    }
+
+    /// How far the carried card is drawn from its slot: enough to sit under the
+    /// finger, wherever its slot has moved to.
+    private func offsetOfDraggedCard() -> CGSize {
+        guard let id = draggedID, let index = currentIndex(of: id) else { return .zero }
+        let slot = origin(ofIndex: index)
+        return CGSize(width: finger.x - grabOffset.width - slot.x,
+                      height: finger.y - grabOffset.height - slot.y)
+    }
+}
+
 struct OTPCardView: View {
     let code: OTPCode
     let dataStore: OTPDataStore
+    /// `true` while this card is being rearranged in the iPad grid.
+    ///
+    /// Tapping it to copy, or holding it for its menu, would then compete with the
+    /// drag that is the whole point of the mode, so in it the card answers only to
+    /// being picked up.
+    var isRearranging: Bool = false
     
     @State private var remainingSeconds: Int = 30
     @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -190,10 +407,87 @@ struct OTPCardView: View {
         // for a token whose stored period is malformed.
         return min(max(Double(remainingSeconds) / Double(code.effectivePeriod), 0), 1)
     }
-    
+
+    // MARK: - Sizing
+
+    /// The card is drawn at iPhone size by default and given a little more room in
+    /// the iPad grid, where it fills a wider column and is read from further away.
+    private var iconSize: CGFloat { AdaptiveLayout.isIPad ? 44 : 40 }
+    private var codeTextStyle: Font.TextStyle { AdaptiveLayout.isIPad ? .title : .title2 }
+    private var countdownWidth: CGFloat { AdaptiveLayout.isIPad ? 84 : 56 }
+    private var verticalPadding: CGFloat { AdaptiveLayout.isIPad ? 14 : 12 }
+
     var body: some View {
+        card
+            .sheet(isPresented: $showEditSheet) {
+                EditTokenView(code: code, dataStore: dataStore)
+            }
+            .sheet(isPresented: $showSecretSheet) {
+                TokenSecretView(code: code, dataStore: dataStore)
+            }
+            .onAppear {
+                updateRemainingSeconds()
+            }
+            .onReceive(timer) { _ in
+                updateRemainingSeconds()
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
+            .animation(.easeInOut(duration: 0.2), value: isCopied)
+    }
+
+    /// The card as the user sees it, with the two things that depend on what it is
+    /// for: normally tapping copies the code and a long press opens its menu, while
+    /// in the grid's rearranging mode it is picked up and dropped instead.
+    @ViewBuilder
+    private var card: some View {
+        if isRearranging {
+            surface
+        } else {
+            surface
+                .onTapGesture {
+                    // Tap to copy with haptic feedback
+                    copyToClipboard()
+                }
+                .contextMenu {
+                    Button {
+                        dataStore.setPinned(!code.isPinned, for: code)
+                    } label: {
+                        Label(code.isPinned ? "Unpin" : "Pin",
+                              systemImage: code.isPinned ? "pin.slash" : "pin")
+                    }
+
+                    Button {
+                        copyToClipboard()
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc")
+                    }
+
+                    Button {
+                        showSecretSheet = true
+                    } label: {
+                        Label("View Secret", systemImage: "key")
+                    }
+
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+
+                    Button(role: .destructive) {
+                        // Haptic feedback for delete action
+                        deleteHaptic.notificationOccurred(.warning)
+                        deleteToken()
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+        }
+    }
+
+    private var surface: some View {
         HStack(spacing: 12) {
-            IssuerIconView(branding: branding, size: 40)
+            IssuerIconView(branding: branding, size: iconSize)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
@@ -227,13 +521,13 @@ struct OTPCardView: View {
                         .foregroundColor(.accentColor)
                 } else {
                     Text(code.currentCode)
-                        .font(.system(.title2, design: .monospaced).weight(.bold))
+                        .font(.system(codeTextStyle, design: .monospaced).weight(.bold))
                         .foregroundColor(isExpiring ? .red : .primary)
                 }
 
                 HStack(spacing: 6) {
                     ProgressView(value: countdownProgress)
-                        .frame(width: 56)
+                        .frame(width: countdownWidth)
                         .tint(isExpiring ? .red : timerRingColor)
 
                     Text("\(remainingSeconds)s")
@@ -242,8 +536,15 @@ struct OTPCardView: View {
                 }
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        // Fills the column it is given, so the card's background reaches the edges
+        // of its cell in the iPad grid. It was already full width on iPhone, where
+        // the row is the display.
+        .frame(maxWidth: .infinity)
+        .padding(.leading, 16)
+        // While rearranging, the card steps in from the trailing edge to leave the
+        // reorder grabber its own space.
+        .padding(.trailing, isRearranging ? TokenGrid.grabberSpace : 16)
+        .padding(.vertical, verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
@@ -256,58 +557,6 @@ struct OTPCardView: View {
                     lineWidth: isExpiring ? 1 : 0.5
                 )
         )
-        .onTapGesture {
-            // Tap to copy with haptic feedback
-            copyToClipboard()
-        }
-        .contextMenu {
-            Button {
-                dataStore.setPinned(!code.isPinned, for: code)
-            } label: {
-                Label(code.isPinned ? "Unpin" : "Pin",
-                      systemImage: code.isPinned ? "pin.slash" : "pin")
-            }
-
-            Button {
-                copyToClipboard()
-            } label: {
-                Label("Copy", systemImage: "doc.on.doc")
-            }
-
-            Button {
-                showSecretSheet = true
-            } label: {
-                Label("View Secret", systemImage: "key")
-            }
-
-            Button {
-                showEditSheet = true
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-
-            Button(role: .destructive) {
-                // Haptic feedback for delete action
-                deleteHaptic.notificationOccurred(.warning)
-                deleteToken()
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-        .sheet(isPresented: $showEditSheet) {
-            EditTokenView(code: code, dataStore: dataStore)
-        }
-        .sheet(isPresented: $showSecretSheet) {
-            TokenSecretView(code: code, dataStore: dataStore)
-        }
-        .onAppear {
-            updateRemainingSeconds()
-        }
-        .onReceive(timer) { _ in
-            updateRemainingSeconds()
-        }
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
-        .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
     
     private func updateRemainingSeconds() {

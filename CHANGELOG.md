@@ -4,6 +4,13 @@ All notable changes to **Autheris** are documented in this file. Newest first.
 
 This file mirrors the in-app changelog in [`Vaultic/ChangelogView.swift`](Vaultic/ChangelogView.swift) and the App Store release notes.
 
+## [2.1] — September 2026
+
+- Autheris now runs on iPad as well as iPhone. Your codes, sync, and settings are unchanged — the app is simply built for the larger screen too.
+- The token list is a grid on iPad — two codes per row, with a larger code and countdown on each card — instead of a single column stretched across the screen.
+- Tap Edit and drag a card by its grabber handle — the same control as on iPhone. The other codes move out of the way as you carry one past them, and it settles where you let go.
+- Onboarding, the import summary, and Settings are sized for the larger screen rather than stretched across it.
+
 ## [2.0] — September 2026
 
 - Redesigned home screen: cleaner token cards with larger issuer icons, glanceable countdowns, and native search.

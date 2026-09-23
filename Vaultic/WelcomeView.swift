@@ -72,6 +72,7 @@ struct WelcomeView: View {
                     pageDots
                     navigationButtons
                 }
+                .readableWidth(ReadableWidth.prose)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 40)
             }
@@ -106,6 +107,7 @@ struct WelcomeView: View {
             Spacer()
             Spacer()
         }
+        .readableWidth(ReadableWidth.prose)
         .padding(.horizontal, 32)
     }
 
@@ -124,6 +126,7 @@ struct WelcomeView: View {
                     FeatureRow(feature: feature)
                 }
             }
+            .readableWidth(ReadableWidth.prose)
             .padding(.horizontal, 24)
             .padding(.top, 24)
             .padding(.bottom, 24)
@@ -168,6 +171,7 @@ struct WelcomeView: View {
 
             Spacer()
         }
+        .readableWidth(ReadableWidth.prose)
     }
 
     // MARK: - Bottom controls

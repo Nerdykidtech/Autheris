@@ -37,6 +37,18 @@ nonisolated enum TokenOrdering {
         displayed(moved(displayed(tokens), offsets: offsets, destination: destination))
     }
 
+    /// Moves one code to `destination`, an insertion index into `displayed(tokens)`.
+    ///
+    /// The iPad grid picks up a single card rather than a whole row, so the move it
+    /// performs is addressed by the code that was dragged. `destination` counts in
+    /// the array the caller rendered (`displayed`), which is what makes dropping a
+    /// card onto the first column the same thing as dropping it at the start of the
+    /// list. A code that is not in `tokens` leaves everything alone.
+    static func moving(_ tokens: [OTPCode], id: UUID, to destination: Int) -> [OTPCode] {
+        guard let from = displayed(tokens).firstIndex(where: { $0.id == id }) else { return tokens }
+        return moving(tokens, offsets: IndexSet(integer: from), destination: destination)
+    }
+
     /// `Array.move(fromOffsets:toOffset:)` semantics, implemented here so this
     /// file needs no SwiftUI import.
     ///

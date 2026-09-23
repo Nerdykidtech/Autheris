@@ -280,6 +280,20 @@ final class OTPDataStore: ObservableObject {
         saveCodes()
     }
 
+    /// Applies a drag-to-reorder of one card from the iPad grid.
+    ///
+    /// The grid picks up a single card rather than a whole row, so the move is
+    /// addressed by the id the drag carried rather than by offsets, and
+    /// `destination` is where it was dropped in `orderedCodes` — the same array
+    /// `move(offsets:destination:)` is addressed in. Like that call, this
+    /// deliberately does not sync: manual order is per-device.
+    func moveCode(withID id: UUID, toDisplayedIndex destination: Int) {
+        let reordered = TokenOrdering.moving(orderedCodes, id: id, to: destination)
+        guard reordered != codes else { return }
+        codes = reordered
+        saveCodes()
+    }
+
     // MARK: - iCloud Sync
 
     /// Turns sync on or off. Local tokens are never modified by this call.
