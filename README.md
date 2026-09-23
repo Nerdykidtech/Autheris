@@ -1,25 +1,25 @@
 # Autheris
 
 <p align="center">
-  <img src="https://eddington.tech/autheris/og-image.png" alt="Autheris - Secure 2FA Token Manager for iOS" width="600">
+  <img src="https://eddington.tech/autheris/og-image.png" alt="Autheris - Secure 2FA Token Manager for iOS and macOS" width="600">
 </p>
 
 <p align="center">
   <a href="https://apps.apple.com/app/autheris">
     <img src="https://img.shields.io/badge/Download_on_the_App_Store-0D96F6?style=for-the-badge&logo=apple&logoColor=white" alt="Download on the App Store">
   </a>
-  <img src="https://img.shields.io/badge/iOS-16.0%2B-000000?style=for-the-badge&logo=ios" alt="iOS 16.0+">
+  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%20%7C%20macOS%2026.0%2B-000000?style=for-the-badge&logo=apple" alt="iOS, iPadOS and macOS 26.0+">
   <img src="https://img.shields.io/badge/SwiftUI-FA7343?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
 </p>
 
-**Autheris** is a secure, privacy-focused two-factor authentication (2FA) token manager for iOS. Built with SwiftUI and designed with zero-knowledge architecture — your tokens never leave your device unless you explicitly choose to export them or turn on iCloud Sync.
+**Autheris** is a secure, privacy-focused two-factor authentication (2FA) token manager for iPhone, iPad, and Mac. Built with SwiftUI and designed with zero-knowledge architecture — your tokens never leave your device unless you explicitly choose to export them or turn on iCloud Sync.
 
 ## Features
 
 - 🔐 **Privacy-First Design**: Blur app content when backgrounded, hide codes in app switcher, and cover them while the screen is being recorded or mirrored
 - 👁️ **Setup Key Access**: View, copy, or edit a token's secret — masked by default, tap to reveal
 - ☁️ **Optional iCloud Sync**: Off by default. When enabled, tokens sync across your own devices through your private iCloud database, with secret keys end-to-end encrypted
-- 📱 **iOS Native**: Built with SwiftUI for the best native experience
+- 📱 **Native Everywhere**: One SwiftUI codebase for iPhone, iPad, and Mac — no Catalyst, no "Designed for iPad"
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
 - 📤 **Export & Backup**: Local backup files and QR exports you control (stored in the app sandbox, protected by the device passcode, not additionally encrypted)
 - 📥 **Easy Migration**: Import from Google Authenticator
@@ -33,7 +33,7 @@
 - **Language**: Swift 5.9+
 - **Framework**: SwiftUI
 - **Architecture**: MVVM with Combine
-- **Storage**: JSON in the iOS Keychain (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`). See [Security](#security) for what this does and does not protect
+- **Storage**: JSON in the Keychain (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`) — the data protection keychain on macOS, via `kSecUseDataProtectionKeychain`. See [Security](#security) for what this does and does not protect
 - **Sync**: CloudKit private database (optional, opt-in per device)
 - **Backend**: Cloudflare Workers (optional, used for issuer logo lookups only)
 
@@ -162,7 +162,14 @@ xcodebuild test -project Vaultic.xcodeproj -scheme Vaultic \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
-Or press ⌘U in Xcode. The shared `Vaultic` scheme's Test action runs the whole `VaulticTests` target, which is hosted by the app because the tests use `@testable import Vaultic`.
+On a Mac the same suite runs natively if you pass signing:
+
+```bash
+xcodebuild test -project Vaultic.xcodeproj -scheme Vaultic \
+  -destination 'platform=macOS' -allowProvisioningUpdates
+```
+
+Or press ⌘U in Xcode. The shared `Vaultic` scheme's Test action runs the whole `VaulticTests` target, which is hosted by the app because the tests use `@testable import Vaultic`. Note that the macOS run needs a real Mac provisioning profile rather than `CODE_SIGNING_ALLOWED=NO`: the CloudKit container is created eagerly at launch, and CloudKit aborts the process when `com.apple.developer.icloud-services` is missing, which takes the test host down with it.
 
 The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`. They are deterministic because `SyncMergeEngine.merge` is pure by construction — no I/O and no clock reads (`now` and `tombstoneRetention` are parameters) — so each case pins both rather than reading the real clock. The rules they assert:
 
@@ -183,6 +190,80 @@ The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`.
 
 `OTPCode`'s hand-written `init(from:)` is what keeps pre-sync JSON decodable; `VaulticTests/OTPCodeCodableTests.swift` holds that case, so keep it passing whenever that type changes. `VaulticTests/BackupCryptoTests.swift` additionally pins the `.autheris` envelope against wrong passwords, tampered ciphertext, and a tampered salt.
 
+## macOS
+
+Autheris is one Xcode target (`Vaultic`) that builds for iPhone, iPad, and Mac — `SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx"`. The Mac app is a real AppKit/SwiftUI app, not Mac Catalyst and not "Designed for iPad", so it gets native window and menu-bar behaviour and the roomy token grid the iPad uses. Mac-only build settings are scoped with `[sdk=macosx*]`, and the Mac has its own entitlements file (`Vaultic/Vaultic-macOS.entitlements`), so the iOS build is untouched.
+
+Most of the source is shared. The platform differences are named once, in `Vaultic/Platform/`, rather than branched at every call site:
+
+| File | What it covers |
+| --- | --- |
+| `PlatformImage.swift` | `PlatformImage`/`PlatformColor` (`UIImage`/`NSImage`, `UIColor`/`NSColor`), `Image(platformImage:)`, PNG encoding and `CGImage` bridging |
+| `PlatformSemanticColors.swift` | AppKit spellings for `NSColor.systemBackground`, `.separator`, `.secondarySystemBackground`, `.secondarySystemGroupedBackground` |
+| `PlatformNavigation.swift` | Navigation titles, sheet sizing (macOS has no `presentationDetents`), `fullScreenCover`, search placement, list style, toolbar placements, AutoFill and keyboard hints || `PlatformFeedback.swift` | `Haptics` — a no-op on macOS, which has no haptic engine |
+| `PlatformShareSheet.swift` | `UIActivityViewController` on iOS, `NSSharingServicePicker` on the Mac |
+| `PlatformLifecycle.swift` | App-activation notification names, mapping iOS background/foreground onto macOS hide/unhide |
+| `PlatformApplication.swift` | Machine model and OS version for the support template, the camera privacy deep-link, in-app-mail availability |
+| `WindowCaptureExclusion.swift` | Excludes the window from capture on macOS; a no-op on iOS, which can detect capture instead |
+
+Three behaviour differences are worth knowing about, because they are deliberate rather than oversights:
+
+- **Screen-capture protection works differently, and is stronger on the Mac.** iOS *detects* recording (`UIScreen.isCaptured`) and reacts; macOS offers no such signal, because ScreenCaptureKit tells the capturer and not the captee. So the Mac does not try to detect anything — it excludes its windows from capture outright via `NSWindow.sharingType = .none` while "Hide codes when screen captured" is on. The trade-off, stated plainly: that also keeps the Mac app out of *your own* screenshots and screen recordings. Turning the setting off lifts the exclusion and leaves you alone.
+- **Camera permission needs a relaunch.** macOS applies a newly granted camera permission on the next launch, not the current one, so after you grant it the scanner tells you to quit and reopen rather than sitting on a spinner.
+- **There are no haptics.** The copy, reveal, and save confirmations are silent on a Mac by design.
+- **Settings is a preferences window, not a sheet.** On iPhone and iPad it is the sheet it has always been. On the Mac it is a `Settings` scene — so it gets the standard "Settings…" menu item and ⌘, — and the same settings are laid out across General, Privacy, iCloud, Data and Help tabs instead of one long list. Both containers are drawn from the same section views, so a setting is added in exactly one place.
+
+Two things every Mac sheet has to do for itself — both of which fail *silently* if forgotten, so they are worth checking whenever a sheet is added:
+
+- **Declare a size with `platformSheetSize()`.** A macOS sheet has no size of its own. Content with nowhere to lay out does not get clipped or scrolled — it simply does not appear, and the sheet opens as an empty box showing only its toolbar.
+- **Use `platformSheetLeading` / `platformSheetTrailing` for its buttons**, not `platformLeading` / `platformTrailing`. The latter are *window*-toolbar placements, and a sheet is not the window, so those buttons are dropped entirely and the sheet cannot be closed — macOS sheets do not dismiss on outside-click either.
+
+### Submitting the Mac app
+
+macOS is a **separate App Store Connect platform** (`MAC_OS`), not a device family like iPad. An iOS app record serves iPhone and iPad from one version; macOS needs its own version, its own screenshots, and a different build artifact. The Mac minimum is macOS 14.0 (`MACOSX_DEPLOYMENT_TARGET`) — that floor is forced by `openSettings`, which is macOS 14+; 13.0 is two errors away if it is ever worth a fallback.
+
+Already done for 2.2, and repeatable per release:
+
+```bash
+# Add the macOS version. 2.2's is b9845c12-38c5-447c-973b-eab852a6cce2.
+asc versions create --app 6760686327 --version 2.2 --platform MAC_OS \
+  --copyright "© 2026 Hunter Eddington" --release-type AFTER_APPROVAL
+
+# Push metadata/version/2.2/en-US.strings to it (needs the version ID from above).
+asc localizations upload --version "<macOS version id>" \
+  --path "metadata/version/2.2/en-US.strings"
+```
+
+Two things that catch people out:
+
+- **A first Mac release has no What's New.** `asc` reports *"whatsNew cannot be set for this version (initial releases have no What's New section)"* and retries without it. Expected — set it from the next Mac release onward. The same file still carries `whatsNew` for the iOS version, where 2.2 is an update.
+- **Universal purchase is automatic** because the Mac and iOS versions share one app record and bundle ID, so existing iPhone/iPad buyers get the Mac app at no extra cost. Nothing to configure.
+
+The two steps still to do, neither of which `asc` can finish on its own:
+
+1. **Mac screenshots.** Apple accepts 16:10 Mac images at 1280×800, 1440×900, 2560×1600 or 2880×1800. `asc screenshots sizes` lists only `APP_IPHONE_65` and `APP_IPAD_PRO_3GEN_129` — there is **no Mac display type**, so `asc screenshots upload` cannot place them; use the App Store Connect web UI or Transporter. You can capture from a running Mac app, but note it grabs the window at its own size, so it still needs compositing onto one of the accepted sizes:
+
+   ```bash
+   # The app must already be running, and the window you want must already be showing.
+   asc screenshots capture --bundle-id com.eddingtontech.autheris \
+     --name "home" --provider macos --output-dir ./screenshots/mac
+   ```
+
+   Use throwaway entries — these images are public, and the token list shows whatever is in the vault.
+
+2. **The build, as a signed `.pkg` — not an `.ipa`.** The `app_store_build` flow documented elsewhere produces an IPA, which is iOS only. For the Mac App Store:
+
+   ```bash
+   xcodebuild archive -project Vaultic.xcodeproj -scheme Vaultic \
+     -destination 'generic/platform=macOS' -configuration Release \
+     -archivePath build/Autheris.xcarchive
+
+   xcodebuild -exportArchive -archivePath build/Autheris.xcarchive \
+     -exportPath build/export -exportOptionsPlist ExportOptions.plist   # method: app-store-connect
+   ```
+
+   Then upload the resulting `.pkg` and attach it to the macOS 2.2 version. This path is **not yet verified end to end** — only a *development* Mac provisioning profile exists so far, and the first distribution archive is what creates the distribution one.
+
 ## Installation
 
 ```bash
@@ -191,7 +272,7 @@ cd Autheris
 open Vaultic.xcodeproj
 ```
 
-Requires Xcode 15.0+ and iOS 16.0+.
+Requires the iOS 26 and macOS 26 SDKs (Xcode 26 or later). The Mac app also needs a Mac provisioning profile for `com.eddingtontech.autheris` — signing in with an Apple ID and building once with `-allowProvisioningUpdates` (or just ⌘R in Xcode) creates it.
 
 ## Download
 

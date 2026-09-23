@@ -4,6 +4,28 @@ All notable changes to **Autheris** are documented in this file. Newest first.
 
 This file mirrors the in-app changelog in [`Vaultic/ChangelogView.swift`](Vaultic/ChangelogView.swift) and the App Store release notes.
 
+A version number lives in four places, and a release is not finished until they agree:
+
+1. **`MARKETING_VERSION`** in `Vaultic.xcodeproj/project.pbxproj` — four build settings (app and tests, Debug and Release). This is what the app and the App Store report.
+2. **The `catalog`** in [`Vaultic/ChangelogView.swift`](Vaultic/ChangelogView.swift) — the release notes shown inside the app.
+3. **This file** — the same notes, and the copy the repository keeps.
+4. **[`metadata/version/<version>/en-US.strings`](metadata)** — the App Store listing: description, keywords, what's new, and promotional text.
+
+`VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
+
+## [2.2] — September 2026
+
+- Autheris now runs on the Mac — a real Mac app rather than a phone app stretched across the desktop. Your codes, sync and settings are unchanged: add an account on your iPhone and it is there on your Mac.
+- Settings on the Mac is a proper preferences window. Open it from the gear or with ⌘, and find everything grouped into General, Privacy, iCloud, Data and Help.
+- Scan QR codes with your Mac's built-in or attached camera, including Google Authenticator transfer codes.
+- App Lock works on the Mac: Touch ID where your Mac has it, and your login password where it does not.
+- Codes are hidden from screen sharing and recording, so a call or a demo cannot put your codes on someone else's screen.
+- The small things a Mac expects: switch controls use the system's own blue, the accent colours sit in a row rather than a scroller, lists reorder by dragging a row directly, search lives in the window toolbar, and copied codes are marked as concealed so they do not travel to your other devices through Universal Clipboard.
+- Support on the Mac opens your own mail app with the troubleshooting details already filled in.
+- Fixed a set of Mac teething problems: some sheets opened as an empty box, several could not be closed at all, Recently Deleted had no way back, and the buttons in Settings did not respond everywhere they looked like they should.
+- Fixed a crash when starting the Mac's QR scanner.
+- Fixed a startup crash in builds where iCloud is unavailable — the app now opens normally and explains that sync is unavailable, instead of refusing to start.
+
 ## [2.1] — September 2026
 
 - Autheris now runs on iPad as well as iPhone. Your codes, sync, and settings are unchanged — the app is simply built for the larger screen too.

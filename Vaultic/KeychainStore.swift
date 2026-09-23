@@ -10,12 +10,31 @@ import Security
 enum KeychainStore {
     private static let service = "com.eddingtontech.autheris"
 
-    static func save(_ data: Data, account: String) -> Bool {
-        let baseQuery: [String: Any] = [
+    /// The identity of an item, shared by every operation.
+    ///
+    /// On iOS this is exactly `class + service + account`. macOS needs one more
+    /// key, and it is the difference between the promise above being kept and not:
+    /// the `kSecAttrAccessible*` constants — and with them "this device only" —
+    /// only exist in the *data protection* keychain. The older file-based
+    /// keychain ignores them, and an item added there with an accessibility
+    /// attribute is rejected outright. Opting in explicitly is what makes the Mac
+    /// store these the same way the phone does.
+    private static func query(account: String) -> [String: Any] {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account
         ]
+
+        #if os(macOS)
+        query[kSecUseDataProtectionKeychain as String] = true
+        #endif
+
+        return query
+    }
+
+    static func save(_ data: Data, account: String) -> Bool {
+        let baseQuery = query(account: account)
 
         let updateStatus = SecItemUpdate(
             baseQuery as CFDictionary,
@@ -42,13 +61,9 @@ enum KeychainStore {
     }
 
     static func load(account: String) -> Data? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
+        var query = query(account: account)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)

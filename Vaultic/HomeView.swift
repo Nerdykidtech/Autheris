@@ -1,10 +1,19 @@
 import SwiftUI
 import Foundation
 import Combine
+#if os(iOS)
 import UIKit
+#else
+import AppKit
+#endif
 
 struct HomeView: View {
     @EnvironmentObject private var dataStore: OTPDataStore
+    #if os(macOS)
+    /// Opens the Mac's `Settings` scene — the preferences window — which is what
+    /// the gear button does there. On iOS/iPad the gear opens the sheet instead.
+    @Environment(\.openSettings) private var openSettings
+    #endif
     /// Whether the grid is in its rearranging mode — the state `Edit` and `Done`
     /// switch on the iPad, where the grid is not a `List` and so has no edit mode
     /// of its own to inherit.
@@ -78,12 +87,18 @@ struct HomeView: View {
         // carries its own Done button. Doing the same on an iPad is heavier than
         // the platform asks of a modal, so there it opens as a sheet, at the
         // system's form-sheet size.
-        if AdaptiveLayout.isIPad {
+        if AdaptiveLayout.usesRoomyLayout {
+            #if os(macOS)
+            // The Mac has no settings sheet: the gear button and ⌘, open the
+            // `Settings` scene instead. See `AutherisApp`.
+            tokenList
+            #else
             tokenList.sheet(isPresented: $showingSettings) {
                 SettingsView(dataStore: dataStore)
             }
+            #endif
         } else {
-            tokenList.fullScreenCover(isPresented: $showingSettings) {
+            tokenList.platformFullScreenCover(isPresented: $showingSettings) {
                 SettingsView(dataStore: dataStore)
             }
         }
@@ -139,16 +154,24 @@ struct HomeView: View {
     /// own.
     @ToolbarContentBuilder
     private func toolbarContent(width: CGFloat) -> some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
+        ToolbarItem(placement: .platformLeading) {
             Button {
+                #if os(macOS)
+                // On the Mac, Settings is a preferences window (⌘,), not a sheet.
+                // `openSettings` can leave the window behind the main one when the
+                // app is not already active, so it is brought forward explicitly.
+                openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+                #else
                 showingSettings = true
+                #endif
             } label: {
                 Image(systemName: "gear")
                     .font(.title3)
             }
         }
 
-        ToolbarItemGroup(placement: .navigationBarTrailing) {
+        ToolbarItemGroup(placement: .platformTrailing) {
             // Reordering is hidden while a search is active, which avoids a mode
             // that would offer nothing to rearrange.
             if canReorder {
@@ -159,7 +182,14 @@ struct HomeView: View {
                         }
                     }
                 } else {
+                    // `EditButton` drives the edit mode a `List` provides, and
+                    // macOS has neither the control nor the mode: a Mac list is
+                    // reordered by dragging a row directly, with no mode to enter
+                    // first. So the Mac simply has no control here — nothing is
+                    // lost, because the drag works without one.
+                    #if os(iOS)
                     EditButton()
+                    #endif
                 }
             }
 
@@ -192,13 +222,13 @@ struct HomeView: View {
                 }
                 .toolbar { toolbarContent(width: proxy.size.width) }
             }
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tokens")
+            .platformSearchable(text: $searchText, prompt: "Search tokens")
             .navigationTitle("Autheris")
-            .navigationBarTitleDisplayMode(.large)
+            .largeNavigationTitle()
             .sheet(isPresented: $showingAddToken) {
                 AddTokenView(dataStore: dataStore, importResult: $importResult)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
+                    .platformSheetDetents(dragIndicator: true)
+            .platformSheetSize()
             }
             .alert(
                 Text(importResult?.title ?? "Import"),
@@ -378,10 +408,6 @@ struct OTPCardView: View {
     @State private var showEditSheet = false
     @State private var showSecretSheet = false
     
-    // Haptic feedback generators
-    private let copyHaptic = UIImpactFeedbackGenerator(style: .light)
-    private let deleteHaptic = UINotificationFeedbackGenerator()
-    
     // Compute warning threshold based on period
     private var warningThreshold: Int {
         return max(5, Int(Double(code.effectivePeriod) * 0.1667)) // 5 seconds or 1/6 of period
@@ -411,11 +437,11 @@ struct OTPCardView: View {
     // MARK: - Sizing
 
     /// The card is drawn at iPhone size by default and given a little more room in
-    /// the iPad grid, where it fills a wider column and is read from further away.
-    private var iconSize: CGFloat { AdaptiveLayout.isIPad ? 44 : 40 }
-    private var codeTextStyle: Font.TextStyle { AdaptiveLayout.isIPad ? .title : .title2 }
-    private var countdownWidth: CGFloat { AdaptiveLayout.isIPad ? 84 : 56 }
-    private var verticalPadding: CGFloat { AdaptiveLayout.isIPad ? 14 : 12 }
+    /// the roomy grid, where it fills a wider column and is read from further away.
+    private var iconSize: CGFloat { AdaptiveLayout.usesRoomyLayout ? 44 : 40 }
+    private var codeTextStyle: Font.TextStyle { AdaptiveLayout.usesRoomyLayout ? .title : .title2 }
+    private var countdownWidth: CGFloat { AdaptiveLayout.usesRoomyLayout ? 84 : 56 }
+    private var verticalPadding: CGFloat { AdaptiveLayout.usesRoomyLayout ? 14 : 12 }
 
     var body: some View {
         card
@@ -476,7 +502,7 @@ struct OTPCardView: View {
 
                     Button(role: .destructive) {
                         // Haptic feedback for delete action
-                        deleteHaptic.notificationOccurred(.warning)
+                        Haptics.notify(.warning)
                         deleteToken()
                     } label: {
                         Label("Delete", systemImage: "trash")
@@ -572,7 +598,7 @@ struct OTPCardView: View {
     
     private func copyToClipboard() {
         // Light haptic feedback for copy
-        copyHaptic.impactOccurred()
+        Haptics.impact(.light)
         
         ClipboardHelper.copy(code.currentCode)
         withAnimation {
@@ -609,9 +635,6 @@ struct EditTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
-    
-    // Haptic feedback for save
-    private let saveHaptic = UINotificationFeedbackGenerator()
     
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
@@ -654,7 +677,7 @@ struct EditTokenView: View {
             }
             .formStyle(.grouped)
             .navigationTitle("Edit Token")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
                 // `.cancellationAction` / `.confirmationAction` are SwiftUI's own
                 // placements for a modal, so the system decides the position and the
@@ -695,8 +718,8 @@ struct EditTokenView: View {
                 Text(alertMessage)
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .platformSheetDetents(dragIndicator: true)
+            .platformSheetSize()
     }
 
     // MARK: - Sections
@@ -740,8 +763,8 @@ struct EditTokenView: View {
             TextField("Service name", text: $label)
 
             TextField("Account (optional)", text: $account)
-                .textContentType(.username)
-                .autocapitalization(.none)
+                .platformTextContentType(.username)
+                .platformNoAutocapitalization()
         }
     }
 
@@ -846,7 +869,7 @@ struct EditTokenView: View {
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
             dataStore.updateCode(updatedCode, at: index)
             // Success haptic feedback
-            saveHaptic.notificationOccurred(.success)
+            Haptics.notify(.success)
         }
         
         dismiss()

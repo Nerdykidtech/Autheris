@@ -1,6 +1,10 @@
 import SwiftUI
-import AVFoundation
-import AudioToolbox
+// `AVCaptureSession` is documented as safe to start and stop from another thread
+// but is not annotated `Sendable`, so the explicit annotation is what keeps that
+// deliberate cross-thread use from being reported as a hazard.
+@preconcurrency import AVFoundation
+
+#if os(iOS)
 
 struct QRScannerView: UIViewControllerRepresentable {
     @Binding var isScanning: Bool
@@ -23,7 +27,7 @@ struct QRScannerView: UIViewControllerRepresentable {
             }
             
             // Found a QR code
-            AudioServicesPlaySystemSound(SystemSoundID(kSystemSoundID_Vibrate))
+            Haptics.vibrate()
             captureSession?.stopRunning()
             
             DispatchQueue.main.async {
@@ -40,9 +44,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         }
         
         @objc func openSettings() {
-            if let url = URL(string: UIApplication.openSettingsURLString) {
-                UIApplication.shared.open(url)
-            }
+            PlatformApplication.openCameraSettings()
         }
         
         @objc func requestPermission() {
@@ -390,3 +392,396 @@ struct QRScannerView: UIViewControllerRepresentable {
     }
 }
 
+#else
+
+import AppKit
+
+/// The Mac's QR scanner.
+///
+/// iOS needs a hand-built `UIViewController` because the preview layer has to be
+/// hosted in a `UIView` and there is nowhere else for the labels and buttons to
+/// live. AppKit hosts the preview just as easily, so the Mac draws the frame, its
+/// corner brackets and every permission state in SwiftUI instead — a good deal
+/// less code, and consistent with the rest of the app.
+///
+/// The capture session itself is plain AVFoundation and identical on both
+/// platforms; only the presentation differs.
+struct QRScannerView: View {
+    @Binding var isScanning: Bool
+    let onCodeScanned: (String?) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var authorization = AVCaptureDevice.authorizationStatus(for: .video)
+    @State private var scanner: ScannerSession?
+    /// macOS will not hand a freshly-granted camera to the process that asked for
+    /// it — the permission only takes effect on the next launch. So the session
+    /// can fail to build even with `.authorized` showing, and that is worth
+    /// saying out loud rather than leaving the user on a spinner.
+    @State private var needsRelaunch = false
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            switch authorization {
+            case .authorized:
+                if let scanner {
+                    CameraPreview(session: scanner.session)
+                        .ignoresSafeArea()
+                        // The frame and its corner brackets are drawn across the whole
+                        // surface, so they must not intercept the way out layered on
+                        // top of them below.
+                        .overlay(scanningOverlay.allowsHitTesting(false))
+                        .overlay(alignment: .bottom) { closeButton }
+                } else if needsRelaunch {
+                    relaunchNotice
+                } else {
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(.white)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .overlay(alignment: .bottom) { closeButton }
+                }
+
+            case .notDetermined:
+                permissionRequest
+
+            default:
+                permissionDenied
+            }
+        }
+        .frame(minWidth: 480, minHeight: 480)
+        .onAppear(perform: start)
+        .onDisappear { scanner?.stop() }
+    }
+
+    // MARK: - Dismissal
+
+    /// The way out of the scanner.
+    ///
+    /// The iPhone build gets this from a `UIButton` added to its hand-built view
+    /// controller. Each Mac state carries its own action button — permission
+    /// request, permission denied, and relaunch all have one — but the live
+    /// preview and the brief loading state had none, which left a sheet that
+    /// macOS will not dismiss by clicking outside it. It is layered *over* the
+    /// scanning frame rather than under it for the same reason.
+    private var closeButton: some View {
+        Button {
+            finish(with: nil)
+        } label: {
+            Text("Cancel")
+                .font(.callout.weight(.semibold))
+                .padding(.horizontal, 22)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(.black.opacity(0.55)))
+                .foregroundStyle(.white)
+        }
+        .platformPlainButton()
+        // Escape works too, which is the first thing a Mac user reaches for.
+        .keyboardShortcut(.cancelAction)
+        .padding(.bottom, 28)
+    }
+
+    // MARK: - Overlay
+
+    /// The scanning frame: everything outside it dimmed, a bright bracket at each
+    /// corner, and the same instruction the iPhone shows.
+    private var scanningOverlay: some View {
+        GeometryReader { geometry in
+            let side: CGFloat = 250
+            let frame = CGRect(
+                x: (geometry.size.width - side) / 2,
+                y: (geometry.size.height - side) / 2,
+                width: side,
+                height: side
+            )
+
+            ZStack {
+                Canvas { context, size in
+                    // Everything but the scanning frame, as one even-odd fill.
+                    var dimmed = Path(CGRect(origin: .zero, size: size))
+                    dimmed.addPath(Path(roundedRect: frame, cornerRadius: 20))
+                    context.fill(
+                        dimmed,
+                        with: .color(.black.opacity(0.7)),
+                        style: FillStyle(eoFill: true)
+                    )
+
+                    context.stroke(
+                        Path(roundedRect: frame, cornerRadius: 20),
+                        with: .color(.white),
+                        lineWidth: 3
+                    )
+
+                    let cornerLength: CGFloat = 30
+                    let brackets = Path { path in
+                        // Top left
+                        path.move(to: CGPoint(x: frame.minX, y: frame.minY + cornerLength))
+                        path.addLine(to: CGPoint(x: frame.minX, y: frame.minY))
+                        path.addLine(to: CGPoint(x: frame.minX + cornerLength, y: frame.minY))
+                        // Top right
+                        path.move(to: CGPoint(x: frame.maxX - cornerLength, y: frame.minY))
+                        path.addLine(to: CGPoint(x: frame.maxX, y: frame.minY))
+                        path.addLine(to: CGPoint(x: frame.maxX, y: frame.minY + cornerLength))
+                        // Bottom left
+                        path.move(to: CGPoint(x: frame.minX, y: frame.maxY - cornerLength))
+                        path.addLine(to: CGPoint(x: frame.minX, y: frame.maxY))
+                        path.addLine(to: CGPoint(x: frame.minX + cornerLength, y: frame.maxY))
+                        // Bottom right
+                        path.move(to: CGPoint(x: frame.maxX - cornerLength, y: frame.maxY))
+                        path.addLine(to: CGPoint(x: frame.maxX, y: frame.maxY))
+                        path.addLine(to: CGPoint(x: frame.maxX, y: frame.maxY - cornerLength))
+                    }
+                    context.stroke(
+                        brackets,
+                        with: .color(.blue),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                }
+
+                Text("Position QR code within frame")
+                    .font(.callout.weight(.medium))
+                    .foregroundStyle(.white)
+                    .position(x: geometry.size.width / 2, y: frame.maxY + 32)
+            }
+        }
+    }
+
+    // MARK: - Permission states
+
+    private var permissionRequest: some View {
+        VStack(spacing: 20) {
+            Text("Camera Access Required")
+                .font(.title.weight(.bold))
+            Text("To scan QR codes, please allow camera access")
+                .foregroundStyle(.white.opacity(0.8))
+
+            Button("Allow Camera Access") {
+                requestPermission()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Button("Cancel") { finish(with: nil) }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.7))
+        }
+        .foregroundStyle(.white)
+        .multilineTextAlignment(.center)
+        .padding(40)
+    }
+
+    private var permissionDenied: some View {
+        VStack(spacing: 20) {
+            Text("Camera Access Denied")
+                .font(.title.weight(.bold))
+            Text("Camera access is required to scan QR codes. Please enable it in System Settings under Privacy & Security → Camera.")
+                .foregroundStyle(.white.opacity(0.8))
+                .frame(maxWidth: 360)
+
+            Button("Open System Settings") {
+                PlatformApplication.openCameraSettings()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+
+            Button("Cancel") { finish(with: nil) }
+                .buttonStyle(.plain)
+                .foregroundStyle(.white.opacity(0.7))
+        }
+        .foregroundStyle(.white)
+        .multilineTextAlignment(.center)
+        .padding(40)
+    }
+
+    private var relaunchNotice: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "camera")
+                .font(.system(size: 44))
+                .foregroundStyle(.white.opacity(0.8))
+            Text("Camera Access Granted")
+                .font(.title2.weight(.bold))
+            Text("macOS applies camera access the next time an app starts. Quit and reopen Autheris to use the scanner — or add the code from a picture instead.")
+                .foregroundStyle(.white.opacity(0.8))
+                .frame(maxWidth: 360)
+            Button("Done") { finish(with: nil) }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+        }
+        .foregroundStyle(.white)
+        .multilineTextAlignment(.center)
+        .padding(40)
+    }
+
+    // MARK: - Session
+
+    private func start() {
+        guard authorization == .authorized, scanner == nil else { return }
+        if let scanner = ScannerSession(onCode: { value in finish(with: value) }) {
+            self.scanner = scanner
+            scanner.start()
+        } else {
+            #if DEBUG
+            print("No camera device available")
+            #endif
+            needsRelaunch = true
+        }
+    }
+
+    private func requestPermission() {
+        AVCaptureDevice.requestAccess(for: .video) { granted in
+            DispatchQueue.main.async {
+                authorization = granted ? .authorized : .denied
+                if granted { start() } else { finish(with: nil) }
+            }
+        }
+    }
+
+    private func finish(with value: String?) {
+        scanner?.stop()
+        onCodeScanned(value)
+        dismiss()
+    }
+}
+
+/// The capture session and its delegate, which are plain AVFoundation and so
+/// identical to what the iOS path uses.
+@MainActor
+private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+    let session = AVCaptureSession()
+    private let output = AVCaptureMetadataOutput()
+    private let onCode: (String) -> Void
+
+    init?(onCode: @escaping (String) -> Void) {
+        self.onCode = onCode
+        super.init()
+
+        guard let device = AVCaptureDevice.default(for: .video),
+              let input = try? AVCaptureDeviceInput(device: device) else { return nil }
+
+        session.beginConfiguration()
+        if session.canSetSessionPreset(.hd1280x720) {
+            session.sessionPreset = .hd1280x720
+        }
+        let configured = session.canAddInput(input) && session.canAddOutput(output)
+        if configured {
+            session.addInput(input)
+            session.addOutput(output)
+        }
+        session.commitConfiguration()
+        guard configured else { return nil }
+
+        // The delegate queue is the main queue, which is what lets the callback
+        // below assume main-actor isolation.
+        output.setMetadataObjectsDelegate(self, queue: .main)
+
+        // QR detection is switched on *after* the configuration is committed, and
+        // only once the output says it offers `.qr`. See
+        // `enableQRDetectionIfAvailable` for why that ordering is load-bearing.
+        enableQRDetectionIfAvailable()
+
+        // On macOS the available set is only reliably published once the session is
+        // actually running, so this is the second attempt.
+        NotificationCenter.default.addObserver(
+            forName: AVCaptureSession.didStartRunningNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] _ in
+            // `queue: .main` means this really is running on the main actor, which
+            // the compiler cannot see through the callback signature.
+            MainActor.assumeIsolated {
+                _ = self?.enableQRDetectionIfAvailable()
+            }
+        }
+    }
+
+    /// Turns on QR detection, if the output offers it.
+    ///
+    /// `metadataObjectTypes` may only be assigned a subset of
+    /// `availableMetadataObjectTypes`, and assigning anything else **raises**
+    /// `NSInvalidArgumentException`. Swift cannot catch that, so it becomes a
+    /// SIGTRAP and takes the app down with it — which is exactly what happened the
+    /// moment Scan was pressed.
+    ///
+    /// Two things were wrong. The assignment sat inside the
+    /// `beginConfiguration()` block, where the available set has not yet been
+    /// derived from the input being added, so `.qr` looked unsupported and
+    /// AVFoundation raised. And on macOS the set is only dependable once the
+    /// session is running, which is why this is also called from
+    /// `didStartRunningNotification` and from `start()`.
+    ///
+    /// Guarding on the available set means this can never raise, whatever the
+    /// session does.
+    ///
+    /// Returns `true` when QR detection is live.
+    @discardableResult
+    private func enableQRDetectionIfAvailable() -> Bool {
+        guard !output.metadataObjectTypes.contains(.qr) else { return true }
+        guard output.availableMetadataObjectTypes.contains(.qr) else {
+            #if DEBUG
+            print("Camera is not offering QR detection yet. Available: \(output.availableMetadataObjectTypes)")
+            #endif
+            return false
+        }
+        output.metadataObjectTypes = [.qr]
+        return true
+    }
+
+    func start() {
+        guard !session.isRunning else { return }
+        // A second scan in the same launch finds the session already running, and
+        // then `didStartRunningNotification` will not fire again.
+        enableQRDetectionIfAvailable()
+        // startRunning blocks; keep it off the main thread so the window stays
+        // responsive.
+        let session = self.session
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+    }
+
+    func stop() {
+        guard session.isRunning else { return }
+        let session = self.session
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.stopRunning()
+        }
+    }
+
+    nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput,
+                                    didOutput metadataObjects: [AVMetadataObject],
+                                    from connection: AVCaptureConnection) {
+        guard let object = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+              let value = object.stringValue else { return }
+
+        MainActor.assumeIsolated {
+            stop()
+            onCode(value)
+        }
+    }
+}
+
+/// Hosts an `AVCaptureVideoPreviewLayer` in an AppKit view.
+private struct CameraPreview: NSViewRepresentable {
+    let session: AVCaptureSession
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        view.wantsLayer = true
+
+        let preview = AVCaptureVideoPreviewLayer(session: session)
+        preview.videoGravity = .resizeAspectFill
+        preview.frame = view.bounds
+        // The preview layer is a layer, not a view, so AppKit will not lay it
+        // out; it tracks its host through layer autoresizing instead.
+        preview.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        view.layer?.addSublayer(preview)
+
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        (nsView.layer?.sublayers?.first as? AVCaptureVideoPreviewLayer)?.session = session
+    }
+}
+#endif

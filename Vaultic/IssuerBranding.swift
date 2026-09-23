@@ -58,19 +58,19 @@ class LogoCacheManager {
         return fileManager.fileExists(atPath: fileURL.path)
     }
     
-    func getCachedLogo(for branding: IssuerBranding) -> UIImage? {
+    func getCachedLogo(for branding: IssuerBranding) -> PlatformImage? {
         let fileURL = cacheDirectory.appendingPathComponent("\(branding.cacheKey).png")
         
         guard fileManager.fileExists(atPath: fileURL.path),
               let data = try? Data(contentsOf: fileURL),
-              let image = UIImage(data: data) else {
+              let image = PlatformImage(data: data) else {
             return nil
         }
         
         return image
     }
     
-    func cacheLogo(_ image: UIImage, for branding: IssuerBranding) {
+    func cacheLogo(_ image: PlatformImage, for branding: IssuerBranding) {
         let fileURL = cacheDirectory.appendingPathComponent("\(branding.cacheKey).png")
         
         // Save as PNG
@@ -79,7 +79,7 @@ class LogoCacheManager {
         }
     }
     
-    func fetchAndCacheLogo(for branding: IssuerBranding, completion: @escaping (UIImage?) -> Void) {
+    func fetchAndCacheLogo(for branding: IssuerBranding, completion: @escaping (PlatformImage?) -> Void) {
         guard let token = logoDevPublishableKey, token.hasPrefix("pk_") else {
             // No API key, don't fetch
             completion(nil)
@@ -94,10 +94,10 @@ class LogoCacheManager {
         }
     }
     
-    private func fetchLogo(url: URL, branding: IssuerBranding, completion: @escaping (UIImage?) -> Void) {
+    private func fetchLogo(url: URL, branding: IssuerBranding, completion: @escaping (PlatformImage?) -> Void) {
         URLSession.shared.dataTask(with: url) { data, response, error in
             guard let data = data, error == nil,
-                  let image = UIImage(data: data) else {
+                  let image = PlatformImage(data: data) else {
                 DispatchQueue.main.async {
                     completion(nil)
                 }
@@ -179,7 +179,7 @@ class LogoCacheManager {
 // MARK: - Icon View with Caching
 struct IssuerIconView: View {
     let branding: IssuerBranding
-    @State private var cachedImage: UIImage?
+    @State private var cachedImage: PlatformImage?
     @State private var isLoading = false
     
     // Icon diameter; the token card passes 44, other callers use the default.
@@ -193,7 +193,7 @@ struct IssuerIconView: View {
             
             if let cachedImage = cachedImage {
                 // Use cached image - fill the entire circle
-                Image(uiImage: cachedImage)
+                Image(platformImage: cachedImage)
                     .resizable()
                     .scaledToFill()
                     .frame(width: size, height: size)
@@ -206,7 +206,7 @@ struct IssuerIconView: View {
             } else if LogoCacheManager.shared.hasCachedLogo(for: branding),
                       let image = LogoCacheManager.shared.getCachedLogo(for: branding) {
                 // Load from cache if available - fill the entire circle
-                Image(uiImage: image)
+                Image(platformImage: image)
                     .resizable()
                     .scaledToFill()
                     .frame(width: size, height: size)

@@ -37,9 +37,9 @@ struct OTPAuthURLView: View {
                 }
             }
             .padding(40)
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .platformTrailing) {
                     Button("Cancel") {
                         isPresented = false
                     }

@@ -1,9 +1,18 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
 
 @main
 struct AutherisApp: App {
+    // The delegate is the same object on both platforms — it only registers for
+    // remote notifications and routes CloudKit silent pushes — so only the
+    // adaptor that installs it differs.
+    #if os(iOS)
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    #else
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    #endif
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
@@ -12,6 +21,9 @@ struct AutherisApp: App {
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     @StateObject private var dataStore = OTPDataStore()
     @StateObject private var appLock = AppLockManager()
+    /// Keeps the app's windows out of screen capture on the Mac. A no-op on iOS,
+    /// where capture can be detected instead.
+    @StateObject private var captureExclusion = WindowCaptureExclusion()
     @State private var showingImportSheet = false
     @State private var importData: Data?
     @State private var otpSetupResult: (title: String, body: String)?
@@ -108,6 +120,7 @@ struct AutherisApp: App {
             .animation(.easeInOut(duration: 0.3), value: isAppActive)
             .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
             .tint(selectedAccent?.color ?? .accentColor)
+            .windowCaptureExclusion(captureExclusion)
             .onAppear {
                 #if DEBUG
                 print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
@@ -136,8 +149,10 @@ struct AutherisApp: App {
                 // capture state in case the app launched into an active recording.
                 setupAppStateObservers()
                 refreshScreenCaptureState()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
+
+                // Apply the saved capture preference to the windows themselves.
+                captureExclusion.setExcluding(hideCodesWhenScreenCaptured)
+            }            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
                 #if DEBUG
                 print("Received import data notification")
                 #endif
@@ -160,7 +175,10 @@ struct AutherisApp: App {
                 updatePrivacyOverlay()
             }
             .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
-                // Update privacy overlay when setting changes
+                // Update privacy overlay when setting changes, and on the Mac
+                // apply the setting to the windows themselves — there is no
+                // capture to notice, so the exclusion *is* the protection.
+                captureExclusion.setExcluding(newValue)
                 updatePrivacyOverlay()
             }
             .onChange(of: scenePhase) { _, newPhase in
@@ -185,6 +203,15 @@ struct AutherisApp: App {
                 }
             }
         }
+
+        #if os(macOS)
+        // A real preferences window rather than a sheet: it gives Autheris the
+        // standard "Settings…" menu item and ⌘, for free, and it is what a Mac user
+        // reaches for. The iPad keeps the sheet.
+        Settings {
+            SettingsView(dataStore: dataStore, presentation: .preferences)
+        }
+        #endif
     }
     
     private func handleIncomingURL(_ url: URL) {
@@ -341,9 +368,11 @@ struct AutherisApp: App {
             PreferencesStore.persist()
         }
 
-        // Observe app state changes
+        // Observe app state changes. `AppActivity` names the platform's own
+        // notification for each of these four moments, so the privacy rules below
+        // read the same on both platforms.
         NotificationCenter.default.addObserver(
-            forName: UIApplication.willResignActiveNotification,
+            forName: AppActivity.willResignActive,
             object: nil,
             queue: .main
         ) { _ in
@@ -355,7 +384,7 @@ struct AutherisApp: App {
         }
         
         NotificationCenter.default.addObserver(
-            forName: UIApplication.didBecomeActiveNotification,
+            forName: AppActivity.didBecomeActive,
             object: nil,
             queue: .main
         ) { _ in
@@ -368,29 +397,32 @@ struct AutherisApp: App {
 
         // Recording or mirroring can begin while the app stays frontmost, which
         // never resigns active and is therefore invisible to every notification
-        // above. This is the only signal iOS gives for it.
-        NotificationCenter.default.addObserver(
-            forName: UIScreen.capturedDidChangeNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            refreshScreenCaptureState()
+        // above. This is the only signal iOS gives for it, and macOS gives none:
+        // the observer is simply not installed there.
+        if let captureChanged = AppActivity.screenCaptureChanged {
+            NotificationCenter.default.addObserver(
+                forName: captureChanged,
+                object: nil,
+                queue: .main
+            ) { _ in
+                refreshScreenCaptureState()
+            }
         }
         
         NotificationCenter.default.addObserver(
-            forName: UIApplication.didEnterBackgroundNotification,
+            forName: AppActivity.didLeaveForeground,
             object: nil,
             queue: .main
         ) { _ in
             #if DEBUG
-            print("App did enter background")
+            print("App left the foreground")
             #endif
             isAppActive = false
             updatePrivacyOverlay()
         }
         
         NotificationCenter.default.addObserver(
-            forName: UIApplication.willEnterForegroundNotification,
+            forName: AppActivity.willEnterForeground,
             object: nil,
             queue: .main
         ) { _ in

@@ -1,6 +1,23 @@
 import CloudKit
 import Foundation
 
+#if os(macOS)
+// For the pre-flight entitlement check that stops an unentitled build from
+// asking CloudKit for a container it cannot have. See `configurationProblem`.
+import Security
+#endif
+
+/// Raised before CloudKit is touched when this build cannot use it at all.
+///
+/// A plain error rather than a `CKError`, because in this case no CloudKit call
+/// is ever made — there is no CloudKit error to receive. It maps onto
+/// `CloudSyncStatus.unavailable`, the state Settings already renders in red.
+struct CloudKitUnavailableError: LocalizedError {
+    let reason: String
+
+    var errorDescription: String? { reason }
+}
+
 /// Syncs tokens through the user's **private** CloudKit database.
 ///
 /// ### Where the secrets live
@@ -102,8 +119,9 @@ final class CloudKitTokenSyncService: TokenSyncService {
     private static let maxPushAttempts = 2
 
     private let defaults: UserDefaults
-    private let container: CKContainer
-    private let database: CKDatabase
+    private let containerIdentifier: String
+    /// Built on first use rather than in `init` — see `container()` for why.
+    private var containerStorage: CKContainer?
 
     private(set) var isEnabled: Bool
     private(set) var status: CloudSyncStatus
@@ -115,11 +133,87 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
     init(isEnabled: Bool, containerIdentifier: String = CloudKitTokenSyncService.containerIdentifier, defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.container = CKContainer(identifier: containerIdentifier)
-        self.database = container.privateCloudDatabase
+        self.containerIdentifier = containerIdentifier
         self.isEnabled = isEnabled
-        self.status = isEnabled ? .synced(nil) : .disabled
+        // Say up front that this build cannot use CloudKit, rather than showing a
+        // "Synced" that the first availability probe then has to contradict.
+        if let problem = Self.configurationProblem(forContainer: containerIdentifier) {
+            self.status = .unavailable(problem)
+        } else {
+            self.status = isEnabled ? .synced(nil) : .disabled
+        }
     }
+
+    // MARK: - Container
+
+    /// The CloudKit container, built on first use.
+    ///
+    /// **Deliberately not built in `init`.** `CKContainer(identifier:)` does not
+    /// throw when the app lacks the CloudKit entitlement — it raises an
+    /// Objective-C exception, which terminates the process. `OTPDataStore`
+    /// constructs this service whether or not the user has turned sync on, so
+    /// building the container eagerly turned "this build has no iCloud
+    /// entitlement" into "the app crashes at launch, before any UI appears, even
+    /// with sync switched off". That is exactly what the first unsigned macOS
+    /// build did — and on a shipping app the same shape means a misconfigured App
+    /// ID crashes for every user instead of degrading.
+    ///
+    /// Building it here means such a build starts, runs, and reports
+    /// `.unavailable` from Settings. That is the state `CloudSyncStatus` and the
+    /// `status(for:)` branch below were already written for, but could never
+    /// reach: the container raised before any error could be formed.
+    private func container() throws -> CKContainer {
+        if let containerStorage { return containerStorage }
+
+        if let problem = Self.configurationProblem(forContainer: containerIdentifier) {
+            throw CloudKitUnavailableError(reason: problem)
+        }
+
+        let container = CKContainer(identifier: containerIdentifier)
+        containerStorage = container
+        return container
+    }
+
+    private func cloudDatabase() throws -> CKDatabase {
+        try container().privateCloudDatabase
+    }
+
+    /// A reason this build cannot use CloudKit at all, or `nil` when its
+    /// entitlements look right.
+    ///
+    /// The check has to happen *before* a container exists, and it cannot ask
+    /// CloudKit, so it reads the app's own code signature instead. macOS only:
+    /// `SecTaskCreateFromSelf` is not in the public iOS SDK, and an unentitled
+    /// iOS build is not something that ships — App Store, TestFlight and device
+    /// builds all carry the entitlement. On iOS the first CloudKit *use* still
+    /// raises in that case; what deferring it buys there is that it no longer
+    /// happens during launch.
+    private static func configurationProblem(forContainer identifier: String) -> String? {
+        #if os(macOS)
+        guard let services = entitlementsValue("com.apple.developer.icloud-services"),
+              // A development profile grants `*` rather than naming CloudKit.
+              services.contains(where: { $0 == "CloudKit" || $0 == "*" }) else {
+            return "This build is not configured for iCloud. Add the iCloud capability to the Autheris target."
+        }
+        guard let containers = entitlementsValue("com.apple.developer.icloud-container-identifiers"),
+              containers.contains(identifier) else {
+            return "This build is not entitled to the \(identifier) iCloud container."
+        }
+        return nil
+        #else
+        return nil
+        #endif
+    }
+
+    #if os(macOS)
+    /// Reads one entitlement out of this process's own code signature. Reading
+    /// *self* needs no special permission.
+    private static func entitlementsValue(_ key: String) -> [String]? {
+        guard let task = SecTaskCreateFromSelf(nil),
+              let value = SecTaskCopyValueForEntitlement(task, key as CFString, nil) else { return nil }
+        return value as? [String]
+    }
+    #endif
 
     // MARK: - Enablement
 
@@ -148,7 +242,14 @@ final class CloudKitTokenSyncService: TokenSyncService {
             }
         } catch {
             isAvailable = false
-            updateStatus(isEnabled ? Self.status(for: error) : .disabled)
+            // A build that cannot reach CloudKit at all keeps saying so, even with
+            // sync off — the status row is the only place the user can find out
+            // that turning it on will not help.
+            if let unavailable = error as? CloudKitUnavailableError {
+                updateStatus(.unavailable(unavailable.reason))
+            } else {
+                updateStatus(isEnabled ? Self.status(for: error) : .disabled)
+            }
         }
     }
 
@@ -212,7 +313,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         guard !recordIDs.isEmpty else { return }
 
         for chunk in stride(from: 0, to: recordIDs.count, by: Self.pageSize).map({ Array(recordIDs[$0..<min($0 + Self.pageSize, recordIDs.count)]) }) {
-            let response = try await database.modifyRecords(
+            let response = try await cloudDatabase().modifyRecords(
                 saving: [],
                 deleting: chunk,
                 atomically: false
@@ -244,7 +345,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         // is `nil` unless the app *also* holds an iCloud Documents (ubiquity
         // container) entitlement, so gating on it would pin a CloudKit-only app
         // like this one at "not signed in" forever, even for a signed-in user.
-        try await container.accountStatus() == .available
+        try await container().accountStatus() == .available
     }
 
     // MARK: - Subscription
@@ -253,7 +354,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
     /// app with a silent push instead of relying on the user reopening it.
     private func installSubscriptionIfNeeded() async throws {
         guard !hasCheckedSubscription else { return }
-        let existing = try await database.allSubscriptions()
+        let existing = try await cloudDatabase().allSubscriptions()
         hasCheckedSubscription = true
         guard !existing.contains(where: { $0.subscriptionID == Self.subscriptionID }) else { return }
 
@@ -263,7 +364,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         info.shouldSendContentAvailable = true
         subscription.notificationInfo = info
         do {
-            _ = try await database.save(subscription)
+            _ = try await cloudDatabase().save(subscription)
         } catch let error as CKError where error.code == .serverRejectedRequest {
             // Already registered on the server from an earlier install.
         }
@@ -299,9 +400,9 @@ final class CloudKitTokenSyncService: TokenSyncService {
         repeat {
             let response: (matchResults: [(CKRecord.ID, Result<CKRecord, Error>)], queryCursor: CKQueryOperation.Cursor?)
             if let cursor {
-                response = try await database.records(continuingMatchFrom: cursor, resultsLimit: Self.pageSize)
+                response = try await cloudDatabase().records(continuingMatchFrom: cursor, resultsLimit: Self.pageSize)
             } else {
-                response = try await database.records(matching: query, resultsLimit: Self.pageSize)
+                response = try await cloudDatabase().records(matching: query, resultsLimit: Self.pageSize)
             }
             for (_, result) in response.matchResults {
                 if case .success(let record) = result { records.append(record) }
@@ -327,7 +428,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
         for _ in 0..<Self.maxPushAttempts {
             guard !pending.isEmpty else { break }
-            let response = try await database.modifyRecords(
+            let response = try await cloudDatabase().modifyRecords(
                 saving: pending.map(\.record),
                 deleting: [],
                 // Only send fields we changed, so two devices editing different
@@ -457,6 +558,11 @@ final class CloudKitTokenSyncService: TokenSyncService {
     }
 
     private static func status(for error: Error) -> CloudSyncStatus {
+        // Raised by `container()` before CloudKit is touched, so it is the one
+        // failure that arrives as neither a `CKError` nor an ongoing sync problem.
+        if let unavailable = error as? CloudKitUnavailableError {
+            return .unavailable(unavailable.reason)
+        }
         let message = error.localizedDescription.lowercased()
         guard let cloudError = error as? CKError else {
             return .failed(error.localizedDescription)

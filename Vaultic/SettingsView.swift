@@ -1,11 +1,29 @@
 import SwiftUI
+
+#if os(iOS)
 import MessageUI
 import UIKit
+#endif
+
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var dataStore: OTPDataStore
+
+    /// How this view is being shown.
+    ///
+    /// The settings themselves are identical either way; only the container differs.
+    /// Defaulted so the existing sheet call sites are unchanged.
+    var presentation: Presentation = .sheet
+
+    /// The two containers this screen can be drawn in.
+    enum Presentation {
+        /// One scrolling list, in a sheet — what iPhone and iPad use.
+        case sheet
+        /// The same settings distributed across tabs, in the Mac preferences window.
+        case preferences
+    }
     @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
@@ -23,6 +41,7 @@ struct SettingsView: View {
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
     @State private var showingChangelog = false
+    @State private var showingRecentlyDeleted = false
     @State private var showingSupportMail = false
     @State private var supportTo = "autheris@eddington.tech"
     @State private var supportSubject = "Support Request from Autheris User"
@@ -67,233 +86,26 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    HStack(spacing: 14) {
-                        Image("Logo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 54, height: 54)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Autheris")
-                                .font(.title3.weight(.semibold))
-                            Text("Version \(appMarketingVersion) (\(appBuildNumber))")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                Section {
-                    Toggle("Blur when backgrounded", isOn: $enablePrivacyBlur)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                    
-                    Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-
-                    Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-
-                    Toggle("Require Face ID / Touch ID", isOn: $enableAppLock)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                } header: {
-                    Text("Privacy")
-                } footer: {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
-                        Text("• **Hide codes in app switcher**: Shows a privacy screen instead of your OTP codes when using the app switcher.")
-                        Text("• **Hide codes while recording or mirroring**: Shows a privacy screen while the screen is being recorded or sent to another display.")
-                        Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .padding(.top, 4)
-                }
-
-                Section {
-                    Toggle("Sync with iCloud", isOn: syncToggleBinding)
-                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-
-                    syncStatusRow
-
-                    if !dataStore.isSyncAvailable && !isICloudSyncEnabled {
-                        // Explain, but do not block: the toggle must stay usable, and
-                        // the status row reports the precise reason if it fails.
-                        Text("iCloud isn't reachable right now. You can still turn sync on — it will connect once iCloud is available.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    if isICloudSyncEnabled {
-                        Button(role: .destructive) {
-                            showingDeleteCloudDataDialog = true
-                        } label: {
-                            Text("Delete Tokens from iCloud")
-                        }
-                    }
-                } header: {
-                    Text("iCloud Sync")
-                } footer: {
-                    Text("Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-                
-                Section {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 14) {
-                            Button {
-                                accentThemeRaw = ""
-                            } label: {
-                                Circle()
-                                    .fill(Color.accentColor)
-                                    .frame(width: 36, height: 36)
-                                    .overlay(
-                                        Circle()
-                                            .stroke(
-                                                accentThemeRaw.isEmpty
-                                                    ? Color.primary
-                                                    : Color.clear,
-                                                lineWidth: 3
-                                            )
-                                    )
-                                    .overlay(
-                                        Text("A")
-                                            .font(.caption.weight(.bold))
-                                            .foregroundColor(.white)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Default")
-
-                            ForEach(AccentTheme.allCases) { theme in
-                                Button {
-                                    accentThemeRaw = theme.rawValue
-                                } label: {
-                                    Circle()
-                                        .fill(theme.color)
-                                        .frame(width: 36, height: 36)
-                                        .overlay(
-                                            Circle()
-                                                .stroke(
-                                                    theme.rawValue == accentThemeRaw
-                                                        ? Color.primary
-                                                        : Color.clear,
-                                                    lineWidth: 3
-                                                )
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel(theme.displayName)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                } header: {
-                    Text("Appearance")
-                } footer: {
-                    Text("Choose an accent tint, or use the default Autheris color.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-                
-                Section {
-                    Button {
-                        showingImporter = true
-                    } label: {
-                        Label("Import from Another App", systemImage: "square.and.arrow.down")
-                    }
-
-                    Button {
-                        showingBackupView = true
-                    } label: {
-                        Label("Backup", systemImage: "externaldrive.badge.plus")
-                    }
-                    
-                    Button {
-                        showingQRCodeView = true
-                    } label: {
-                        Label("Transfer via QR Code", systemImage: "qrcode")
-                    }
-
-                    NavigationLink {
-                        RecentlyDeletedView(dataStore: dataStore)
-                    } label: {
-                        HStack {
-                            Label("Recently Deleted", systemImage: "trash")
-                            Spacer()
-                            if !dataStore.trash.isEmpty {
-                                Text("\(dataStore.trash.count)")
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                } header: {
-                    Text("Data")
-                } footer: {
-                    Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files. Deleted codes stay recoverable on this device for \(TrashBin.retentionDays) days.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-
-                Section {
-                    Button {
-                        showingChangelog = true
-                    } label: {
-                        Label("Changelog", systemImage: "list.bullet.rectangle")
-                    }
-                    
-                    Button {
-                        presentSupportEmail()
-                    } label: {
-                        Label("Support", systemImage: "envelope")
-                    }
-                } header: {
-                    Text("Help")
-                }
-                
-                Section {
-                    LabeledContent("Version", value: appMarketingVersion)
-                    LabeledContent("Build", value: appBuildNumber)
-
-                    Link(destination: URL(string: "https://eddington.tech/autheris")!) {
-                        LabeledContent("Website", value: "eddington.tech/autheris")
-                    }
-                } header: {
-                    Text("About")
-                } footer: {
-                    Text("Made by Hunter Eddington")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
+        Group {
+            #if os(macOS)
+            if presentation == .preferences {
+                macPreferencesBody
+            } else {
+                sheetBody
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-            .alert(
-                "Support Email",
-                isPresented: $showingSupportError
-            ) {
-                Button("OK", role: .cancel) { showingSupportError = false }
-            } message: {
-                Text(supportErrorMessage)
-            }
+            #else
+            sheetBody
+            #endif
+        }
+        // Shared by both containers, so it is attached outside the branch: the
+        // Help tab can trigger the same support error as the iPhone's Help section.
+        .alert(
+            "Support Email",
+            isPresented: $showingSupportError
+        ) {
+            Button("OK", role: .cancel) { showingSupportError = false }
+        } message: {
+            Text(supportErrorMessage)
         }
         .task {
             // Re-check the iCloud account each time Settings opens, so a user who
@@ -350,11 +162,14 @@ struct SettingsView: View {
         .sheet(isPresented: $showingChangelog) {
             ChangelogView()
         }
+        .sheet(isPresented: $showingRecentlyDeleted) {
+            RecentlyDeletedView(dataStore: dataStore)
+        }
         .sheet(isPresented: $showingSupportMail) {
             SupportMailComposer(
                 to: supportTo,
                 subject: supportSubject,
-                body: supportBody
+                messageBody: supportBody
             )
         }
         .confirmationDialog(
@@ -483,20 +298,414 @@ struct SettingsView: View {
         supportSubject = "Support Request from Autheris User"
         supportBody = SupportMailData.troubleshootingTemplate()
 
-        if MFMailComposeViewController.canSendMail() {
+        if PlatformApplication.hasInAppMailComposer {
             showingSupportMail = true
             return
         }
 
-        // Fallback: open Mail app via mailto:
+        // Fallback: hand the draft to the user's own mail client via mailto:.
+        // On the Mac this is the only path, and the better one.
         guard let url = SupportMailData.mailtoURL(to: supportTo, subject: supportSubject, body: supportBody) else {
             supportErrorMessage = "Unable to open Mail. Please email \(supportTo) with subject \"\(supportSubject)\"."
             showingSupportError = true
             return
         }
 
-        UIApplication.shared.open(url)
+        PlatformApplication.openMail(url)
     }
+    // MARK: - Containers
+
+    /// The iOS and iPad container: every section stacked in one scrolling list.
+    private var sheetBody: some View {
+        NavigationStack {
+            List {
+
+                appHeaderSection
+
+                privacySettingsSection
+
+                syncSettingsSection
+
+                appearanceSettingsSection
+
+                dataSettingsSection
+
+                helpSettingsSection
+
+                aboutSettingsSection
+            }
+            .navigationTitle("Settings")
+            .inlineNavigationTitle()
+            .toolbar {
+                ToolbarItem(placement: .platformSheetTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+        // Settings is the tallest sheet in the app — several sections, each with a
+        // footer — and a macOS sheet carries no size of its own.
+        .platformSheetSize(minWidth: 520, minHeight: 640)
+    }
+
+    #if os(macOS)
+    /// The Mac container: the same settings as a real preferences window.
+    ///
+    /// The window, its title and its toolbar all come from the `Settings` scene —
+    /// macOS turns a `TabView` of `Label` tab items into the standard preferences
+    /// toolbar — so this only has to say which sections go where. The iOS app-header
+    /// section is deliberately absent: the window title and the version rows say the
+    /// same thing, and a logo badge in a preferences pane is a phone idiom.
+    private var macPreferencesBody: some View {
+        TabView {
+            Form {
+                appearanceSettingsSection
+                aboutSettingsSection
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("General", systemImage: "gearshape") }
+
+            Form {
+                privacySettingsSection
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Privacy", systemImage: "hand.raised") }
+
+            Form {
+                syncSettingsSection
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("iCloud", systemImage: "icloud") }
+
+            Form {
+                dataSettingsSection
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Data", systemImage: "externaldrive") }
+
+            Form {
+                helpSettingsSection
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Help", systemImage: "questionmark.circle") }
+        }
+        .frame(width: 620, height: 520)
+    }
+    #endif
+
+    // MARK: - Sections
+    //
+    // Written once and composed by both containers: the iOS/iPad sheet stacks them
+    // in a List, and the Mac preferences window distributes them across tabs. Every
+    // setting therefore lives in exactly one place.
+
+    @ViewBuilder
+    private var appHeaderSection: some View {
+        Section {
+            HStack(spacing: 14) {
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 54, height: 54)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Autheris")
+                        .font(.title3.weight(.semibold))
+                    Text("Version \(appMarketingVersion) (\(appBuildNumber))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+    
+                Spacer()
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var privacySettingsSection: some View {
+        Section {
+            Toggle("Blur when backgrounded", isOn: $enablePrivacyBlur)
+                .platformAccentToggle()
+            
+            Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
+                .platformAccentToggle()
+    
+            Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
+                .platformAccentToggle()
+    
+            Toggle(appLockToggleLabel, isOn: $enableAppLock)
+                .platformAccentToggle()
+        } header: {
+            Text("Privacy")
+        } footer: {
+            VStack(alignment: .leading, spacing: 8) {
+                #if os(macOS)
+                // A Mac preferences window is narrower and its tab is short, so the
+                // iPhone's per-switch list reads as a wall of text. The switch labels
+                // carry the meaning already; this says what they add up to.
+                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.")
+                #else
+                Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
+                Text("• **Hide codes in app switcher**: Shows a privacy screen instead of your OTP codes when using the app switcher.")
+                Text("• **Hide codes while recording or mirroring**: Shows a privacy screen while the screen is being recorded or sent to another display.")
+                Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
+                #endif
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .padding(.top, 4)
+        }
+    }
+
+    /// The App Lock switch's label.
+    ///
+    /// macOS has no Face ID, and on a Mac without Touch ID the system falls back to
+    /// the login password — so naming Face ID there would be wrong twice over.
+    private var appLockToggleLabel: String {
+        #if os(macOS)
+        return "Require Touch ID or password"
+        #else
+        return "Require Face ID / Touch ID"
+        #endif
+    }
+
+    @ViewBuilder
+    private var syncSettingsSection: some View {
+        Section {
+            Toggle("Sync with iCloud", isOn: syncToggleBinding)
+                .platformAccentToggle()
+    
+            syncStatusRow
+    
+            if !dataStore.isSyncAvailable && !isICloudSyncEnabled
+                && !dataStore.syncStatus.isConfigurationFailure {
+                // Explain, but do not block: the toggle must stay usable, and
+                // the status row reports the precise reason if it fails.
+                Text("iCloud isn't reachable right now. You can still turn sync on — it will connect once iCloud is available.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+    
+            if isICloudSyncEnabled {
+                Button(role: .destructive) {
+                    showingDeleteCloudDataDialog = true
+                } label: {
+                    Text("Delete Tokens from iCloud")
+                }
+            }
+        } header: {
+            Text("iCloud Sync")
+        } footer: {
+            Text("Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var appearanceSettingsSection: some View {
+        Section {
+            PlatformSwatchRow {
+                Button {
+                    accentThemeRaw = ""
+                } label: {
+                    Circle()
+                        .fill(Color.accentColor)
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    accentThemeRaw.isEmpty
+                                        ? Color.primary
+                                        : Color.clear,
+                                    lineWidth: 3
+                                )
+                        )
+                        .overlay(
+                            Text("A")
+                                .font(.caption.weight(.bold))
+                                .foregroundColor(.white)
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Default")
+    
+                ForEach(AccentTheme.allCases) { theme in
+                    Button {
+                        accentThemeRaw = theme.rawValue
+                    } label: {
+                        Circle()
+                            .fill(theme.color)
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                Circle()
+                                    .stroke(
+                                        theme.rawValue == accentThemeRaw
+                                            ? Color.primary
+                                            : Color.clear,
+                                        lineWidth: 3
+                                    )
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(theme.displayName)
+                }
+            }
+        } header: {
+            Text("Appearance")
+        } footer: {
+            Text("Choose an accent tint, or use the default Autheris color.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var dataSettingsSection: some View {
+        Section {
+            Button {
+                showingImporter = true
+            } label: {
+                actionRowLabel("Import from Another App", systemImage: "square.and.arrow.down")
+            }
+            .platformPlainButton()
+    
+            Button {
+                showingBackupView = true
+            } label: {
+                actionRowLabel("Backup", systemImage: "externaldrive.badge.plus")
+            }
+            .platformPlainButton()
+            
+            Button {
+                showingQRCodeView = true
+            } label: {
+                actionRowLabel("Transfer via QR Code", systemImage: "qrcode")
+            }
+            .platformPlainButton()
+    
+            #if os(macOS)
+            // A `NavigationLink` needs a navigation stack to push into. The Mac
+            // Data tab is a plain form in the preferences window — pushing would
+            // replace the tab's content and leave the tab bar stranded above a back
+            // button — so it opens the same screen as a sheet instead.
+            Button {
+                showingRecentlyDeleted = true
+            } label: {
+                recentlyDeletedRowLabel
+            }
+            .platformPlainButton()
+            #else
+            NavigationLink {
+                RecentlyDeletedView(dataStore: dataStore)
+            } label: {
+                recentlyDeletedRowLabel
+            }
+            #endif
+        } header: {
+            Text("Data")
+        } footer: {
+            Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files. Deleted codes stay recoverable on this device for \(TrashBin.retentionDays) days.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
+    /// An action row in the Data and Help sections.
+    ///
+    /// iOS already draws a `Button` in a `List` as a plain row. macOS draws its
+    /// default bordered chrome instead, and around a `Label` that wraps the icon and
+    /// the title in *separate* grey capsules — so a row read as two grey pills
+    /// rather than a setting. The fix is `.platformPlainButton()` at the call site;
+    /// this supplies the trailing chevron those rows need in exchange, because a
+    /// chrome-less row otherwise gives no hint that it opens anything.
+    @ViewBuilder
+    private func actionRowLabel(_ title: String, systemImage: String) -> some View {
+        #if os(macOS)
+        HStack {
+            Label(title, systemImage: systemImage)
+            Spacer()
+            actionRowChevron
+        }
+        // Without this the row only responds to a click directly on its icon or text:
+        // a plain-styled macOS button is hittable only where its label draws, and the
+        // `Spacer` draws nothing.
+        .platformActionRowHitArea()
+        #else
+        Label(title, systemImage: systemImage)
+        #endif
+    }
+
+    #if os(macOS)
+    private var actionRowChevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.tertiary)
+    }
+    #endif
+
+    /// The Recently Deleted row, shared by the `Button` and `NavigationLink` forms.
+    private var recentlyDeletedRowLabel: some View {
+        HStack {
+            Label("Recently Deleted", systemImage: "trash")
+            Spacer()
+            if !dataStore.trash.isEmpty {
+                Text("\(dataStore.trash.count)")
+                    .foregroundColor(.secondary)
+            }
+            #if os(macOS)
+            actionRowChevron
+            #endif
+        }
+        .platformActionRowHitArea()
+    }
+
+    @ViewBuilder
+    private var helpSettingsSection: some View {
+        Section {
+            Button {
+                showingChangelog = true
+            } label: {
+                actionRowLabel("Changelog", systemImage: "list.bullet.rectangle")
+            }
+            .platformPlainButton()
+            
+            Button {
+                presentSupportEmail()
+            } label: {
+                actionRowLabel("Support", systemImage: "envelope")
+            }
+            .platformPlainButton()
+        } header: {
+            Text("Help")
+        }
+    }
+
+    @ViewBuilder
+    private var aboutSettingsSection: some View {
+        Section {
+            LabeledContent("Version", value: appMarketingVersion)
+            LabeledContent("Build", value: appBuildNumber)
+    
+            Link(destination: URL(string: "https://eddington.tech/autheris")!) {
+                LabeledContent("Website", value: "eddington.tech/autheris")
+            }
+        } header: {
+            Text("About")
+        } footer: {
+            Text("Made by Hunter Eddington")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
 }
 
 private struct SupportMailData {
@@ -505,12 +714,8 @@ private struct SupportMailData {
     let body: String
 
     static func troubleshootingTemplate() -> String {
-        let device = UIDevice.current
-
         let appVersion = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "Unknown"
         let build = (Bundle.main.infoDictionary?["CFBundleVersion"] as? String) ?? "Unknown"
-
-        let modelIdentifier = Self.modelIdentifier() ?? "Unknown"
 
         return """
         Hi Autheris Support,
@@ -528,8 +733,8 @@ private struct SupportMailData {
         -
 
         Device info:
-        - Device: \(device.model) (\(modelIdentifier))
-        - iOS: \(device.systemVersion)
+        - Device: \(PlatformApplication.deviceDescription)
+        - \(PlatformApplication.osName): \(PlatformApplication.osVersion)
         - Autheris: \(appVersion) (\(build))
 
         Thanks!
@@ -546,23 +751,37 @@ private struct SupportMailData {
         ]
         return components.url
     }
+}
 
-    static func modelIdentifier() -> String? {
-        var systemInfo = utsname()
-        uname(&systemInfo)
+/// The support-mail draft, as a sheet.
+///
+/// iOS presents `MFMailComposeViewController`, which is the only place a draft
+/// can be composed and sent without leaving the app. macOS has no such
+/// controller, so this renders nothing there — and nothing needs it to, because
+/// `PlatformApplication.hasInAppMailComposer` is `false` and the caller takes the
+/// `mailto:` route instead. The sheet is kept rather than branched at the call
+/// site so the view hierarchy stays the same shape on both platforms.
+private struct SupportMailComposer: View {
+    let to: String
+    let subject: String
+    /// Named `messageBody` rather than `body`: `body` is already the `View`
+    /// requirement on this struct.
+    let messageBody: String
 
-        let mirror = Mirror(reflecting: systemInfo.machine)
-        return mirror.children.compactMap { element -> String? in
-            guard let value = element.value as? Int8, value != 0 else { return nil }
-            return String(UnicodeScalar(UInt8(value)))
-        }.joined()
+    var body: some View {
+        #if os(iOS)
+        MailComposerRepresentable(to: to, subject: subject, messageBody: messageBody)
+        #else
+        EmptyView()
+        #endif
     }
 }
 
-private struct SupportMailComposer: UIViewControllerRepresentable {
+#if os(iOS)
+private struct MailComposerRepresentable: UIViewControllerRepresentable {
     let to: String
     let subject: String
-    let body: String
+    let messageBody: String
 
     @Environment(\.dismiss) private var dismiss
 
@@ -575,7 +794,7 @@ private struct SupportMailComposer: UIViewControllerRepresentable {
         vc.mailComposeDelegate = context.coordinator
         vc.setToRecipients([to])
         vc.setSubject(subject)
-        vc.setMessageBody(body, isHTML: false)
+        vc.setMessageBody(messageBody, isHTML: false)
         return vc
     }
 
@@ -597,6 +816,7 @@ private struct SupportMailComposer: UIViewControllerRepresentable {
         }
     }
 }
+#endif
 
 #Preview {
     SettingsView(dataStore: OTPDataStore())

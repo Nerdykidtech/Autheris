@@ -31,17 +31,17 @@ struct ChangelogView: View {
                 }
             }
             .navigationTitle("Changelog")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .platformSheetTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .platformSheetDetents(dragIndicator: true)
+            .platformSheetSize()
     }
 }
 
@@ -54,6 +54,23 @@ struct ChangelogRelease: Identifiable, Sendable {
     let changes: [String]
     
     static let catalog: [ChangelogRelease] = [
+        ChangelogRelease(
+            id: "2.2",
+            version: "2.2",
+            date: "September 2026",
+            changes: [
+                "Autheris now runs on the Mac — a real Mac app rather than a phone app stretched across the desktop. Your codes, sync and settings are unchanged: add an account on your iPhone and it is there on your Mac.",
+                "Settings on the Mac is a proper preferences window. Open it from the gear or with ⌘, and find everything grouped into General, Privacy, iCloud, Data and Help.",
+                "Scan QR codes with your Mac's built-in or attached camera, including Google Authenticator transfer codes.",
+                "App Lock works on the Mac: Touch ID where your Mac has it, and your login password where it does not.",
+                "Codes are hidden from screen sharing and recording, so a call or a demo cannot put your codes on someone else's screen.",
+                "The small things a Mac expects: switch controls use the system's own blue, the accent colours sit in a row rather than a scroller, lists reorder by dragging a row directly, search lives in the window toolbar, and copied codes are marked as concealed so they do not travel to your other devices through Universal Clipboard.",
+                "Support on the Mac opens your own mail app with the troubleshooting details already filled in.",
+                "Fixed a set of Mac teething problems: some sheets opened as an empty box, several could not be closed at all, Recently Deleted had no way back, and the buttons in Settings did not respond everywhere they looked like they should.",
+                "Fixed a crash when starting the Mac's QR scanner.",
+                "Fixed a startup crash in builds where iCloud is unavailable — the app now opens normally and explains that sync is unavailable, instead of refusing to start."
+            ]
+        ),
         ChangelogRelease(
             id: "2.1",
             version: "2.1",

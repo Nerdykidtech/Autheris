@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Mac App Store apps must be sandboxed. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!-- Issuer logo lookups over HTTPS, and CloudKit. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+
+	<!-- Scanning a QR code with the Mac's built-in or attached camera. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+
+	<!-- Restoring a backup the user picks in the open panel. Read-only: the app
+	     never writes back to a user-selected location. -->
+	<key>com.apple.security.files.user-selected.read-only</key>
+	<true/>
+
+	<!-- Same private container as the iOS app, so tokens sync between them. -->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.com.eddingtontech.autheris</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudKit</string>
+	</array>
+
+	<!-- Silent CloudKit pushes. On macOS the APNs entitlement is namespaced. -->
+	<key>com.apple.developer.aps-environment</key>
+	<string>$(APS_ENVIRONMENT)</string>
+
+	<!-- The data protection keychain, which is how macOS gets the iOS
+	     "survives a reinstall" behaviour the iOS app already relies on. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.eddingtontech.autheris</string>
+	</array>
+</dict>
+</plist>

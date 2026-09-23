@@ -1,4 +1,7 @@
 import CloudKit
+import Foundation
+
+#if os(iOS)
 import UIKit
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -6,10 +9,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         #if DEBUG
         print("Autheris app launched")
         #endif
-        
-        // Clear any old pending data
-        UserDefaults.standard.removeObject(forKey: "pendingImportData")
-        UserDefaults.standard.synchronize()
+
+        clearPendingImport()
 
         // Silent pushes carry iCloud sync changes. Registering unconditionally is
         // harmless: nothing is delivered until a CloudKit subscription exists, and
@@ -44,4 +45,59 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             completionHandler(handled ? .newData : .noData)
         }
     }
+}
+
+#else
+import AppKit
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        #if DEBUG
+        print("Autheris app launched")
+        #endif
+
+        clearPendingImport()
+
+        // Same reasoning as on iOS: registering unconditionally is harmless until
+        // a CloudKit subscription exists, and that only happens once the user
+        // turns sync on.
+        NSApplication.shared.registerForRemoteNotifications()
+    }
+
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        #if DEBUG
+        print("Registered for remote notifications")
+        #endif
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        #if DEBUG
+        print("Remote notification registration failed: \(error.localizedDescription)")
+        #endif
+    }
+
+    /// Silent push from the sync service's `CKDatabaseSubscription`.
+    ///
+    /// macOS delivers this without a completion handler — there is no background
+    /// fetch budget to report against the way iOS has one, because the app is
+    /// either running or it is not — so the sync is simply awaited, and there is
+    /// no one to tell what it found.
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        // `deliver` takes the iOS spelling of the payload dictionary; rebuilding
+        // it is the only difference between the two platform callbacks.
+        let payload = Dictionary(
+            uniqueKeysWithValues: userInfo.map { (AnyHashable($0.key), $0.value) }
+        )
+        Task { @MainActor in
+            _ = await SyncRemoteNotificationRouter.deliver(userInfo: payload)
+        }
+    }
+}
+#endif
+
+private func clearPendingImport() {
+    // Clear any old pending data. Shared by both platforms: the `autheris://import`
+    // URL that sets this key is registered on both.
+    UserDefaults.standard.removeObject(forKey: "pendingImportData")
+    UserDefaults.standard.synchronize()
 }

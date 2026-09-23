@@ -9,9 +9,6 @@ struct SecretKeySection: View {
     @State private var isRevealed = false
     @State private var isCopied = false
     
-    private let copyHaptic = UIImpactFeedbackGenerator(style: .light)
-    private let revealHaptic = UIImpactFeedbackGenerator(style: .light)
-    
     /// Fixed-width bullets so the masked field doesn't jump when the secret length changes.
     private var maskedText: String {
         String(repeating: "•", count: max(8, min(secret.count, 24)))
@@ -27,7 +24,7 @@ struct SecretKeySection: View {
                 Spacer()
                 
                 Button {
-                    revealHaptic.impactOccurred()
+                    Haptics.impact(.light)
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isRevealed.toggle()
                     }
@@ -43,10 +40,10 @@ struct SecretKeySection: View {
             Group {
                 if isRevealed {
                     TextField("Setup key", text: $secret)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .textContentType(.password)
-                        .keyboardType(.asciiCapable)
+                        .platformNoAutocapitalization()
+                        .autocorrectionDisabled()
+                        .platformTextContentType(.password)
+                        .asciiCapableKeyboard()
                         .font(.system(size: 16, weight: .medium, design: .monospaced))
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -77,7 +74,7 @@ struct SecretKeySection: View {
                         )
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            revealHaptic.impactOccurred()
+                            Haptics.impact(.light)
                             withAnimation(.easeInOut(duration: 0.2)) {
                                 isRevealed = true
                             }
@@ -90,7 +87,7 @@ struct SecretKeySection: View {
             
             HStack {
                 Button {
-                    revealHaptic.impactOccurred()
+                    Haptics.impact(.light)
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isRevealed.toggle()
                     }
@@ -116,7 +113,7 @@ struct SecretKeySection: View {
     
     private func copySecret() {
         guard !secret.isEmpty else { return }
-        copyHaptic.impactOccurred()
+        Haptics.impact(.light)
         ClipboardHelper.copy(secret)
         withAnimation(.easeInOut(duration: 0.2)) {
             isCopied = true

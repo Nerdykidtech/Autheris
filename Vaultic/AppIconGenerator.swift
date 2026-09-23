@@ -1,3 +1,6 @@
+// iOS-only: unreferenced icon-generation scratch code. Excluded from the
+// macOS build rather than ported, because nothing calls it.
+#if os(iOS)
 import UIKit
 import CoreGraphics
 
@@ -88,3 +91,4 @@ struct AppIconGenerator {
         }
     }
 }
+#endif

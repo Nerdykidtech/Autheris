@@ -81,4 +81,15 @@ nonisolated enum CloudSyncStatus: Equatable {
         case .disabled, .syncing, .synced, .accountUnavailable: return false
         }
     }
+
+    /// `true` when the failure is about *this build's* configuration rather than a
+    /// condition that will pass — the difference between "try again later" and
+    /// "this will not work until the build is fixed".
+    ///
+    /// Settings uses it to avoid telling the user to wait for iCloud when the real
+    /// problem is an entitlement the app does not have.
+    var isConfigurationFailure: Bool {
+        if case .unavailable = self { return true }
+        return false
+    }
 }

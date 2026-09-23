@@ -1,5 +1,4 @@
 import AVFoundation
-import UIKit
 
 class CameraPermissionHelper {
     static func checkCameraPermission(completion: @escaping (Bool) -> Void) {
@@ -22,8 +21,6 @@ class CameraPermissionHelper {
     }
     
     static func openSettings() {
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
+        PlatformApplication.openCameraSettings()
     }
 }

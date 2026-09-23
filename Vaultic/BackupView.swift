@@ -1,6 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(iOS)
 import UIKit
+#endif
 
 private func backupFileSizeText(_ url: URL) -> String {
     let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
@@ -94,9 +96,9 @@ struct BackupView: View {
                 backupInfoSection
             }
             .navigationTitle("Backup & Restore")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .platformSheetTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -176,13 +178,15 @@ struct BackupView: View {
             }
             .sheet(isPresented: $showingShareSheet) {
                 if let shareURL {
-                    ShareSheet(activityItems: [shareURL])
+                    PlatformShareSheet(activityItems: [shareURL])
                 } else {
                     Text("Nothing to share.")
-                        .presentationDetents([.medium])
+                        .platformSheetDetents([.medium])
+                        .platformSheetSize(minHeight: 200)
                 }
             }
         }
+        .platformSheetSize(minHeight: 560)
     }
 
     // MARK: - Sections
@@ -352,15 +356,4 @@ struct BackupView: View {
         shareURL = backupURL
         showingShareSheet = true
     }
-}
-
-private struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    var applicationActivities: [UIActivity]? = nil
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

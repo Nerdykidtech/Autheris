@@ -8,6 +8,7 @@ import SwiftUI
 struct RecentlyDeletedView: View {
     @ObservedObject var dataStore: OTPDataStore
 
+    @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteAllConfirmation = false
     @State private var message: (title: String, body: String)?
 
@@ -37,14 +38,34 @@ struct RecentlyDeletedView: View {
                             .font(.caption)
                     }
                 }
-                .listStyle(.insetGrouped)
+                .platformInsetGroupedList()
             }
         }
         .navigationTitle("Recently Deleted")
-        .navigationBarTitleDisplayMode(.inline)
+        .inlineNavigationTitle()
         .toolbar {
+            #if os(macOS)
+            // On the Mac this screen is a sheet, and a sheet has no navigation back
+            // button — on iOS the push that opens it supplies one, which is why the
+            // Mac build had no way out at all. This is deliberately *outside* the
+            // `entries` check below: with an empty trash the toolbar would otherwise
+            // be completely empty and the window would be unclosable.
+            ToolbarItem(placement: .platformSheetLeading) {
+                Button("Done") {
+                    dismiss()
+                }
+                // Escape closes it too, which is the first thing a Mac user tries.
+                .keyboardShortcut(.cancelAction)
+            }
+            #endif
+
             if !entries.isEmpty {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                // `platformSheetTrailing`, not `platformTrailing`: on iOS it maps to
+                // exactly the same navigation-bar placement it always used (this
+                // screen is pushed there), and on macOS it is presented as a sheet
+                // from the Data tab — where a *window*-toolbar placement would be
+                // dropped and Delete All would silently disappear.
+                ToolbarItem(placement: .platformSheetTrailing) {
                     Button("Delete All", role: .destructive) {
                         showingDeleteAllConfirmation = true
                     }
@@ -80,6 +101,9 @@ struct RecentlyDeletedView: View {
             // re-check whenever the list is opened.
             dataStore.purgeExpiredTrash()
         }
+        // Only meaningful where this is a sheet (the Mac Data tab). On iOS it is
+        // pushed, and detents have no effect on a pushed destination.
+        .platformSheetSize(minHeight: 480)
     }
 
     // MARK: - Rows

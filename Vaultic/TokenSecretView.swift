@@ -12,8 +12,6 @@ struct TokenSecretView: View {
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
     
-    private let saveHaptic = UINotificationFeedbackGenerator()
-    
     private var branding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
     }
@@ -88,9 +86,9 @@ struct TokenSecretView: View {
                 .padding(.bottom, 24)
             }
             .navigationTitle("Account Secret")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .platformSheetLeading) {
                     Button("Cancel") {
                         if isDirty {
                             showDiscardConfirmation = true
@@ -119,8 +117,8 @@ struct TokenSecretView: View {
                 Text(alertMessage)
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .platformSheetDetents(dragIndicator: true)
+            .platformSheetSize()
     }
     
     private func saveChanges() {
@@ -136,7 +134,7 @@ struct TokenSecretView: View {
         
         if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
             dataStore.updateCode(updatedCode, at: index)
-            saveHaptic.notificationOccurred(.success)
+            Haptics.notify(.success)
         }
         
         dismiss()

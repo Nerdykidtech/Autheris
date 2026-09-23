@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 private func rgb(_ hex: UInt32) -> Color {
     Color(

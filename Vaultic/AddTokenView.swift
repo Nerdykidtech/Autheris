@@ -3,7 +3,6 @@ import Foundation
 import AVFoundation
 import PhotosUI
 import Vision
-import UIKit
 
 struct AddTokenView: View {
     @Environment(\.dismiss) private var dismiss
@@ -84,6 +83,7 @@ struct AddTokenView: View {
                                     .background(Capsule().fill(Color.accentColor))
                                     .foregroundColor(.white)
                             }
+                            .platformPlainButton()
                             PhotosPicker(selection: $selectedPhoto, matching: .images) {
                                 Label("Upload QR", systemImage: "photo.on.rectangle.angled")
                                     .font(.subheadline.weight(.semibold))
@@ -134,13 +134,13 @@ struct AddTokenView: View {
                             TextField("Service name", text: $label)
 
                             TextField("Account (optional)", text: $account)
-                                .textContentType(.username)
-                                .autocapitalization(.none)
+                                .platformTextContentType(.username)
+                                .platformNoAutocapitalization()
 
                             SecureField("Setup key", text: $secret)
-                                .textInputAutocapitalization(.never)
+                                .platformNoAutocapitalization()
                                 .autocorrectionDisabled()
-                                .textContentType(.password)
+                                .platformTextContentType(.password)
                         }
 
                         Section {
@@ -180,9 +180,9 @@ struct AddTokenView: View {
                 }
             }
             .navigationTitle("Add Token")
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .platformSheetLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
@@ -199,7 +199,7 @@ struct AddTokenView: View {
                         parseQRCode(qrCode)
                     }
                 })
-                .edgesIgnoringSafeArea(.all)
+                .ignoresSafeArea()
             }
             .onChange(of: selectedPhoto) { _, newItem in
                 guard let newItem else { return }
@@ -209,7 +209,7 @@ struct AddTokenView: View {
                 Task {
                     do {
                         if let data = try await newItem.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
+                           let image = PlatformImage(data: data) {
                             await MainActor.run {
                                 isProcessingImage = false
                                 readQRFromImage(image)
@@ -231,8 +231,8 @@ struct AddTokenView: View {
                 }
             }
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        .platformSheetDetents(dragIndicator: true)
+            .platformSheetSize()
     }
     
     private func requestCameraPermission() {
@@ -248,8 +248,8 @@ struct AddTokenView: View {
         }
     }
     
-    private func readQRFromImage(_ image: UIImage) {
-        guard let cgImage = image.cgImage else {
+    private func readQRFromImage(_ image: PlatformImage) {
+        guard let cgImage = image.cgImageForExport else {
             isProcessingImage = false
             deferAlert(message: "Could not read the selected image.")
             return
@@ -257,12 +257,12 @@ struct AddTokenView: View {
         // Downscale large photos so Vision runs faster and UI doesn't feel frozen
         let maxDimension: CGFloat = 1024
         let imageToUse: CGImage
-        if max(image.size.width, image.size.height) > maxDimension {
-            let scale = maxDimension / max(image.size.width, image.size.height)
-            let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-            let renderer = UIGraphicsImageRenderer(size: newSize)
-            let scaled = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
-            imageToUse = scaled.cgImage ?? cgImage
+        let pixelWidth = CGFloat(cgImage.width)
+        let pixelHeight = CGFloat(cgImage.height)
+        if max(pixelWidth, pixelHeight) > maxDimension {
+            let scale = maxDimension / max(pixelWidth, pixelHeight)
+            let newSize = CGSize(width: pixelWidth * scale, height: pixelHeight * scale)
+            imageToUse = Self.downscaled(cgImage, to: newSize) ?? cgImage
         } else {
             imageToUse = cgImage
         }
@@ -296,6 +296,29 @@ struct AddTokenView: View {
         }
     }
     
+    /// Draws `image` into a smaller bitmap.
+    ///
+    /// Core Graphics directly rather than a UIKit image renderer, which macOS
+    /// does not have — and which is all the renderer was doing underneath anyway.
+    private static func downscaled(_ image: CGImage, to size: CGSize) -> CGImage? {
+        let width = Int(size.width.rounded())
+        let height = Int(size.height.rounded())
+        guard width > 0, height > 0,
+              let context = CGContext(
+                  data: nil,
+                  width: width,
+                  height: height,
+                  bitsPerComponent: 8,
+                  bytesPerRow: 0,
+                  space: CGColorSpaceCreateDeviceRGB(),
+                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+              ) else { return nil }
+
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
+    }
+
     /// Show an alert on the next run loop so it isn't lost when a sheet has just closed.
     private func deferAlert(message: String) {
         DispatchQueue.main.async {

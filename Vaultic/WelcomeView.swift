@@ -60,6 +60,7 @@ struct WelcomeView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                #if os(iOS)
                 TabView(selection: $currentPage) {
                     welcomePage.tag(0)
                     featuresPage.tag(1)
@@ -67,6 +68,25 @@ struct WelcomeView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(maxHeight: .infinity)
+                #else
+                // macOS has no paging container — `.page` is iOS-only, and a
+                // plain `TabView` there draws a tab bar, which is not what three
+                // onboarding screens should look like. The Back and Next buttons
+                // already drive `currentPage`, so the Mac simply shows the
+                // selected page and cross-fades between them.
+                Group {
+                    switch currentPage {
+                    case 0: welcomePage
+                    case 1: featuresPage
+                    default: getStartedPage
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .animation(
+                    reduceMotion ? nil : .easeInOut(duration: 0.25),
+                    value: currentPage
+                )
+                #endif
 
                 VStack(spacing: 20) {
                     pageDots
@@ -194,7 +214,7 @@ struct WelcomeView: View {
         HStack(spacing: 16) {
             if currentPage > 0 {
                 Button {
-                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    Haptics.impact(.light)
                     currentPage -= 1
                 } label: {
                     HStack(spacing: 8) {
@@ -212,11 +232,11 @@ struct WelcomeView: View {
             }
 
             Button {
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                Haptics.impact(.medium)
                 if currentPage < totalPages - 1 {
                     currentPage += 1
                 } else {
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    Haptics.notify(.success)
                     hasCompletedOnboarding = true
                 }
             } label: {

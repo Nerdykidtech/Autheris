@@ -2,5 +2,5 @@
 "keywords" = "two-factor,mfa,2-factor,token,generator,security,privacy,private,backup,sync,icloud,vault";
 "whatsNew" = "Autheris 2.0 is a big update.\n\nNEW\n• Pin and Reorder — Pin the codes you use most to the top, and drag the rest into any order.\n• Recently Deleted — A deleted code is kept on your device for 7 days, so a wrong tap is recoverable. Restore it, or remove it for good straight away.\n• Protected While Recording — Codes are now covered if your screen is being recorded or mirrored, alongside the existing app-switcher and background protection.\n• SHA-256 and SHA-512 — Choose the algorithm when adding or editing a code. Some services need something other than the default.\n• Account Is Now Optional — Add a code without filling in an account name.\n\nIMPROVED\n• Redesigned home screen, with Add and Edit rebuilt as native forms — the code updates live as you change a setting.\n• Tokens, settings and pending deletions now live in the Keychain, so they survive reinstalling the app.\n• A deleted code can no longer reappear after a reinstall.\n• Fixed a crash a malformed setup link or backup file could trigger.\n• The app is now named Autheris on your home screen, matching the App Store.";
 "promotionalText" = "Now with pinning, a 7-day Recently Deleted bin, and SHA-256 support. No account, no tracking — your codes stay on your device.";
-"marketingUrl" = "https://eddington.tech/autheris";
-"supportUrl" = "https://eddington.tech/autheris";
+"marketingUrl" = "https://autheris.app";
+"supportUrl" = "https://autheris.app";

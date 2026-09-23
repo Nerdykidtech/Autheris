@@ -7,7 +7,7 @@ struct QRCodeView: View {
     let title: String
     
     @Environment(\.dismiss) private var dismiss
-    @State private var qrImage: UIImage?
+    @State private var qrImage: PlatformImage?
     @State private var generationError: String?
     @State private var isSharing = false
     
@@ -31,7 +31,7 @@ struct QRCodeView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 24)
                 } else if let qrImage {
-                    Image(uiImage: qrImage)
+                    Image(platformImage: qrImage)
                         .interpolation(.none)
                         .resizable()
                         .scaledToFit()
@@ -81,9 +81,9 @@ struct QRCodeView: View {
             }
             .padding(.top, 40)
             .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
+            .inlineNavigationTitle()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .platformSheetTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -94,10 +94,11 @@ struct QRCodeView: View {
             }
             .sheet(isPresented: $isSharing) {
                 if let qrImage {
-                    ActivityViewController(activityItems: [qrImage])
+                    PlatformShareSheet(activityItems: [qrImage])
                 }
             }
         }
+        .platformSheetSize(minHeight: 560)
     }
     
     private func generateQRCode() {
@@ -147,7 +148,7 @@ struct QRCodeView: View {
                 return
             }
             
-            let image = UIImage(cgImage: cgImage)
+            let image = PlatformImage.from(cgImage: cgImage)
             DispatchQueue.main.async {
                 qrImage = image
             }
@@ -157,16 +158,4 @@ struct QRCodeView: View {
     private func shareQRCode() {
         isSharing = true
     }
-}
-
-struct ActivityViewController: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    let applicationActivities: [UIActivity]? = nil
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

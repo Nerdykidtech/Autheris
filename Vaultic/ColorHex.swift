@@ -1,5 +1,7 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
+#endif
 
 extension Color {
     /// Parses `#RRGGBB` or `RRGGBB` (6 hex digits).
@@ -15,34 +17,47 @@ extension Color {
         let b = Double(value & 0xFF) / 255
         self.init(red: r, green: g, blue: b)
     }
-    
+
     /// Uppercase `RRGGBB` for storage, or `nil` if the color cannot be resolved to RGB.
     func rgbHexStringForStorage() -> String? {
-        let ui = UIColor(self)
+        #if os(macOS)
+        // An AppKit semantic colour has no fixed components until it is resolved
+        // into a concrete colour space, and asking an unresolved one either fails
+        // or answers for whatever space the current display happens to be in.
+        // Resolving to sRGB first is what makes the stored hex the same on every
+        // Mac. `NSColor.getRed` also reports failure by *raising* rather than by
+        // returning a flag, so reading the components is the safe route here.
+        guard let color = PlatformColor(self).usingColorSpace(.sRGB),
+              let components = color.cgColor.components else { return nil }
+        return Self.hex(fromComponents: components)
+        #else
+        let color = UIColor(self)
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        if ui.getRed(&r, green: &g, blue: &b, alpha: &a) {
-            return String(
-                format: "%02X%02X%02X",
-                Int((r * 255).rounded()),
-                Int((g * 255).rounded()),
-                Int((b * 255).rounded())
-            )
+        if color.getRed(&r, green: &g, blue: &b, alpha: &a) {
+            return Self.hex(red: r, green: g, blue: b)
         }
-        let cg = ui.cgColor
-        guard let components = cg.components else { return nil }
-        if cg.numberOfComponents == 2 {
-            let gray = components[0]
-            let v = Int((gray * 255).rounded())
+        guard let components = color.cgColor.components else { return nil }
+        return Self.hex(fromComponents: components)
+        #endif
+    }
+
+    /// `RRGGBB` from a colour's components, treating a two-component (grayscale)
+    /// colour as grey rather than rejecting it.
+    private static func hex(fromComponents components: [CGFloat]) -> String? {
+        if components.count == 2 {
+            let v = Int((components[0] * 255).rounded())
             return String(format: "%02X%02X%02X", v, v, v)
         }
-        if components.count >= 3 {
-            return String(
-                format: "%02X%02X%02X",
-                Int((components[0] * 255).rounded()),
-                Int((components[1] * 255).rounded()),
-                Int((components[2] * 255).rounded())
-            )
-        }
-        return nil
+        guard components.count >= 3 else { return nil }
+        return hex(red: components[0], green: components[1], blue: components[2])
+    }
+
+    private static func hex(red: CGFloat, green: CGFloat, blue: CGFloat) -> String {
+        String(
+            format: "%02X%02X%02X",
+            Int((red * 255).rounded()),
+            Int((green * 255).rounded()),
+            Int((blue * 255).rounded())
+        )
     }
 }

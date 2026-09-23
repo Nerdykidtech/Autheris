@@ -1,8 +1,11 @@
 import SwiftUI
-import UIKit
 
-/// Answers "is this an iPad?" once, in one place, for the few layout decisions
-/// that actually depend on it.
+#if os(iOS)
+import UIKit
+#endif
+
+/// Answers "does this app have room to spread out?" once, in one place, for the
+/// few layout decisions that actually depend on it.
 ///
 /// The idiom is asked for rather than the horizontal size class on purpose. A
 /// size class changes while the app is running — rotating a large iPhone, or
@@ -10,10 +13,20 @@ import UIKit
 /// body that depends on one makes SwiftUI tear down and rebuild the view it
 /// wraps, losing its state (search text, an open sheet). An idiom is fixed for
 /// the lifetime of the process, so a branch on it never flips.
+///
+/// A Mac answers `true` for the same reason an iPad does: it has a large display
+/// and a pointer, so the roomy layout is the right one. It also happens to be
+/// fixed for the lifetime of the process on the Mac — a window can be resized,
+/// but the app is still a Mac app — so the property above still holds.
 enum AdaptiveLayout {
-    /// `true` when the app is running on an iPad.
-    static var isIPad: Bool {
+    /// `true` on an iPad or a Mac: a large display that the roomy layout was
+    /// designed for.
+    static var usesRoomyLayout: Bool {
+        #if os(macOS)
+        true
+        #else
         UIDevice.current.userInterfaceIdiom == .pad
+        #endif
     }
 }
 
@@ -40,11 +53,12 @@ private struct ReadableWidthModifier: ViewModifier {
     @ViewBuilder
     func body(content: Content) -> some View {
         // Gated on the device rather than on width: an iPad in a narrow Split
-        // View is already narrower than the cap, so gating on the device costs
-        // nothing there — while gating on width would also catch a large iPhone
-        // in landscape, which is wider than the cap, and quietly change an
-        // iPhone layout that this work was not meant to touch.
-        if AdaptiveLayout.isIPad {
+        // View — or a Mac window dragged narrow — is already narrower than the
+        // cap, so gating on the device costs nothing there — while gating on
+        // width would also catch a large iPhone in landscape, which is wider
+        // than the cap, and quietly change an iPhone layout that this work was
+        // not meant to touch.
+        if AdaptiveLayout.usesRoomyLayout {
             content.frame(maxWidth: maxWidth)
         } else {
             content
