@@ -17,7 +17,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		18BDC6FD2F5D320E00198CC5 /* Vaultic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Vaultic.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		18BDC6FD2F5D320E00198CC5 /* Autheris.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Autheris.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A17E57022F5D320E00198CC7 /* VaulticTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaulticTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -77,7 +77,7 @@
 		18BDC6FE2F5D320E00198CC5 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				18BDC6FD2F5D320E00198CC5 /* Vaultic.app */,
+				18BDC6FD2F5D320E00198CC5 /* Autheris.app */,
 				A17E57022F5D320E00198CC7 /* VaulticTests.xctest */,
 			);
 			name = Products;
@@ -105,7 +105,7 @@
 			packageProductDependencies = (
 			);
 			productName = Vaultic;
-			productReference = 18BDC6FD2F5D320E00198CC5 /* Vaultic.app */;
+			productReference = 18BDC6FD2F5D320E00198CC5 /* Autheris.app */;
 			productType = "com.apple.product-type.application";
 		};
 		A17E57012F5D320E00198CC7 /* VaulticTests */ = {
@@ -358,7 +358,7 @@
 				CODE_SIGN_ENTITLEMENTS = Vaultic/Vaultic.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Vaultic/Vaultic-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -378,9 +378,10 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.2;
+				MARKETING_VERSION = 2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_MODULE_NAME = Vaultic;
+				PRODUCT_NAME = Autheris;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -405,7 +406,7 @@
 				CODE_SIGN_ENTITLEMENTS = Vaultic/Vaultic.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Vaultic/Vaultic-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -425,9 +426,10 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.2;
+				MARKETING_VERSION = 2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_MODULE_NAME = Vaultic;
+				PRODUCT_NAME = Autheris;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -448,7 +450,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -458,7 +460,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.2;
+				MARKETING_VERSION = 2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -467,7 +469,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vaultic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vaultic";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Autheris.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autheris";
 			};
 			name = Debug;
 		};
@@ -476,7 +478,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -486,7 +488,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.2;
+				MARKETING_VERSION = 2.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -495,7 +497,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Vaultic.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Vaultic";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Autheris.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autheris";
 			};
 			name = Release;
 		};

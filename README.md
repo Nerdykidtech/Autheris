@@ -194,6 +194,8 @@ The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`.
 
 Autheris is one Xcode target (`Vaultic`) that builds for iPhone, iPad, and Mac — `SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx"`. The Mac app is a real AppKit/SwiftUI app, not Mac Catalyst and not "Designed for iPad", so it gets native window and menu-bar behaviour and the roomy token grid the iPad uses. Mac-only build settings are scoped with `[sdk=macosx*]`, and the Mac has its own entitlements file (`Vaultic/Vaultic-macOS.entitlements`), so the iOS build is untouched.
 
+The target is still called `Vaultic`, but its **product** is `Autheris`: `PRODUCT_NAME = Autheris` with `PRODUCT_MODULE_NAME = Vaultic`, so the app ships as `Autheris.app` while the Swift module the tests import stays `Vaultic`. This matters on the Mac specifically — iOS names the home-screen icon from `CFBundleDisplayName`, but macOS takes the app's name from the bundle and `CFBundleName`, so `PRODUCT_NAME = "$(TARGET_NAME)"` is what once shipped a Mac app called `Vaultic.app` with a "Quit Vaultic" menu item. Keep `PRODUCT_MODULE_NAME` in sync with the `@testable import Vaultic` in `VaulticTests`, and `TEST_HOST` pointing at `Autheris.app/.../Autheris`.
+
 Most of the source is shared. The platform differences are named once, in `Vaultic/Platform/`, rather than branched at every call site:
 
 | File | What it covers |
@@ -241,7 +243,22 @@ Two things that catch people out:
 
 The two steps still to do, neither of which `asc` can finish on its own:
 
-1. **Mac screenshots.** Apple accepts 16:10 Mac images at 1280×800, 1440×900, 2560×1600 or 2880×1800. `asc screenshots sizes` lists only `APP_IPHONE_65` and `APP_IPAD_PRO_3GEN_129` — there is **no Mac display type**, so `asc screenshots upload` cannot place them; use the App Store Connect web UI or Transporter. You can capture from a running Mac app, but note it grabs the window at its own size, so it still needs compositing onto one of the accepted sizes:
+1. **Mac screenshots.** Apple accepts 16:10 Mac images at 1280×800, 1440×900, 2560×1600 or 2880×1800. `asc screenshots sizes` lists only `APP_IPHONE_65` and `APP_IPAD_PRO_3GEN_129` — there is **no Mac display type**, so `asc screenshots upload` cannot place them; use the App Store Connect web UI or Transporter.
+
+   A ready set is committed at `./screenshots/mac/` (2880×1800, the largest accepted size):
+
+   | File | Screen |
+   | --- | --- |
+   | `autheris-mac-01-codes.png` | Token list with demo accounts |
+   | `autheris-mac-02-settings.png` | Settings › General |
+   | `autheris-mac-03-add-token.png` | Add Token › Scan QR Code |
+
+   These were **rendered from the app's own views** — `OTPCardView`, `SettingsView(presentation: .preferences)` and `AddTokenView` — with throwaway demo tokens, then composed onto a headline frame. The vault is never captured, so nothing private can leak into a public image. Two details worth knowing if you regenerate them:
+
+   - **The countdown bar is wall-clock driven.** A render taken in the last second of a period shows a red, almost-empty bar — an alarming state that says nothing about the app. Wait for a mid-period phase before rendering.
+   - **`TabView` and `ProgressView` cannot rasterise offscreen.** `ImageRenderer` draws SwiftUI's unsupported-view glyph instead; render through `NSHostingView` + `cacheDisplay`, and draw the Settings toolbar yourself, because the offscreen `TabView` comes out as a clipped fragment.
+
+   To capture a real window instead, note it grabs the window at its own size, so it still needs compositing onto an accepted size:
 
    ```bash
    # The app must already be running, and the window you want must already be showing.
@@ -249,20 +266,76 @@ The two steps still to do, neither of which `asc` can finish on its own:
      --name "home" --provider macos --output-dir ./screenshots/mac
    ```
 
-   Use throwaway entries — these images are public, and the token list shows whatever is in the vault.
+   Either way, use throwaway entries — these images are public, and the token list shows whatever is in the vault.
 
-2. **The build, as a signed `.pkg` — not an `.ipa`.** The `app_store_build` flow documented elsewhere produces an IPA, which is iOS only. For the Mac App Store:
+   **Order is upload order, not filename order.** App Store Connect keeps the order the files were added in, so upload them in the sequence you want customers to see — the first image is the one that appears in search results and the product page. `asc screenshots download` sorts by *filename* when numbering what it writes, so it does not tell you the real order; use `asc screenshots list`, which returns them in display order.
+
+   **Screenshots lock once the version is added for review.** In `READY_FOR_REVIEW`, `asc screenshots delete` fails with *"Can't Delete Screenshot while Ready For Review appScreenshots"*. Two things that do not get you out of it: `asc review items-update --state REMOVED` is rejected (`state` cannot be sent in an UPDATE), and `asc review submissions-cancel` is rejected (`Resource is not in cancellable state`). The web UI's "Remove from Review" is a **DELETE on `reviewSubmissionItems`**, which `asc` does not expose — so either use the UI, or call it directly and then restore the submission:
 
    ```bash
-   xcodebuild archive -project Vaultic.xcodeproj -scheme Vaultic \
-     -destination 'generic/platform=macOS' -configuration Release \
-     -archivePath build/Autheris.xcarchive
+   # 1. remove the version from the draft (204 No Content on success)
+   curl -X DELETE -H "Authorization: Bearer $JWT" \
+     "https://api.appstoreconnect.apple.com/v1/reviewSubmissionItems/$ITEM_ID"
 
-   xcodebuild -exportArchive -archivePath build/Autheris.xcarchive \
-     -exportPath build/export -exportOptionsPlist ExportOptions.plist   # method: app-store-connect
+   # 2. reorder, then put the version back
+   asc screenshots upload --version-localization "<loc id>" \
+     --path ./screenshots/mac --device-type APP_DESKTOP --replace
+   asc review submissions-create --app 6760686327 --platform MAC_OS
+   asc review items-add --submission "<new submission id>" \
+     --item-type appStoreVersions --item-id "<version id>"
    ```
 
-   Then upload the resulting `.pkg` and attach it to the macOS 2.2 version. This path is **not yet verified end to end** — only a *development* Mac provisioning profile exists so far, and the first distribution archive is what creates the distribution one.
+   Mint `$JWT` with ES256 from the ASC API key (`kid`, `iss`, `aud: appstoreconnect-v1`, `exp` ≤ 20 min). Expect one empty leftover draft afterwards: an emptied submission can be neither cancelled nor deleted (`reviewSubmissions` allows only CREATE, GET and UPDATE), and ASC leaves it behind.
+
+
+2. **The build, as a signed `.pkg` — not an `.ipa`.** The `app_store_build` flow documented elsewhere produces an IPA, which is iOS only. For the Mac App Store, one prerequisite: a Mac App Store upload needs an **Apple Distribution** certificate (signs the app) and a **Mac Installer Distribution** certificate (signs the package). A development certificate will not do:
+
+   ```bash
+   asc certificates csr generate --common-name "Autheris Mac Distribution" \
+     --key-out ~/.asc/mac-signing/distribution.key \
+     --csr-out ~/.asc/mac-signing/distribution.csr
+   asc certificates create --certificate-type DISTRIBUTION \
+     --csr ~/.asc/mac-signing/distribution.csr
+
+   asc certificates csr generate --common-name "Autheris Mac Installer" \
+     --key-out ~/.asc/mac-signing/installer.key \
+     --csr-out ~/.asc/mac-signing/installer.csr
+   asc certificates create --certificate-type MAC_INSTALLER_DISTRIBUTION \
+     --csr ~/.asc/mac-signing/installer.csr
+   ```
+
+   Import each returned certificate into the login keychain alongside its key, then archive and export. Note `-legacy`: OpenSSL 3 defaults to a PKCS#12 encoding that macOS `security` rejects with *"MAC verification failed during PKCS12 import (wrong password?)"* — the password is correct, the format is not.
+
+   ```bash
+   openssl pkcs12 -export -legacy -inkey distribution.key -in distribution.cer \
+     -out distribution.p12 -passout pass:temp
+   security import distribution.p12 -P temp \
+     -T /usr/bin/codesign -T /usr/bin/productbuild -T /usr/bin/security
+
+   xcodebuild archive -project Vaultic.xcodeproj -scheme Vaultic \
+     -destination 'generic/platform=macOS' -configuration Release \
+     -archivePath build/Autheris.xcarchive -allowProvisioningUpdates
+
+   xcodebuild -exportArchive -archivePath build/Autheris.xcarchive \
+     -exportPath build/export -exportOptionsPlist ExportOptions.plist \
+     -allowProvisioningUpdates        # method: app-store-connect
+   ```
+
+   `-allowProvisioningUpdates` is what creates the Mac App Store provisioning profile — it needs the distribution certificate in the keychain first, which is why the certificate step comes before the archive. The archive itself signs with the *development* identity; the export is what re-signs with distribution.
+
+   Then upload and attach:
+
+   ```bash
+   asc builds upload --app 6760686327 --pkg build/export/Autheris.pkg \
+     --version 2.2 --build-number 1
+   asc builds wait --app 6760686327 --newest     # processing takes a minute or two
+   asc versions attach-build --version-id "<macOS version id>" --build "<build id>"
+   ```
+
+   Verify with `asc versions view --version-id "<id>" --include-build`, which reports `buildId`. **`asc versions list` does not inline the build relationship and will report no build even when one is attached** — do not trust it for this.
+
+   To confirm a `.pkg` before uploading, without installing it: `pkgutil --check-signature X.pkg` should name *3rd Party Mac Developer Installer*, and `pkgutil --expand-full X.pkg /tmp/x` then `codesign -dv` on the app inside should name *Apple Distribution*.
+
 
 ## Installation
 

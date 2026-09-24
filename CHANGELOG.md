@@ -13,6 +13,12 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [2.3] — September 2026
+
+- On the Mac, the app is now named Autheris everywhere — it previously installed as Vaultic, so the Dock, the menu bar and your Applications folder called it something else. They now match the name the app already uses in the App Store.
+- Nothing else changes: your codes, iCloud sync and settings are exactly where you left them.
+- If an older copy named Vaultic is still in your Applications folder, you can move it to the Trash — Autheris is the app from here on.
+
 ## [2.2] — September 2026
 
 - Autheris now runs on the Mac — a real Mac app rather than a phone app stretched across the desktop. Your codes, sync and settings are unchanged: add an account on your iPhone and it is there on your Mac.

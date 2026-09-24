@@ -55,6 +55,16 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.3",
+            version: "2.3",
+            date: "September 2026",
+            changes: [
+                "On the Mac, the app is now named Autheris everywhere — it previously installed as Vaultic, so the Dock, the menu bar and your Applications folder called it something else. They now match the name the app already uses in the App Store.",
+                "Nothing else changes: your codes, iCloud sync and settings are exactly where you left them.",
+                "If an older copy named Vaultic is still in your Applications folder, you can move it to the Trash — Autheris is the app from here on."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.2",
             version: "2.2",
             date: "September 2026",

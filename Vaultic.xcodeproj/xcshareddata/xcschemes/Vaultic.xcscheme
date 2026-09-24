@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "18BDC6FC2F5D320E00198CC5"
-               BuildableName = "Vaultic.app"
+               BuildableName = "Autheris.app"
                ReferencedContainer = "container:Vaultic.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -57,7 +57,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "18BDC6FC2F5D320E00198CC5"
-            BuildableName = "Vaultic.app"
+            BuildableName = "Autheris.app"
             ReferencedContainer = "container:Vaultic.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -73,7 +73,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "18BDC6FC2F5D320E00198CC5"
-            BuildableName = "Vaultic.app"
+            BuildableName = "Autheris.app"
             ReferencedContainer = "container:Vaultic.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
