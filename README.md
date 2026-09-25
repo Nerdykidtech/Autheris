@@ -1,11 +1,11 @@
 # Autheris
 
 <p align="center">
-  <img src="https://eddington.tech/autheris/og-image.png" alt="Autheris - Secure 2FA Token Manager for iOS and macOS" width="600">
+  <img src="https://autheris.app/assets/img/og-image.jpg" alt="Autheris - Secure 2FA Token Manager for iOS and macOS" width="600">
 </p>
 
 <p align="center">
-  <a href="https://apps.apple.com/app/autheris">
+  <a href="https://apps.apple.com/app/id6760686327">
     <img src="https://img.shields.io/badge/Download_on_the_App_Store-0D96F6?style=for-the-badge&logo=apple&logoColor=white" alt="Download on the App Store">
   </a>
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%20%7C%20macOS%2026.0%2B-000000?style=for-the-badge&logo=apple" alt="iOS, iPadOS and macOS 26.0+">
@@ -349,15 +349,15 @@ Requires the iOS 26 and macOS 26 SDKs (Xcode 26 or later). The Mac app also need
 
 ## Download
 
-<a href="https://eddington.tech/autheris">
-  <img src="https://eddington.tech/autheris/app-icon.png" width="120" alt="Autheris App">
+<a href="https://autheris.app">
+  <img src="https://autheris.app/assets/img/app-icon.png" width="120" alt="Autheris App">
 </a>
 
-**[Get it on eddington.tech/autheris](https://eddington.tech/autheris)**
+**[Get it at autheris.app](https://autheris.app)**
 
 ## Privacy Policy
 
-View our privacy policy at [eddington.tech/autheris](https://eddington.tech/autheris)
+View our privacy policy at [autheris.app/privacy](https://autheris.app/privacy)
 
 ## License
 

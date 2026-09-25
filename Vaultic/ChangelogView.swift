@@ -59,8 +59,9 @@ struct ChangelogRelease: Identifiable, Sendable {
             version: "2.3",
             date: "September 2026",
             changes: [
+                "Autheris can now ask for an App Store rating. Settings has a Rate Autheris row under Help for whenever you want to leave one, and the app will ask by itself once, after you change a setting — never on launch, and at most once per version.",
                 "On the Mac, the app is now named Autheris everywhere — it previously installed as Vaultic, so the Dock, the menu bar and your Applications folder called it something else. They now match the name the app already uses in the App Store.",
-                "Nothing else changes: your codes, iCloud sync and settings are exactly where you left them.",
+                "Your codes, iCloud sync and settings are exactly where you left them.",
                 "If an older copy named Vaultic is still in your Applications folder, you can move it to the Trash — Autheris is the app from here on."
             ]
         ),

@@ -9,6 +9,9 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    /// Opens the App Store review form for the "Rate Autheris" row. Cross-platform,
+    /// so the Mac preferences window uses the same row with no branch.
+    @Environment(\.openURL) private var openURL
     @ObservedObject var dataStore: OTPDataStore
 
     /// How this view is being shown.
@@ -43,7 +46,7 @@ struct SettingsView: View {
     @State private var showingChangelog = false
     @State private var showingRecentlyDeleted = false
     @State private var showingSupportMail = false
-    @State private var supportTo = "autheris@eddington.tech"
+    @State private var supportTo = "support@autheris.app"
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false
@@ -97,6 +100,22 @@ struct SettingsView: View {
             sheetBody
             #endif
         }
+        // A change to any setting on this screen is what earns the review ask —
+        // see `ReviewPrompt.settingsChanged`.
+        //
+        // `onChange` does not fire for the values already present when the screen
+        // appears, so opening Settings is never itself "doing something", and
+        // flipping a toggle back and forth counts as the two changes it is.
+        //
+        // The iCloud sync toggle is deliberately absent from this list: it is a
+        // flow with its own dialogs rather than a plain preference, and the app
+        // itself can flip it when the account changes — which would be the app
+        // counting its own housekeeping as a user action.
+        .onChange(of: enablePrivacyBlur) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesInAppSwitcher) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesWhenScreenCaptured) { _, _ in settingsDidChange() }
+        .onChange(of: enableAppLock) { _, _ in settingsDidChange() }
+        .onChange(of: accentThemeRaw) { _, _ in settingsDidChange() }
         // Shared by both containers, so it is attached outside the branch: the
         // Help tab can trigger the same support error as the iPhone's Help section.
         .alert(
@@ -293,8 +312,16 @@ struct SettingsView: View {
         }
     }
 
+    /// Called by any change to a setting on this screen.
+    ///
+    /// `ReviewPrompt` owns the rules and records the ask; this only reports that
+    /// something changed, which is the one moment that earns an ask.
+    private func settingsDidChange() {
+        ReviewPrompt.settingsChanged(codeCount: dataStore.codes.count)
+    }
+
     private func presentSupportEmail() {
-        supportTo = "autheris@eddington.tech"
+        supportTo = "support@autheris.app"
         supportSubject = "Support Request from Autheris User"
         supportBody = SupportMailData.troubleshootingTemplate()
 
@@ -682,6 +709,18 @@ struct SettingsView: View {
                 actionRowLabel("Support", systemImage: "envelope")
             }
             .platformPlainButton()
+
+            // The only review control the user owns. Apple's guidance is explicit
+            // that the review *prompt* must not be raised from a button tap — it
+            // may present nothing, and it does nothing at all in TestFlight — so a
+            // settings screen gets the write-review link instead, which opens the
+            // App Store app on the review form every time.
+            Button {
+                if let url = ReviewPrompt.writeReviewURL { openURL(url) }
+            } label: {
+                actionRowLabel("Rate Autheris", systemImage: "star")
+            }
+            .platformPlainButton()
         } header: {
             Text("Help")
         }
@@ -693,8 +732,8 @@ struct SettingsView: View {
             LabeledContent("Version", value: appMarketingVersion)
             LabeledContent("Build", value: appBuildNumber)
     
-            Link(destination: URL(string: "https://eddington.tech/autheris")!) {
-                LabeledContent("Website", value: "eddington.tech/autheris")
+            Link(destination: URL(string: "https://autheris.app")!) {
+                LabeledContent("Website", value: "autheris.app")
             }
         } header: {
             Text("About")
