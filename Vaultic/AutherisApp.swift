@@ -290,16 +290,16 @@ struct AutherisApp: App {
     private func handleOTPAuthSetup(_ url: URL) {
         guard let parsed = OTPAuthURLParser.parse(url) else {
             otpSetupResult = (
-                "Couldn't Add Code",
-                "That verification-code link isn't in the expected otpauth format."
+                String(localized: "Couldn't Add Code"),
+                String(localized: "That verification-code link isn't in the expected otpauth format.")
             )
             return
         }
 
         guard OTPGenerator.isValidSecret(parsed.secret) else {
             otpSetupResult = (
-                "Couldn't Add Code",
-                "The setup key in that link isn't a valid Base32 secret."
+                String(localized: "Couldn't Add Code"),
+                String(localized: "The setup key in that link isn't a valid Base32 secret.")
             )
             return
         }
@@ -308,8 +308,8 @@ struct AutherisApp: App {
             $0.label == parsed.label && $0.account == parsed.account
         }) {
             otpSetupResult = (
-                "Already Added",
-                "\(parsed.label) is already in Autheris."
+                String(localized: "Already Added"),
+                String(localized: "\(parsed.label) is already in Autheris.")
             )
             return
         }
@@ -328,8 +328,8 @@ struct AutherisApp: App {
         DispatchQueue.main.async {
             self.dataStore.addCode(code)
             self.otpSetupResult = (
-                "Verification Code Added",
-                "\(parsed.label) was added to Autheris."
+                String(localized: "Verification Code Added"),
+                String(localized: "\(parsed.label) was added to Autheris.")
             )
         }
     }
@@ -339,8 +339,8 @@ struct AutherisApp: App {
         let payload = url.absoluteString
         guard let tokens = GoogleMigrationParser.parseMigrationURL(payload), !tokens.isEmpty else {
             otpSetupResult = (
-                "Couldn't Add Codes",
-                "Could not parse this Google Authenticator export."
+                String(localized: "Couldn't Add Codes"),
+                String(localized: "Could not parse this Google Authenticator export.")
             )
             return
         }
@@ -351,8 +351,8 @@ struct AutherisApp: App {
                 self.dataStore.addCode(token)
             }
             self.otpSetupResult = (
-                "Verification Codes Added",
-                "Imported \(count) code\(count == 1 ? "" : "s") to Autheris."
+                String(localized: "Verification Codes Added"),
+                String(localized: "Imported \(count) codes to Autheris.")
             )
         }
     }

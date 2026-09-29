@@ -60,7 +60,7 @@ struct OTPAuthURLView: View {
     
     private func addTokenFromURL() {
         guard let url = URL(string: urlString), url.scheme == "otpauth" else {
-            alertMessage = "Invalid OTP URL"
+            alertMessage = String(localized: "Invalid OTP URL")
             showingAlert = true
             return
         }
@@ -139,11 +139,11 @@ struct OTPAuthURLView: View {
             isPresented = false
         } else {
             if !secretFound {
-                alertMessage = "No secret key found in the URL."
+                alertMessage = String(localized: "No secret key found in the URL.")
             } else if !OTPGenerator.isValidSecret(secret) {
-                alertMessage = "Invalid secret key in the URL."
+                alertMessage = String(localized: "Invalid secret key in the URL.")
             } else if label.isEmpty {
-                alertMessage = "Service name missing in the URL."
+                alertMessage = String(localized: "Service name missing in the URL.")
             }
             showingAlert = true
         }

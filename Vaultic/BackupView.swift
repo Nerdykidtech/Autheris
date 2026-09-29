@@ -295,7 +295,7 @@ struct BackupView: View {
 
     private func createEncryptedBackup() {
         guard !newBackupPassword.isEmpty, newBackupPassword == newBackupConfirmPassword else {
-            restoreErrorMessage = "Passwords don't match. Please try again."
+            restoreErrorMessage = String(localized: "Passwords don't match. Please try again.")
             showingRestoreError = true
             return
         }
@@ -305,7 +305,7 @@ struct BackupView: View {
             shareURL = url
             showingCreateBackupAlert = true
         } else {
-            restoreErrorMessage = "Could not create the encrypted backup."
+            restoreErrorMessage = String(localized: "Could not create the encrypted backup.")
             showingRestoreError = true
         }
 
@@ -329,7 +329,7 @@ struct BackupView: View {
         if dataStore.restoreFromBackup(at: backupURL, password: backupPassword) {
             dismiss()
         } else {
-            restoreErrorMessage = "Incorrect password or corrupted backup."
+            restoreErrorMessage = String(localized: "Incorrect password or corrupted backup.")
             showingRestoreError = true
         }
         backupPassword = ""

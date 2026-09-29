@@ -193,6 +193,83 @@ The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`.
 
 `OTPCode`'s hand-written `init(from:)` is what keeps pre-sync JSON decodable; `VaulticTests/OTPCodeCodableTests.swift` holds that case, so keep it passing whenever that type changes. `VaulticTests/BackupCryptoTests.swift` additionally pins the `.autheris` envelope against wrong passwords, tampered ciphertext, and a tampered salt.
 
+## Localization
+
+The app ships in seven languages: English, Spanish, French, German, Japanese, Simplified Chinese and Brazilian Portuguese. Those are the six the App Store listing is already translated into (`metadata/`), so the app follows the listing rather than the other way round — a language offered in the store is one the app should speak.
+
+Everything the app says lives in one String Catalog, `Vaultic/Localizable.xcstrings`. Xcode's extractor fills it from the sources; nothing in the app calls `NSLocalizedString` by hand.
+
+### The translations have not been read by anyone
+
+Every entry is marked `needs_review`, not `translated`. That distinction is deliberate and worth keeping: the wording exists and the app uses it, but no native speaker has checked it. The String Catalog editor filters on exactly that state, so "show me what a human still has to read" is one click. A language is not finished until its entries say `translated`.
+
+### Where the languages are declared
+
+Two places, and they have to agree:
+
+| Place | What it carries |
+| --- | --- |
+| `knownRegions` in `Vaultic.xcodeproj/project.pbxproj` | `en, Base, ja, es, zh-Hans, pt-BR, de, fr` |
+| `Vaultic/Localizable.xcstrings` | the per-language strings themselves |
+
+Those are the **Xcode** language codes, not the App Store Connect ones: `es`, `de` and `fr` rather than `es-ES`, `de-DE`, `fr-FR`. The two vocabularies differ, and the store's own mapping between them is exactly that — `pt-BR` and `zh-Hans` are qualified on both sides. The language-level code is also the more useful of the two: `es` covers the Spanish of every region, where `es-ES` would answer an `es-MX` user in English.
+
+### Keeping the catalog in step with the code
+
+The catalog is neither written nor maintained by hand. During a build the extractor reads the sources (`SWIFT_EMIT_LOC_STRINGS` is on) and emits a `.stringsdata` file per source file; `xcstringstool sync` merges those into the catalog.
+
+**Build for both platforms before syncing.** This is the step that fails silently:
+
+```bash
+xcodebuild build -project Vaultic.xcodeproj -scheme Vaultic \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -derivedDataPath /tmp/autheris-dd CODE_SIGNING_ALLOWED=NO
+xcodebuild build -project Vaultic.xcodeproj -scheme Vaultic \
+  -destination 'platform=macOS' \
+  -derivedDataPath /tmp/autheris-dd CODE_SIGNING_ALLOWED=NO
+
+xcrun xcstringstool sync Vaultic/Localizable.xcstrings \
+  --stringsdata $(find /tmp/autheris-dd -name '*.stringsdata' -path '*Vaultic.build*')
+```
+
+One platform's build only extracts the branches that platform compiles. Inside `#if os(macOS)` sit the entire Mac preferences window, the camera-permission copy, and five Settings rows — an iOS-only extraction leaves every one of them out, and they ship in English while the catalog looks complete. (That is not hypothetical: it is how this section came to be written.) Syncing is idempotent and does not disturb existing translations, so passing the union is always safe.
+
+The watch target has no catalog of its own, so its strings are English. That is a deliberate stopping point rather than an oversight — see [watchOS](#watchos).
+
+### A `String` property is a localization bug
+
+The trap this app hit most, and the one that leaves no trace: `Text("Cancel")` takes a `LocalizedStringKey` and is looked up, while `Text(someString)` renders what it is given. So a view declaring `let title: String` and showing it with `Text(title)` opts every literal at every call site out of localization — and the extractor agrees with it, so nothing appears in the catalog and nothing looks wrong.
+
+The same shape appeared five more ways, all now fixed:
+
+| Shape | Where it was |
+| --- | --- |
+| `String` property shown by `Text` | `OnboardingFeature.title`/`.description`, `QRCodeView.title`, `SecretKeySection.title`, `AccentTheme.displayName` |
+| `String` parameter shown by `Text`/`Label` | `SettingsView.actionRowLabel(_:systemImage:)`, `WelcomeView.highlight(_:)`, `ImportConfirmationView.statRow(label:value:)` |
+| `String` parameter built from a literal tuple | the alert results in `AutherisApp`, `AddTokenView`, `SettingsView`, `RecentlyDeletedView` |
+| `String` state assigned a literal | every `alertMessage`, `restoreErrorMessage`, `generationError`, `supportErrorMessage`, `failureView(message:)` — now `String(localized:)` |
+| Ternary of two literals | `Text(cond ? "Next" : "Get Started")` and friends, which infer as `String`; each is now a typed `LocalizedStringKey` property |
+
+Direct UIKit and AppKit text assignments are the same problem in another dress: `label.text = "…"` and `alertAction.title = "…"` take a `String`, so the scanner's overlay and its permission prompts use `String(localized:)` too.
+
+### Plurals
+
+`"\(count) token\(count == 1 ? "" : "s")"` is correct in exactly one language, and it is the one you are reading this in. Those nine strings are now catalog entries with plural `variations`, so the rule comes from the language rather than from the code: `%lld Code` / `%lld Codes` in German, `Supprimer %lld code` / `Supprimer %lld codes` in French, and a single form for Japanese and Simplified Chinese, which have no `one` category at all. English keeps the behaviour it had, count-of-one awkwardness included.
+
+### What is deliberately not localized
+
+- **The in-app changelog history** (`ChangelogRelease.changes`, back to 1.0). The chrome around it is translated; the release notes themselves are long-form prose mirroring the App Store copy for versions that have already shipped.
+- **The support-email draft** (`SupportMailData.troubleshootingTemplate`). Support answers in English, and a half-translated bug report is worse than a clear English one. The error shown when Mail cannot be opened *is* translated.
+- **`debugInfo`** in `ImportConfirmationView`, which is assigned only inside `#if DEBUG`.
+- **The watch app**, as above.
+- **The product name**, which carries `"shouldTranslate": false` so Xcode stops offering it.
+
+### The test
+
+`VaulticTests/LocalizationCoverageTests.swift` guards the shape of all of this, since it cannot judge the wording: every entry has all six languages, none is left at `new`, every plural entry declares the categories its language actually has, and every translation keeps exactly the placeholders its key has — that last one caught a singular form that had dropped its `%lld`, which would have hidden the count.
+
+Two of its tests reach outside the app. One reads the sources, so a literal the extractor never saw is a failure here rather than English in the shipped app; it checks what it can be certain of — one-line literals with no interpolation — because guessing at interpolations would produce a test that cries wolf. The other reads the built `Autheris.app` and compares its compiled strings against the catalog, because a catalog full of translations proves nothing if the build never puts them in the bundle.
+
 ## macOS
 
 Autheris is one Xcode target (`Vaultic`) that builds for iPhone, iPad, and Mac — `SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx"`. The Mac app is a real AppKit/SwiftUI app, not Mac Catalyst and not "Designed for iPad", so it gets native window and menu-bar behaviour and the roomy token grid the iPad uses. Mac-only build settings are scoped with `[sdk=macosx*]`, and the Mac has its own entitlements file (`Vaultic/Vaultic-macOS.entitlements`), so the iOS build is untouched.

@@ -217,14 +217,14 @@ struct AddTokenView: View {
                         } else {
                             await MainActor.run {
                                 isProcessingImage = false
-                                alertMessage = "Could not read the selected image."
+                                alertMessage = String(localized: "Could not read the selected image.")
                                 showingAlert = true
                             }
                         }
                     } catch {
                         await MainActor.run {
                             isProcessingImage = false
-                            alertMessage = "Could not read the selected image: \(error.localizedDescription)"
+                            alertMessage = String(localized: "Could not read the selected image: \(error.localizedDescription)")
                             showingAlert = true
                         }
                     }
@@ -241,7 +241,7 @@ struct AddTokenView: View {
                 if granted {
                     self.isScanning = true
                 } else {
-                    self.alertMessage = "Camera access is required to scan QR codes. Please enable it in Settings."
+                    self.alertMessage = String(localized: "Camera access is required to scan QR codes. Please enable it in Settings.")
                     self.showingAlert = true
                 }
             }
@@ -282,14 +282,14 @@ struct AddTokenView: View {
                 } else {
                     DispatchQueue.main.async {
                         self.isProcessingImage = false
-                        self.alertMessage = "No QR code found in this image. Try a clearer screenshot or crop to the QR code."
+                        self.alertMessage = String(localized: "No QR code found in this image. Try a clearer screenshot or crop to the QR code.")
                         self.showingAlert = true
                     }
                 }
             } catch {
                 DispatchQueue.main.async {
                     self.isProcessingImage = false
-                    self.alertMessage = "Could not process image: \(error.localizedDescription)"
+                    self.alertMessage = String(localized: "Could not process image: \(error.localizedDescription)")
                     self.showingAlert = true
                 }
             }
@@ -364,7 +364,7 @@ struct AddTokenView: View {
                         #if DEBUG
                         print("Failed to parse as export data")
                         #endif
-                        alertMessage = "Failed to parse import data. The QR code may be corrupted."
+                        alertMessage = String(localized: "Failed to parse import data. The QR code may be corrupted.")
                         showingAlert = true
                         return
                     }
@@ -372,7 +372,7 @@ struct AddTokenView: View {
                     #if DEBUG
                     print("Failed to extract data from URL")
                     #endif
-                    alertMessage = "Invalid import URL. Could not extract data."
+                    alertMessage = String(localized: "Invalid import URL. Could not extract data.")
                     showingAlert = true
                     return
                 }
@@ -435,7 +435,7 @@ struct AddTokenView: View {
         }
         
         // Invalid QR code
-        alertMessage = """
+        alertMessage = String(localized: """
         Could not parse QR code. It may not be a valid OTP QR code.
         
         Common formats:
@@ -445,7 +445,7 @@ struct AddTokenView: View {
         - Export format (multiple tokens)
         
         Please enter the details manually.
-        """
+        """)
         showingAlert = true
     }
 
@@ -538,8 +538,10 @@ struct AddTokenView: View {
         
         if newTokens.isEmpty {
             let count = exportData.tokens.count
-            let body = "All \(count) token\(count == 1 ? "" : "s") in this export already exist on your device."
-            importResult = ("Already on this device", body)
+            // Plural selection comes from the catalog's variations for this key,
+            // not from an `== 1 ? "" : "s"` suffix — that only works in English.
+            let body = String(localized: "All \(count) tokens in this export already exist on your device.")
+            importResult = (String(localized: "Already on this device"), body)
             dismiss()
             return
         }
@@ -553,8 +555,8 @@ struct AddTokenView: View {
         }
         
         let count = newTokens.count
-        let body = "Successfully imported \(count) token\(count == 1 ? "" : "s")."
-        importResult = ("Import Successful", body)
+        let body = String(localized: "Successfully imported \(count) tokens.")
+        importResult = (String(localized: "Import Successful"), body)
         dismiss()
     }
     
@@ -650,13 +652,13 @@ struct AddTokenView: View {
         } else {
             // If secret is invalid or missing, show error
             if !secretFound {
-                alertMessage = "No secret key found in QR code. Please enter manually."
+                alertMessage = String(localized: "No secret key found in QR code. Please enter manually.")
                 showingAlert = true
             } else if !OTPGenerator.isValidSecret(secret) {
-                alertMessage = "Invalid secret key in QR code. Please enter manually."
+                alertMessage = String(localized: "Invalid secret key in QR code. Please enter manually.")
                 showingAlert = true
             } else if label.isEmpty {
-                alertMessage = "Service name missing in QR code. Please enter manually."
+                alertMessage = String(localized: "Service name missing in QR code. Please enter manually.")
                 showingAlert = true
             } else {
                 // Switch to manual entry tab with pre-filled data
@@ -683,7 +685,7 @@ struct AddTokenView: View {
     private func parseMigrationFormat(_ qrCode: String) -> (label: String, account: String, secret: String, algorithm: OTPAlgorithm, digits: Int, period: Int)? {
         // Google migration is handled above via GoogleMigrationParser. If we land here, parsing failed.
         if qrCode.hasPrefix("otpauth-migration://") {
-            alertMessage = "Could not parse this Google Authenticator export. Make sure the QR or image is clear and complete, or try exporting again from Google Authenticator."
+            alertMessage = String(localized: "Could not parse this Google Authenticator export. Make sure the QR or image is clear and complete, or try exporting again from Google Authenticator.")
             showingAlert = true
         }
         return nil
@@ -741,7 +743,7 @@ struct AddTokenView: View {
     
     private func validateAndSave() {
         if !OTPGenerator.isValidSecret(secret) {
-            alertMessage = "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters)."
+            alertMessage = String(localized: "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters).")
             showingAlert = true
             return
         }

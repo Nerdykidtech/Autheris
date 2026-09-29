@@ -178,6 +178,12 @@ struct ChangelogVersionRow: View {
     let release: ChangelogRelease
     let isExpanded: Bool
     let onToggle: () -> Void
+
+    /// Typed explicitly: a ternary of two literals infers as `String`, which
+    /// renders verbatim and is never looked up.
+    private var releaseNotesHint: LocalizedStringKey {
+        isExpanded ? "Collapse release notes" : "Expand release notes"
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -205,13 +211,15 @@ struct ChangelogVersionRow: View {
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Version \(release.version), \(release.date)")
-            .accessibilityHint(isExpanded ? "Collapse release notes" : "Expand release notes")
+            .accessibilityHint(releaseNotesHint)
             
             if isExpanded {
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(Array(release.changes.enumerated()), id: \.offset) { index, line in
                         HStack(alignment: .top, spacing: 10) {
-                            Text("\(index + 1)")
+                            // A list position, not prose: `verbatim` keeps it out
+                            // of the catalog instead of adding a "%lld" key.
+                            Text(verbatim: "\(index + 1)")
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.tertiary)
                                 .frame(width: 18, alignment: .trailing)

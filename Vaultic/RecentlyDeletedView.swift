@@ -77,7 +77,7 @@ struct RecentlyDeletedView: View {
             isPresented: $showingDeleteAllConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Delete \(entries.count) Code\(entries.count == 1 ? "" : "s")", role: .destructive) {
+            Button("Delete \(entries.count) Codes", role: .destructive) {
                 dataStore.emptyTrash()
             }
             Button("Cancel", role: .cancel) { }
@@ -167,8 +167,8 @@ struct RecentlyDeletedView: View {
         guard case .collides = dataStore.restoreFromTrash(entry) else { return }
 
         message = (
-            "Can't Restore",
-            "A code called \"\(entry.code.label)\" with the same account already exists. Delete that one first, then restore this."
+            String(localized: "Can't Restore"),
+            String(localized: "A code called \"\(entry.code.label)\" with the same account already exists. Delete that one first, then restore this.")
         )
     }
 

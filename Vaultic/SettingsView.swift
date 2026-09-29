@@ -292,7 +292,10 @@ struct SettingsView: View {
                 }
 
                 guard !newTokens.isEmpty else {
-                    importMessage = ("No New Tokens", "All tokens in this file are already in Autheris.")
+                    importMessage = (
+                        String(localized: "No New Tokens"),
+                        String(localized: "All tokens in this file are already in Autheris.")
+                    )
                     return
                 }
 
@@ -300,15 +303,15 @@ struct SettingsView: View {
                     dataStore.addCode(token)
                 }
                 importMessage = (
-                    "Import Complete",
-                    "Added \(newTokens.count) token\(newTokens.count == 1 ? "" : "s") to Autheris."
+                    String(localized: "Import Complete"),
+                    String(localized: "Added \(newTokens.count) tokens to Autheris.")
                 )
             } catch {
-                importMessage = ("Import Failed", error.localizedDescription)
+                importMessage = (String(localized: "Import Failed"), error.localizedDescription)
             }
 
         case .failure(let error):
-            importMessage = ("Import Failed", error.localizedDescription)
+            importMessage = (String(localized: "Import Failed"), error.localizedDescription)
         }
     }
 
@@ -333,7 +336,7 @@ struct SettingsView: View {
         // Fallback: hand the draft to the user's own mail client via mailto:.
         // On the Mac this is the only path, and the better one.
         guard let url = SupportMailData.mailtoURL(to: supportTo, subject: supportSubject, body: supportBody) else {
-            supportErrorMessage = "Unable to open Mail. Please email \(supportTo) with subject \"\(supportSubject)\"."
+            supportErrorMessage = String(localized: "Unable to open Mail. Please email \(supportTo) with subject \"\(supportSubject)\".")
             showingSupportError = true
             return
         }
@@ -553,7 +556,9 @@ struct SettingsView: View {
                                 )
                         )
                         .overlay(
-                            Text("A")
+                            // A colour-swatch glyph, not a word: `verbatim` keeps
+                            // it out of the catalog.
+                            Text(verbatim: "A")
                                 .font(.caption.weight(.bold))
                                 .foregroundColor(.white)
                         )
@@ -652,8 +657,13 @@ struct SettingsView: View {
     /// rather than a setting. The fix is `.platformPlainButton()` at the call site;
     /// this supplies the trailing chevron those rows need in exchange, because a
     /// chrome-less row otherwise gives no hint that it opens anything.
+    ///
+    /// The title is a `LocalizedStringKey` and not a `String`: a `String` parameter
+    /// carries a literal straight to `Label` without a lookup, which is how these
+    /// five rows came to be the only English left on an otherwise translated Mac
+    /// Settings window.
     @ViewBuilder
-    private func actionRowLabel(_ title: String, systemImage: String) -> some View {
+    private func actionRowLabel(_ title: LocalizedStringKey, systemImage: String) -> some View {
         #if os(macOS)
         HStack {
             Label(title, systemImage: systemImage)
@@ -683,7 +693,8 @@ struct SettingsView: View {
             Label("Recently Deleted", systemImage: "trash")
             Spacer()
             if !dataStore.trash.isEmpty {
-                Text("\(dataStore.trash.count)")
+                // A count badge: `verbatim` keeps a bare "%lld" out of the catalog.
+                Text(verbatim: "\(dataStore.trash.count)")
                     .foregroundColor(.secondary)
             }
             #if os(macOS)

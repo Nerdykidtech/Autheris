@@ -123,7 +123,7 @@ struct TokenSecretView: View {
     
     private func saveChanges() {
         if !OTPGenerator.isValidSecret(secret) {
-            alertMessage = "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters)."
+            alertMessage = String(localized: "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters).")
             showingAlert = true
             return
         }

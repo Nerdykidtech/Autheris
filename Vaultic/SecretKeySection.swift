@@ -3,7 +3,7 @@ import SwiftUI
 /// Masked setup-key field: blurred by default, tap or eye icon to reveal,
 /// with copy feedback and editing of the bound secret.
 struct SecretKeySection: View {
-    let title: String
+    let title: LocalizedStringKey
     @Binding var secret: String
     
     @State private var isRevealed = false
@@ -12,6 +12,12 @@ struct SecretKeySection: View {
     /// Fixed-width bullets so the masked field doesn't jump when the secret length changes.
     private var maskedText: String {
         String(repeating: "•", count: max(8, min(secret.count, 24)))
+    }
+
+    /// Typed explicitly so the two literals are looked up rather than rendered
+    /// verbatim — a ternary on its own infers as `String`.
+    private var revealToggleLabel: LocalizedStringKey {
+        isRevealed ? "Hide setup key" : "Reveal setup key"
     }
     
     var body: some View {
@@ -34,7 +40,7 @@ struct SecretKeySection: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(isRevealed ? "Hide setup key" : "Reveal setup key")
+                .accessibilityLabel(revealToggleLabel)
             }
             
             Group {

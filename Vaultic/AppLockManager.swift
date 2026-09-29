@@ -65,10 +65,11 @@ final class AppLockManager: ObservableObject {
     func authenticate() {
         let context = LAContext()
         var error: NSError?
-        let reason = "Unlock Autheris to view your tokens."
+        let reason = String(localized: "Unlock Autheris to view your tokens.")
 
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            errorMessage = error?.localizedDescription ?? "Biometric authentication is unavailable."
+            errorMessage = error?.localizedDescription
+                ?? String(localized: "Biometric authentication is unavailable.")
             return
         }
 
@@ -91,7 +92,8 @@ final class AppLockManager: ObservableObject {
                         manager.errorMessage = laError.localizedDescription
                     }
                 } else {
-                    manager.errorMessage = authError?.localizedDescription ?? "Authentication failed."
+                    manager.errorMessage = authError?.localizedDescription
+                        ?? String(localized: "Authentication failed.")
                 }
             }
         }
@@ -113,7 +115,9 @@ struct AppLockView: View {
         }
     }
 
-    private var unlockTitle: String {
+    /// `LocalizedStringKey`, not `String`: a `String` would reach `Label` as
+    /// already-resolved text and never be looked up in the catalog.
+    private var unlockTitle: LocalizedStringKey {
         let context = LAContext()
         switch context.biometryType {
         case .faceID: return "Unlock with Face ID"

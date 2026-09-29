@@ -528,7 +528,11 @@ struct OTPCardView: View {
                         .lineLimit(1)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel(code.isPinned ? "\(code.label), pinned" : code.label)
+                .accessibilityLabel(
+                    code.isPinned
+                        ? String(localized: "\(code.label), pinned")
+                        : code.label
+                )
 
                 if !code.account.isEmpty {
                     Text(code.account)
@@ -799,7 +803,7 @@ struct EditTokenView: View {
                     }
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Ring color")
-                        Text(ringColorMatchesBranding ? "Automatic (service color)" : "Custom color")
+                        Text(ringColorLabel)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -839,6 +843,12 @@ struct EditTokenView: View {
         }
         return picked == brand
     }
+
+    /// Typed explicitly: a ternary of two literals infers as `String`, which
+    /// `Text` renders verbatim and never looks up.
+    private var ringColorLabel: LocalizedStringKey {
+        ringColorMatchesBranding ? "Automatic (service color)" : "Custom color"
+    }
     
     /// `nil` when the chosen color matches the automatic service color (same as legacy “default”).
     private func ringHexForSave() -> String? {
@@ -849,7 +859,7 @@ struct EditTokenView: View {
     
     private func saveChanges() {
         if label.isEmpty {
-            alertMessage = "Service name cannot be empty."
+            alertMessage = String(localized: "Service name cannot be empty.")
             showingAlert = true
             return
         }

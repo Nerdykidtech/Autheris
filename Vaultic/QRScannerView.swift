@@ -184,7 +184,7 @@ struct QRScannerView: UIViewControllerRepresentable {
     private func showPermissionRequest(viewController: UIViewController, context: Context) {
         // Add instruction label
         let instructionLabel = UILabel()
-        instructionLabel.text = "Camera Access Required"
+        instructionLabel.text = String(localized: "Camera Access Required")
         instructionLabel.textColor = .white
         instructionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         instructionLabel.textAlignment = .center
@@ -192,7 +192,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         viewController.view.addSubview(instructionLabel)
         
         let detailLabel = UILabel()
-        detailLabel.text = "To scan QR codes, please allow camera access"
+        detailLabel.text = String(localized: "To scan QR codes, please allow camera access")
         detailLabel.textColor = .white
         detailLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         detailLabel.textAlignment = .center
@@ -201,7 +201,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         viewController.view.addSubview(detailLabel)
         
         var requestConfig = UIButton.Configuration.filled()
-        requestConfig.title = "Allow Camera Access"
+        requestConfig.title = String(localized: "Allow Camera Access")
         requestConfig.baseForegroundColor = .white
         requestConfig.baseBackgroundColor = .systemBlue
         requestConfig.background.cornerRadius = 12
@@ -230,7 +230,7 @@ struct QRScannerView: UIViewControllerRepresentable {
     private func showPermissionDenied(viewController: UIViewController, context: Context) {
         // Add instruction label
         let instructionLabel = UILabel()
-        instructionLabel.text = "Camera Access Denied"
+        instructionLabel.text = String(localized: "Camera Access Denied")
         instructionLabel.textColor = .white
         instructionLabel.font = UIFont.systemFont(ofSize: 24, weight: .bold)
         instructionLabel.textAlignment = .center
@@ -238,7 +238,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         viewController.view.addSubview(instructionLabel)
         
         let detailLabel = UILabel()
-        detailLabel.text = "Camera access is required to scan QR codes. Please enable it in Settings."
+        detailLabel.text = String(localized: "Camera access is required to scan QR codes. Please enable it in Settings.")
         detailLabel.textColor = .white
         detailLabel.font = UIFont.systemFont(ofSize: 16, weight: .regular)
         detailLabel.textAlignment = .center
@@ -247,7 +247,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         viewController.view.addSubview(detailLabel)
         
         var settingsConfig = UIButton.Configuration.filled()
-        settingsConfig.title = "Open Settings"
+        settingsConfig.title = String(localized: "Open Settings")
         settingsConfig.baseForegroundColor = .white
         settingsConfig.baseBackgroundColor = .systemBlue
         settingsConfig.background.cornerRadius = 12
@@ -275,7 +275,7 @@ struct QRScannerView: UIViewControllerRepresentable {
     
     private func addCancelButton(to viewController: UIViewController, coordinator: Coordinator) {
         var cancelConfig = UIButton.Configuration.filled()
-        cancelConfig.title = "Cancel"
+        cancelConfig.title = String(localized: "Cancel")
         cancelConfig.baseForegroundColor = .white
         cancelConfig.baseBackgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
         cancelConfig.background.cornerRadius = 12
@@ -328,7 +328,7 @@ struct QRScannerView: UIViewControllerRepresentable {
         
         // Add instruction label
         let instructionLabel = UILabel()
-        instructionLabel.text = "Position QR code within frame"
+        instructionLabel.text = String(localized: "Position QR code within frame")
         instructionLabel.textColor = .white
         instructionLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         instructionLabel.textAlignment = .center

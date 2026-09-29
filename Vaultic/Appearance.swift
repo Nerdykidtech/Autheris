@@ -18,7 +18,9 @@ enum AccentTheme: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var displayName: String {
+    /// `LocalizedStringKey` so VoiceOver reads these in the user's language: as a
+    /// `String` the literals never reach the catalog (see SettingsView's swatch row).
+    var displayName: LocalizedStringKey {
         switch self {
         case .indigo: return "Indigo"
         case .cyan: return "Cyan"

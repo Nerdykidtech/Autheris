@@ -4,7 +4,9 @@ import CoreImage.CIFilterBuiltins
 
 struct QRCodeView: View {
     let data: Data
-    let title: String
+    /// `LocalizedStringKey` because the only thing done with it is
+    /// `.navigationTitle(title)`, which looks the value up only when it is a key.
+    let title: LocalizedStringKey
     
     @Environment(\.dismiss) private var dismiss
     @State private var qrImage: PlatformImage?
@@ -125,7 +127,7 @@ struct QRCodeView: View {
             
             guard let messageData else {
                 DispatchQueue.main.async {
-                    generationError = "The export data could not be encoded for a QR code."
+                    generationError = String(localized: "The export data could not be encoded for a QR code.")
                 }
                 return
             }
@@ -134,7 +136,7 @@ struct QRCodeView: View {
             
             guard let outputImage = filter.outputImage else {
                 DispatchQueue.main.async {
-                    generationError = "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead."
+                    generationError = String(localized: "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead.")
                 }
                 return
             }
@@ -143,7 +145,7 @@ struct QRCodeView: View {
             
             guard let cgImage = context.createCGImage(transformedImage, from: transformedImage.extent) else {
                 DispatchQueue.main.async {
-                    generationError = "Could not render the QR image. Try again, or use Backup to export your tokens."
+                    generationError = String(localized: "Could not render the QR image. Try again, or use Backup to export your tokens.")
                 }
                 return
             }

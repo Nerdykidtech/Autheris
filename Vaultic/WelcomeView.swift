@@ -3,8 +3,11 @@ import SwiftUI
 private struct OnboardingFeature: Identifiable {
     let id = UUID()
     let icon: String
-    let title: String
-    let description: String
+    /// `LocalizedStringKey` rather than `String`: these are literals at the call
+    /// site, and a `String` property would carry them past the point where
+    /// `Text` could look them up, leaving them English in every language.
+    let title: LocalizedStringKey
+    let description: LocalizedStringKey
 }
 
 struct WelcomeView: View {
@@ -13,6 +16,12 @@ struct WelcomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let totalPages = 3
+
+    /// Typed explicitly: a ternary of two literals infers as `String`, which
+    /// `Text` renders verbatim and never looks up.
+    private var advanceTitle: LocalizedStringKey {
+        currentPage < totalPages - 1 ? "Next" : "Get Started"
+    }
 
     private let features: [OnboardingFeature] = [
         OnboardingFeature(
@@ -241,7 +250,7 @@ struct WelcomeView: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Text(currentPage < totalPages - 1 ? "Next" : "Get Started")
+                    Text(advanceTitle)
                         .font(.headline)
                     if currentPage < totalPages - 1 {
                         Image(systemName: "chevron.right")
@@ -258,7 +267,7 @@ struct WelcomeView: View {
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentPage)
     }
 
-    private func highlight(_ text: String) -> some View {
+    private func highlight(_ text: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.subheadline)

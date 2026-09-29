@@ -187,14 +187,14 @@ struct ImportConfirmationView: View {
             VStack(spacing: 12) {
                 statRow(
                     label: "Total scanned:",
-                    value: "\(total) token\(total == 1 ? "" : "s")",
+                    value: "\(total) tokens",
                     color: .primary
                 )
                 
                 if new > 0 {
                     statRow(
                         label: "Added:",
-                        value: "\(new) new token\(new == 1 ? "" : "s")",
+                        value: "\(new) new tokens",
                         color: .green,
                         icon: "plus.circle.fill"
                     )
@@ -203,7 +203,7 @@ struct ImportConfirmationView: View {
                 if duplicates > 0 {
                     statRow(
                         label: "Skipped:",
-                        value: "\(duplicates) duplicate\(duplicates == 1 ? "" : "s")",
+                        value: "\(duplicates) duplicates",
                         color: .orange,
                         icon: "xmark.circle.fill"
                     )
@@ -253,7 +253,7 @@ struct ImportConfirmationView: View {
                 .foregroundColor(.primary)
             
             // Message
-            Text("All \(count) token\(count == 1 ? "" : "s") in this import already exist on your device.")
+            Text("All \(count) tokens in this import already exist on your device.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -338,7 +338,7 @@ struct ImportConfirmationView: View {
         }
     }
     
-    private func statRow(label: String, value: String, color: Color, icon: String? = nil) -> some View {
+    private func statRow(label: LocalizedStringKey, value: LocalizedStringKey, color: Color, icon: String? = nil) -> some View {
         HStack(spacing: 8) {
             if let icon = icon {
                 Image(systemName: icon)
@@ -508,7 +508,7 @@ struct ImportConfirmationView: View {
                 #endif
                 DispatchQueue.main.async {
                     self.isImporting = false
-                    self.importResult = .failure("Could not parse the import data. The QR code may be corrupted or in an unsupported format.")
+                    self.importResult = .failure(String(localized: "Could not parse the import data. The QR code may be corrupted or in an unsupported format."))
                 }
             }
         }
