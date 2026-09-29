@@ -162,7 +162,7 @@ The current app never reads or migrates it — the merge engine only ever sees `
 
 ```bash
 xcodebuild test -project Vaultic.xcodeproj -scheme Vaultic \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro Max'
 ```
 
 On a Mac the same suite runs natively if you pass signing:
@@ -197,11 +197,20 @@ The conflict-resolution cases live in `VaulticTests/SyncMergeEngineTests.swift`.
 
 The app ships in seven languages: English, Spanish, French, German, Japanese, Simplified Chinese and Brazilian Portuguese. Those are the six the App Store listing is already translated into (`metadata/`), so the app follows the listing rather than the other way round — a language offered in the store is one the app should speak.
 
-Everything the app says lives in one String Catalog, `Vaultic/Localizable.xcstrings`. Xcode's extractor fills it from the sources; nothing in the app calls `NSLocalizedString` by hand.
+Everything the app says lives in a String Catalog. Xcode's extractor fills them from the sources; nothing in the app calls `NSLocalizedString` by hand.
 
-### The translations have not been read by anyone
+| Catalog | What it carries |
+| --- | --- |
+| `Vaultic/Localizable.xcstrings` | everything the app's own views say |
+| `Vaultic/InfoPlist.xcstrings` | the camera and Face ID prompts |
+| `VaulticWatch/Localizable.xcstrings` | everything the watch says |
+| `VaulticWatch/InfoPlist.xcstrings` | the watch's bundle name |
 
-Every entry is marked `needs_review`, not `translated`. That distinction is deliberate and worth keeping: the wording exists and the app uses it, but no native speaker has checked it. The String Catalog editor filters on exactly that state, so "show me what a human still has to read" is one click. A language is not finished until its entries say `translated`.
+`InfoPlist` is a second *table*, not a second file's worth of the same thing: the system reads a privacy prompt out of `InfoPlist.strings`, so the camera and Face ID copy has to sit under those keys or nothing ever looks it up. There is one per target for the same reason there is one per table — the watch has a bundle of its own.
+
+### Every entry says `translated`, and nobody has read one
+
+`translated` is what the catalog owes a shipping build: it means the strings are settled, not that a human has checked them. The wording came out of machine translation and no native speaker has reviewed it, so the flag is a narrower claim than its name suggests — the App Store listing in `metadata/` is the only copy of this text a translator has actually touched. Reading the four catalogs before release is still what would catch a bad translation; the state itself will not tell you which language to look at. A language is not finished until its entries say `translated`, and all six do.
 
 ### Where the languages are declared
 
@@ -210,31 +219,46 @@ Two places, and they have to agree:
 | Place | What it carries |
 | --- | --- |
 | `knownRegions` in `Vaultic.xcodeproj/project.pbxproj` | `en, Base, ja, es, zh-Hans, pt-BR, de, fr` |
-| `Vaultic/Localizable.xcstrings` | the per-language strings themselves |
+| the four catalogs above | the per-language strings themselves |
 
 Those are the **Xcode** language codes, not the App Store Connect ones: `es`, `de` and `fr` rather than `es-ES`, `de-DE`, `fr-FR`. The two vocabularies differ, and the store's own mapping between them is exactly that — `pt-BR` and `zh-Hans` are qualified on both sides. The language-level code is also the more useful of the two: `es` covers the Spanish of every region, where `es-ES` would answer an `es-MX` user in English.
 
-### Keeping the catalog in step with the code
+### Keeping the catalogs in step with the code
 
-The catalog is neither written nor maintained by hand. During a build the extractor reads the sources (`SWIFT_EMIT_LOC_STRINGS` is on) and emits a `.stringsdata` file per source file; `xcstringstool sync` merges those into the catalog.
+The `Localizable` catalogs are neither written nor maintained by hand. During a build the extractor reads the sources (`SWIFT_EMIT_LOC_STRINGS` is on) and emits a `.stringsdata` file per source file; `xcstringstool sync` merges those into the catalog.
 
-**Build for both platforms before syncing.** This is the step that fails silently:
+**Build every platform before syncing, and give each target only its own files.** Both halves fail silently:
 
 ```bash
 xcodebuild build -project Vaultic.xcodeproj -scheme Vaultic \
-  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro Max' \
   -derivedDataPath /tmp/autheris-dd CODE_SIGNING_ALLOWED=NO
 xcodebuild build -project Vaultic.xcodeproj -scheme Vaultic \
   -destination 'platform=macOS' \
   -derivedDataPath /tmp/autheris-dd CODE_SIGNING_ALLOWED=NO
+xcodebuild build -project Vaultic.xcodeproj -scheme VaulticWatch \
+  -destination 'generic/platform=watchOS' \
+  -derivedDataPath /tmp/autheris-dd CODE_SIGNING_ALLOWED=NO
 
+# the app's own catalog: what the Vaultic target extracted, and nothing else
 xcrun xcstringstool sync Vaultic/Localizable.xcstrings \
-  --stringsdata $(find /tmp/autheris-dd -name '*.stringsdata' -path '*Vaultic.build*')
+  --stringsdata $(find /tmp/autheris-dd -name '*.stringsdata' \
+    -path '*Vaultic.build*' -not -path '*VaulticWatch.build*') \
+  --skip-marking-strings-stale
+
+# the watch's, from the watch target's own build
+xcrun xcstringstool sync VaulticWatch/Localizable.xcstrings \
+  --stringsdata $(find /tmp/autheris-dd -name '*.stringsdata' -path '*VaulticWatch.build*') \
+  --skip-marking-strings-stale
 ```
 
-One platform's build only extracts the branches that platform compiles. Inside `#if os(macOS)` sit the entire Mac preferences window, the camera-permission copy, and five Settings rows — an iOS-only extraction leaves every one of them out, and they ship in English while the catalog looks complete. (That is not hypothetical: it is how this section came to be written.) Syncing is idempotent and does not disturb existing translations, so passing the union is always safe.
+One platform's build only extracts the branches that platform compiles. Inside `#if os(macOS)` sit the entire Mac preferences window, the camera-permission copy, and five Settings rows — an iOS-only extraction leaves every one of them out, and they ship in English while the catalog looks complete. (That is not hypothetical: it is how this section came to be written.)
 
-The watch target has no catalog of its own, so its strings are English. That is a deliberate stopping point rather than an oversight — see [watchOS](#watchos).
+The `-not -path '*VaulticWatch.build*'` guards the same mistake in another hat, and it is the one that produced the watch's catalog. An iOS build of the `Vaultic` scheme **builds the watch app and embeds it**, so the watch's `.stringsdata` lands under `Vaultic.build` too, and a plain `find '*Vaultic.build*'` sweeps its five strings into the *phone's* catalog, where no phone view will ever ask for them.
+
+`--skip-marking-strings-stale` is what makes "syncing does not disturb what is already there" true. The app's catalog holds an entry no Swift source yields — `Autheris`, the product name, marked `shouldTranslate: false` so Xcode stops offering it — and a sync without the flag marks that stale and deletes it, which `testTheProductNameIsNotTranslated` fails on. With the flag, syncing is additive and idempotent: run it twice and the file is byte-identical.
+
+**`xcstringstool sync` is never pointed at the `InfoPlist` catalogs, and should not be.** Their keys *are* `Info.plist` keys — `NSCameraUsageDescription` and friends — which no Swift file says and no `.stringsdata` mentions, so there is nothing for a sync to merge. Xcode keeps that file in step with the `Info.plist`; what is written by hand there is only the translations. Pointing sync at it adds nothing, and without the flag it strips the keys.
 
 ### A `String` property is a localization bug
 
@@ -261,14 +285,13 @@ Direct UIKit and AppKit text assignments are the same problem in another dress: 
 - **The in-app changelog history** (`ChangelogRelease.changes`, back to 1.0). The chrome around it is translated; the release notes themselves are long-form prose mirroring the App Store copy for versions that have already shipped.
 - **The support-email draft** (`SupportMailData.troubleshootingTemplate`). Support answers in English, and a half-translated bug report is worse than a clear English one. The error shown when Mail cannot be opened *is* translated.
 - **`debugInfo`** in `ImportConfirmationView`, which is assigned only inside `#if DEBUG`.
-- **The watch app**, as above.
-- **The product name**, which carries `"shouldTranslate": false` so Xcode stops offering it.
+- **The product name**, which carries `"shouldTranslate": false` so Xcode stops offering it — in `Vaultic/Localizable.xcstrings`, and as `CFBundleName` and `CFBundleDisplayName` in both `InfoPlist` catalogs.
 
 ### The test
 
-`VaulticTests/LocalizationCoverageTests.swift` guards the shape of all of this, since it cannot judge the wording: every entry has all six languages, none is left at `new`, every plural entry declares the categories its language actually has, and every translation keeps exactly the placeholders its key has — that last one caught a singular form that had dropped its `%lld`, which would have hidden the count.
+`VaulticTests/LocalizationCoverageTests.swift` guards the shape of all four catalogs, since it cannot judge the wording: every entry has all six languages, none is left at `new`, an entry marked `shouldTranslate: false` carries no translations to contradict that, every plural entry declares the categories its language actually has, and every translation keeps exactly the placeholders its key has — that last one caught a singular form that had dropped its `%lld`, which would have hidden the count.
 
-Two of its tests reach outside the app. One reads the sources, so a literal the extractor never saw is a failure here rather than English in the shipped app; it checks what it can be certain of — one-line literals with no interpolation — because guessing at interpolations would produce a test that cries wolf. The other reads the built `Autheris.app` and compares its compiled strings against the catalog, because a catalog full of translations proves nothing if the build never puts them in the bundle.
+Two of its tests reach outside the app. One reads the sources — both targets, each against its own catalog — so a literal the extractor never saw is a failure here rather than English in the shipped app; it checks what it can be certain of, one-line literals with no interpolation, because guessing at interpolations would produce a test that cries wolf, and that same fence leaves the watch's five strings out of reach since they arrive through ternaries. The other reads the built `Autheris.app` and compares its compiled strings against the catalogs — `Localizable` for the app and the watch, `InfoPlist` for the prompts, each under the table the system actually reads — because a catalog full of translations proves nothing if the build never puts them in the bundle. The watch's copy is checked only by a run whose host build embedded it, which the iOS run does and the Mac run does not.
 
 ## macOS
 

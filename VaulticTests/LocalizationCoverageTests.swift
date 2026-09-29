@@ -3,14 +3,21 @@ import XCTest
 
 /// Guards the translations the app ships.
 ///
-/// The app has one String Catalog, `Vaultic/Localizable.xcstrings`, in seven
-/// languages: English plus the six the store listing is already translated into.
-/// Six of the seven have never been read by a native speaker — every entry is
-/// marked `needs_review` rather than `translated` — so what these tests are worth
-/// is not that the wording is good. It is that the *shape* is right: every string
-/// has an entry, every entry has all six languages, and no translation quietly
-/// loses a placeholder or a plural form. Wording is for a reviewer; structure is
-/// for a machine, and this is the machine.
+/// Four String Catalogs ship from this repository, and all four are checked here:
+/// `Vaultic/Localizable.xcstrings` for the app's own strings,
+/// `Vaultic/InfoPlist.xcstrings` for the camera and Face ID prompts — the system
+/// reads those from a table of their own, which is why they need a second file —
+/// and the watch's `Localizable` and `InfoPlist` catalogs. Between them they cover
+/// seven languages: English plus the six the store listing is already translated
+/// into.
+///
+/// Every entry is marked `translated`. That says the strings are settled for this
+/// release, not that a human has read them: the wording was produced by machine
+/// translation and no native speaker has reviewed it, so what these tests are
+/// worth is not that the wording is good. It is that the *shape* is right: every
+/// string has an entry, every entry has all six languages, and no translation
+/// quietly loses a placeholder or a plural form. Wording is for a reviewer;
+/// structure is for a machine, and this is the machine.
 ///
 /// Two of them reach outside the app to do that, deliberately.
 ///
@@ -27,6 +34,8 @@ import XCTest
 /// The compiled-catalog tests read the built `Autheris.app` instead, because a
 /// catalog full of translations proves nothing if the build never puts them in the
 /// app — the catalog could be out of the target, or unreachable from the bundle.
+/// The watch's own copy is checked the same way, but only when the host build
+/// embedded it, which an iOS build does and a Mac build does not.
 final class LocalizationCoverageTests: XCTestCase {
 
     // MARK: - What the app is expected to ship
@@ -40,7 +49,26 @@ final class LocalizationCoverageTests: XCTestCase {
     /// many, and a `one` form there would never be selected.
     private static let languagesWithSingularPlurals: Set<String> = ["en", "es-ES", "fr-FR", "de-DE", "pt-BR"]
 
-    private static let catalogPath = "Vaultic/Localizable.xcstrings"
+    /// The app's own catalog, which is the only one with plural entries and the
+    /// only one the compiled-bundle comparisons resolve without a table name.
+    private static let appCatalogPath = "Vaultic/Localizable.xcstrings"
+
+    /// Every catalog that ships. A file that is in no target is invisible to all
+    /// of this, so the list is the place to notice one going missing.
+    private static let catalogPaths = [
+        appCatalogPath,
+        "Vaultic/InfoPlist.xcstrings",
+        "VaulticWatch/Localizable.xcstrings",
+        "VaulticWatch/InfoPlist.xcstrings",
+    ]
+
+    /// The directories scanned for localizable literals, each against its own
+    /// catalog: a watch literal has to be found in the *watch's* catalog, and
+    /// checking it against the app's would be the wrong question.
+    private static let sourceRoots: [(sources: String, catalog: String)] = [
+        ("Vaultic", appCatalogPath),
+        ("VaulticWatch", "VaulticWatch/Localizable.xcstrings"),
+    ]
 
     /// The `String` properties a view holds before `Text` can look anything up.
     /// Matched by *shape* rather than by name, for the same reason
@@ -62,18 +90,18 @@ final class LocalizationCoverageTests: XCTestCase {
             .deletingLastPathComponent()      // …/
     }
 
-    private func loadCatalog() throws -> [String: [String: Any]] {
-        let url = repositoryRoot.appendingPathComponent(Self.catalogPath)
+    private func loadCatalog(_ path: String) throws -> [String: [String: Any]] {
+        let url = repositoryRoot.appendingPathComponent(path)
         let data = try Data(contentsOf: url)
         let root = try XCTUnwrap(
             JSONSerialization.jsonObject(with: data) as? [String: Any],
-            "\(Self.catalogPath) is not a JSON object"
+            "\(path) is not a JSON object"
         )
-        XCTAssertEqual(root["sourceLanguage"] as? String, "en", "the source language is English")
-        let strings = try XCTUnwrap(root["strings"] as? [String: Any], "\(Self.catalogPath) has no strings")
+        XCTAssertEqual(root["sourceLanguage"] as? String, "en", "\(path): the source language is English")
+        let strings = try XCTUnwrap(root["strings"] as? [String: Any], "\(path) has no strings")
         let catalog = strings.compactMapValues { $0 as? [String: Any] }
-        XCTAssertEqual(catalog.count, strings.count, "every entry should be an object")
-        XCTAssertFalse(catalog.isEmpty, "\(Self.catalogPath) has no entries")
+        XCTAssertEqual(catalog.count, strings.count, "\(path): every entry should be an object")
+        XCTAssertFalse(catalog.isEmpty, "\(path) has no entries")
         return catalog
     }
 
@@ -150,89 +178,123 @@ final class LocalizationCoverageTests: XCTestCase {
         }.sorted()
     }
 
-    // MARK: - The catalog in the repository
+    // MARK: - The catalogs in the repository
 
     func testEveryEntryIsTranslatedIntoEveryLanguage() throws {
-        let catalog = try loadCatalog()
-        for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
-            guard !(entry["shouldTranslate"] as? Bool == false) else { continue }
-            for language in Self.translatedLanguages {
-                let strings = strings(entry, language)
-                XCTAssertFalse(strings.isEmpty, "\(language) has no entry for \"\(key)\"")
-                for string in strings {
-                    XCTAssertFalse(string.isEmpty, "\(language) is empty for \"\(key)\"")
+        for path in Self.catalogPaths {
+            let catalog = try loadCatalog(path)
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                guard !(entry["shouldTranslate"] as? Bool == false) else { continue }
+                for language in Self.translatedLanguages {
+                    let strings = strings(entry, language)
+                    XCTAssertFalse(strings.isEmpty, "\(path): \(language) has no entry for \"\(key)\"")
+                    for string in strings {
+                        XCTAssertFalse(string.isEmpty, "\(path): \(language) is empty for \"\(key)\"")
+                    }
                 }
             }
         }
     }
 
     func testNoEntryIsLeftWaitingForSomeoneToWriteIt() throws {
-        let catalog = try loadCatalog()
-        for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
-            for language in Self.translatedLanguages {
-                for state in states(entry, language) {
-                    XCTAssertNotEqual(
-                        state, "new",
-                        "\"\(key)\" is still untranslated in \(language) — `new` means "
-                        + "nobody has written it, not that nobody has checked it"
-                    )
+        for path in Self.catalogPaths {
+            let catalog = try loadCatalog(path)
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                for language in Self.translatedLanguages {
+                    for state in states(entry, language) {
+                        XCTAssertNotEqual(
+                            state, "new",
+                            "\(path): \"\(key)\" is still untranslated in \(language) — `new` means "
+                            + "nobody has written it, not that nobody has checked it"
+                        )
+                    }
                 }
             }
         }
     }
 
     func testPluralEntriesDeclareTheCategoriesTheirLanguageNeeds() throws {
-        let catalog = try loadCatalog()
-        let plurals = catalog.filter { isPlural($0.value) }
-        XCTAssertFalse(plurals.isEmpty, "the catalog should have plural entries to check")
+        for path in Self.catalogPaths {
+            let catalog = try loadCatalog(path)
+            let plurals = catalog.filter { isPlural($0.value) }
+            if path == Self.appCatalogPath {
+                // Only the app's own catalog has plurals to check; the Info.plist
+                // and watch catalogs carry single strings, and a plural that
+                // appeared in one of those would be worth a look.
+                XCTAssertFalse(plurals.isEmpty, "\(path) should have plural entries to check")
+            }
 
-        for (key, entry) in plurals.sorted(by: { $0.key < $1.key }) {
-            // A plural entry's key is what the app asks for, and it must offer the
-            // number the category is chosen from.
-            XCTAssertEqual(
-                placeholders(in: key), ["lld"],
-                "\"\(key)\" must take exactly one integer, or no plural rule can select from it"
-            )
-            for language in Self.translatedLanguages + ["en"] {
-                let forms = try XCTUnwrap(pluralForms(entry, language), "\"\(key)\" has no plural forms for \(language)")
-                XCTAssertNotNil(forms["other"], "\"\(key)\" needs an `other` form for \(language)")
-                if Self.languagesWithSingularPlurals.contains(language) {
-                    XCTAssertNotNil(forms["one"], "\"\(key)\" needs a `one` form for \(language)")
-                } else {
-                    XCTAssertNil(
-                        forms["one"],
-                        "\"\(key)\" has a `one` form for \(language), where CLDR has no such category — "
-                        + "it would never be selected, so it is a form nobody will ever see"
+            for (key, entry) in plurals.sorted(by: { $0.key < $1.key }) {
+                // A plural entry's key is what the app asks for, and it must offer
+                // the number the category is chosen from.
+                XCTAssertEqual(
+                    placeholders(in: key), ["lld"],
+                    "\(path): \"\(key)\" must take exactly one integer, or no plural rule can select from it"
+                )
+                for language in Self.translatedLanguages + ["en"] {
+                    let forms = try XCTUnwrap(
+                        pluralForms(entry, language),
+                        "\(path): \"\(key)\" has no plural forms for \(language)"
                     )
+                    XCTAssertNotNil(forms["other"], "\(path): \"\(key)\" needs an `other` form for \(language)")
+                    if Self.languagesWithSingularPlurals.contains(language) {
+                        XCTAssertNotNil(forms["one"], "\(path): \"\(key)\" needs a `one` form for \(language)")
+                    } else {
+                        XCTAssertNil(
+                            forms["one"],
+                            "\(path): \"\(key)\" has a `one` form for \(language), where CLDR has no such "
+                            + "category — it would never be selected, so it is a form nobody will ever see"
+                        )
+                    }
                 }
             }
         }
     }
 
     func testTranslationsKeepEveryPlaceholderTheKeyHas() throws {
-        let catalog = try loadCatalog()
-        for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
-            let expected = placeholders(in: key)
-            guard !expected.isEmpty else { continue }
-            for language in Self.translatedLanguages {
-                for string in strings(entry, language) {
-                    XCTAssertEqual(
-                        placeholders(in: string), expected,
-                        "\(language) for \"\(key)\" is \"\(string)\": the placeholders do not match the key"
-                    )
+        for path in Self.catalogPaths {
+            let catalog = try loadCatalog(path)
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                let expected = placeholders(in: key)
+                guard !expected.isEmpty else { continue }
+                for language in Self.translatedLanguages {
+                    for string in strings(entry, language) {
+                        XCTAssertEqual(
+                            placeholders(in: string), expected,
+                            "\(path): \(language) for \"\(key)\" is \"\(string)\": the placeholders "
+                            + "do not match the key"
+                        )
+                    }
                 }
             }
         }
     }
 
     func testTheProductNameIsNotTranslated() throws {
-        let catalog = try loadCatalog()
+        let catalog = try loadCatalog(Self.appCatalogPath)
         let autheris = try XCTUnwrap(catalog["Autheris"], "the product name should be in the catalog")
         XCTAssertEqual(autheris["shouldTranslate"] as? Bool, false, "Autheris is a name, not a word")
         XCTAssertNil(autheris["localizations"], "a name that is never translated needs no translations")
     }
 
-    // MARK: - The catalog as the app actually ships it
+    /// The same rule as the product name, anywhere it appears — including the two
+    /// `Info.plist` keys that carry it. A `shouldTranslate` of `false` under a pile
+    /// of translations is a contradiction: it says "leave this alone" while
+    /// offering something to use instead.
+    func testEntriesThatOptOutOfTranslationCarryNoTranslations() throws {
+        for path in Self.catalogPaths {
+            let catalog = try loadCatalog(path)
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                guard entry["shouldTranslate"] as? Bool == false else { continue }
+                XCTAssertNil(
+                    entry["localizations"],
+                    "\(path): \"\(key)\" opts out of translation, so it needs no translations"
+                )
+            }
+        }
+    }
+
+    // MARK: - The catalogs as the app actually ships them
 
     private func appBundle() throws -> Bundle {
         // `Bundle(for:)` rather than `Bundle.main`: the test host is the app, but
@@ -250,6 +312,19 @@ final class LocalizationCoverageTests: XCTestCase {
         return try XCTUnwrap(Bundle(path: path), "\(language).lproj is not a bundle")
     }
 
+    /// The watch app inside the host app, when there is one.
+    ///
+    /// The Mac build has none: the "Embed Watch Content" phase carries
+    /// `platformFilters = (ios, )`, so `Autheris.app` on the Mac has no `Watch/`
+    /// directory at all. Returning nil there is the honest answer rather than a
+    /// failure, and it is why the watch's strings are only checked by the run that
+    /// actually embedded them.
+    private func watchBundle() throws -> Bundle? {
+        let watch = try appBundle().bundleURL.appendingPathComponent("Watch/Autheris.app")
+        guard FileManager.default.fileExists(atPath: watch.path) else { return nil }
+        return try XCTUnwrap(Bundle(url: watch), "\(watch.path) is not a bundle")
+    }
+
     func testEveryTranslatedLanguageReachesTheAppBundle() throws {
         for language in Self.translatedLanguages {
             let bundle = try bundle(for: language)
@@ -265,7 +340,7 @@ final class LocalizationCoverageTests: XCTestCase {
     /// if a translation does not reach the bundle, and it keeps working when the
     /// wording changes.
     func testTheStringsInTheAppAreTheOnesInTheCatalog() throws {
-        let catalog = try loadCatalog()
+        let catalog = try loadCatalog(Self.appCatalogPath)
         for language in Self.translatedLanguages {
             let bundle = try bundle(for: language)
             for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
@@ -273,6 +348,44 @@ final class LocalizationCoverageTests: XCTestCase {
                 XCTAssertEqual(
                     bundle.localizedString(forKey: key, value: nil, table: nil), expected,
                     "the compiled \(language) string for \"\(key)\" is not the catalog's"
+                )
+            }
+        }
+    }
+
+    /// The `Info.plist` prompts are a second table, and a table is exactly the
+    /// kind of thing that can be in the catalog and still miss the bundle — the
+    /// camera and Face ID prompts read this one by name, so a lookup that never
+    /// finds it hands the user the English from the build setting instead.
+    func testThePrivacyPromptsInTheAppAreTheOnesInTheCatalog() throws {
+        let catalog = try loadCatalog("Vaultic/InfoPlist.xcstrings")
+        for language in Self.translatedLanguages {
+            let bundle = try bundle(for: language)
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                guard let expected = value(entry, language) else { continue }
+                XCTAssertEqual(
+                    bundle.localizedString(forKey: key, value: nil, table: "InfoPlist"), expected,
+                    "the compiled \(language) Info.plist string for \"\(key)\" is not the catalog's"
+                )
+            }
+        }
+    }
+
+    func testTheWatchStringsReachTheWatchAppWhenItIsEmbedded() throws {
+        guard let watch = try watchBundle() else { return }
+        let catalog = try loadCatalog("VaulticWatch/Localizable.xcstrings")
+        for language in Self.translatedLanguages {
+            let path = try XCTUnwrap(
+                watch.path(forResource: language, ofType: "lproj"),
+                "the watch app has no \(language).lproj — the watch catalog is not "
+                + "reaching the build, so the watch runs English in \(language)"
+            )
+            let bundle = try XCTUnwrap(Bundle(path: path), "the watch's \(language).lproj is not a bundle")
+            for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
+                guard let expected = value(entry, language) else { continue }
+                XCTAssertEqual(
+                    bundle.localizedString(forKey: key, value: nil, table: nil), expected,
+                    "the compiled \(language) watch string for \"\(key)\" is not the catalog's"
                 )
             }
         }
@@ -311,43 +424,48 @@ final class LocalizationCoverageTests: XCTestCase {
     /// It looks only at what it can be sure about: literals with no interpolation,
     /// on one line. An interpolated literal cannot be matched to a key without
     /// type-checking the interpolation, and guessing at it would produce a test
-    /// that cries wolf until someone deletes it.
+    /// that cries wolf until someone deletes it. The same fence leaves the watch's
+    /// five strings out of reach — they arrive through ternaries, one of them
+    /// multi-line — so what this half of the scan guards is the next literal
+    /// someone adds there, not the five that are already in the catalog.
     func testEveryLocalizableLiteralInTheSourcesHasAnEntry() throws {
-        let sources = repositoryRoot.appendingPathComponent("Vaultic")
-        let files = try XCTUnwrap(
-            FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?.allObjects
-                as? [URL],
-            "could not walk \(sources.path)"
-        ).filter { $0.pathExtension == "swift" }
-        XCTAssertFalse(files.isEmpty, "no sources found under \(sources.path)")
-
-        let catalog = try loadCatalog()
-        let patterns = Self.localizableCallPatterns.compactMap {
-            try? NSRegularExpression(pattern: $0)
-        }
-        XCTAssertEqual(patterns.count, Self.localizableCallPatterns.count, "bad pattern")
-
         var checked = 0
-        for file in files {
-            let source = try String(contentsOf: file, encoding: .utf8)
-            let range = NSRange(source.startIndex..<source.endIndex, in: source)
-            for pattern in patterns {
-                for match in pattern.matches(in: source, range: range) {
-                    guard let matchRange = Range(match.range(at: 1), in: source) else { continue }
-                    let literal = String(source[matchRange])
-                    // Interpolated and multi-line literals are out of reach; an
-                    // empty match is the `"""` of a multi-line literal opening.
-                    guard !literal.isEmpty, !literal.contains("\\("), !literal.contains("\n") else { continue }
-                    let key = literal
-                        .replacingOccurrences(of: "\\\"", with: "\"")
-                        .replacingOccurrences(of: "\\\\", with: "\\")
-                    checked += 1
-                    XCTAssertNotNil(
-                        catalog[key],
-                        "\(file.lastPathComponent) has a localizable literal with no catalog "
-                        + "entry: \"\(key)\". Build for iOS and macOS, then run "
-                        + "`xcrun xcstringstool sync Vaultic/Localizable.xcstrings --stringsdata …`"
-                    )
+        for (root, catalogPath) in Self.sourceRoots {
+            let sources = repositoryRoot.appendingPathComponent(root)
+            let files = try XCTUnwrap(
+                FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?.allObjects
+                    as? [URL],
+                "could not walk \(sources.path)"
+            ).filter { $0.pathExtension == "swift" }
+            XCTAssertFalse(files.isEmpty, "no sources found under \(sources.path)")
+
+            let catalog = try loadCatalog(catalogPath)
+            let patterns = Self.localizableCallPatterns.compactMap {
+                try? NSRegularExpression(pattern: $0)
+            }
+            XCTAssertEqual(patterns.count, Self.localizableCallPatterns.count, "bad pattern")
+
+            for file in files {
+                let source = try String(contentsOf: file, encoding: .utf8)
+                let range = NSRange(source.startIndex..<source.endIndex, in: source)
+                for pattern in patterns {
+                    for match in pattern.matches(in: source, range: range) {
+                        guard let matchRange = Range(match.range(at: 1), in: source) else { continue }
+                        let literal = String(source[matchRange])
+                        // Interpolated and multi-line literals are out of reach; an
+                        // empty match is the `"""` of a multi-line literal opening.
+                        guard !literal.isEmpty, !literal.contains("\\("), !literal.contains("\n") else { continue }
+                        let key = literal
+                            .replacingOccurrences(of: "\\\"", with: "\"")
+                            .replacingOccurrences(of: "\\\\", with: "\\")
+                        checked += 1
+                        XCTAssertNotNil(
+                            catalog[key],
+                            "\(file.lastPathComponent) has a localizable literal with no entry in "
+                            + "\(catalogPath): \"\(key)\". Build for iOS, macOS and watchOS, then run "
+                            + "`xcrun xcstringstool sync \(catalogPath) --stringsdata …`"
+                        )
+                    }
                 }
             }
         }
