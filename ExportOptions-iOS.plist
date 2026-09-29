@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- iOS App Store export. Produces a signed .ipa, which is what
+	     `asc builds upload --ipa` expects.
+
+	     The ExportOptions.plist beside this file is the *Mac* App Store one: same
+	     method, but it produces a .pkg instead, because the archive it exports is
+	     a macOS one. Which artifact comes out is decided by the archive's
+	     platform, so the two files differ only in which one you hand to
+	     `-exportOptionsPlist` / `asc xcode export` for which archive.
+
+	     manageAppVersionAndBuildNumber is off so the exported build keeps the
+	     version and build number the archive was made with — MARKETING_VERSION
+	     and CURRENT_PROJECT_VERSION from the project — rather than having Xcode
+	     renumber it. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<key>teamID</key>
+	<string>37GWLWW278</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>uploadSymbols</key>
+	<true/>
+	<key>manageAppVersionAndBuildNumber</key>
+	<false/>
+</dict>
+</plist>

@@ -293,6 +293,46 @@ Direct UIKit and AppKit text assignments are the same problem in another dress: 
 
 Two of its tests reach outside the app. One reads the sources — both targets, each against its own catalog — so a literal the extractor never saw is a failure here rather than English in the shipped app; it checks what it can be certain of, one-line literals with no interpolation, because guessing at interpolations would produce a test that cries wolf, and that same fence leaves the watch's five strings out of reach since they arrive through ternaries. The other reads the built `Autheris.app` and compares its compiled strings against the catalogs — `Localizable` for the app and the watch, `InfoPlist` for the prompts, each under the table the system actually reads — because a catalog full of translations proves nothing if the build never puts them in the bundle. The watch's copy is checked only by a run whose host build embedded it, which the iOS run does and the Mac run does not.
 
+## Releasing
+
+### Submitting the iOS app
+
+The iOS app carries the watch app inside it, so one archive covers both. `xcodebuild` builds and signs it; `asc` uploads it, stages the version and submits it. 2.5 went out this way.
+
+```bash
+# Release archive for the phone and the watch it embeds.
+xcodebuild archive -project Vaultic.xcodeproj -scheme Vaultic \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -archivePath .asc/artifacts/Autheris.xcarchive -allowProvisioningUpdates
+
+# App Store export. The ExportOptions.plist at the root is the *Mac* one and
+# produces a .pkg; iOS needs ExportOptions-iOS.plist, which produces an .ipa.
+asc xcode export --archive-path .asc/artifacts/Autheris.xcarchive \
+  --export-options ExportOptions-iOS.plist --ipa-path .asc/artifacts/Autheris.ipa
+
+asc builds upload --app 6760686327 --ipa .asc/artifacts/Autheris.ipa \
+  --version 2.5 --build-number 20 --wait
+
+# A freshly uploaded build is refused a review submission until this is set.
+asc builds update --build "<build id>" --uses-non-exempt-encryption false
+
+asc release stage --app 6760686327 --version 2.5 --build "<build id>" \
+  --metadata-dir ./metadata --confirm
+asc release run --app 6760686327 --version 2.5 --build "<build id>" \
+  --metadata-dir ./metadata --confirm
+```
+
+`.asc/artifacts/` and `.asc/release/checkpoints/` are gitignored tool state, and are where `asc` expects both to live. `asc status --app 6760686327` answers "where is this release now" in one line.
+
+Four of these steps fail quietly or confusingly:
+
+- **`--metadata-dir` is the metadata *root*.** `asc release stage` resolves `version/<version>/` itself; pointing it at `./metadata/version/2.5` fails in `apply_metadata` with `flag: help requested` — but only *after* `ensure_version` has already created the version, so the run looks half-done rather than failed. Worse, it writes a checkpoint recording the bad `metadataDir`, and every later run then refuses to start with *"checkpoint does not match current run arguments"* until that file is deleted.
+- **A new build has no export answer.** Submission fails with *"You must provide a value for the attribute `usesNonExemptEncryption`"* until `asc builds update --uses-non-exempt-encryption` is set. Build 19 — the live 2.4 — reports `false`, and 2.5's build 20 matches it; read the previous build with `asc builds info --build <id>` rather than answering the question fresh, because it is a compliance position rather than a build detail.
+- **`asc xcode version view` cannot read this project.** It reports an empty version and `modern: false`, because `MARKETING_VERSION` lives per build configuration rather than at project level. Bump the six settings directly, then confirm `CFBundleShortVersionString` in the built app before uploading anything.
+- **A metadata push must be previewed.** `asc metadata push --app ... --version <v> --dir ./metadata --dry-run` lists exactly what will change. A release that only adds What's New should plan *adds and nothing else*; any `changes` or `deletes` means the local listing has drifted from the live one.
+
+Rehearse the submission with `asc release run ... --dry-run`, which prints all five steps and mutates nothing.
+
 ## macOS
 
 Autheris is one Xcode target (`Vaultic`) that builds for iPhone, iPad, and Mac — `SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx"`. The Mac app is a real AppKit/SwiftUI app, not Mac Catalyst and not "Designed for iPad", so it gets native window and menu-bar behaviour and the roomy token grid the iPad uses. Mac-only build settings are scoped with `[sdk=macosx*]`, and the Mac has its own entitlements file (`Vaultic/Vaultic-macOS.entitlements`), so the iOS build is untouched.
