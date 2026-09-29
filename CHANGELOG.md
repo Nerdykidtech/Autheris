@@ -6,7 +6,7 @@ This file mirrors the in-app changelog in [`Vaultic/ChangelogView.swift`](Vaulti
 
 A version number lives in four places, and a release is not finished until they agree:
 
-1. **`MARKETING_VERSION`** in `Vaultic.xcodeproj/project.pbxproj` — four build settings (app and tests, Debug and Release). This is what the app and the App Store report.
+1. **`MARKETING_VERSION`** in `Vaultic.xcodeproj/project.pbxproj` — six build settings (app, tests and watch, Debug and Release). This is what the app and the App Store report.
 2. **The `catalog`** in [`Vaultic/ChangelogView.swift`](Vaultic/ChangelogView.swift) — the release notes shown inside the app.
 3. **This file** — the same notes, and the copy the repository keeps.
 4. **[`metadata/version/<version>/<locale>.json`](metadata)** — the App Store listing: description, keywords, what's new, and promotional text. One file per locale (name and subtitle live in `metadata/app-info/<locale>.json`), in the canonical layout the `asc` CLI reads and writes — `asc metadata pull` to refresh it, `asc metadata push` to publish it.
@@ -14,6 +14,13 @@ A version number lives in four places, and a release is not finished until they 
    These were `.strings` files until 2.4. They were converted because `asc metadata validate` refuses the old layout outright ("no metadata .json files found"), so nothing could read them; `plutil -convert json` did the conversion and the extracted lengths matched the live listing exactly.
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
+
+## [2.5] — September 2026
+
+- Autheris now speaks Spanish, French, German, Japanese, Simplified Chinese and Brazilian Portuguese — the same six languages the App Store listing has been translated into since 2.4. If your device is set to one of them, the app opens in it.
+- The Apple Watch app speaks them too, so the codes on your wrist read in the same language as the ones in your pocket.
+- The camera and Face ID permission prompts are translated as well. Those come from the system rather than the app, so they were the last English a translated app still showed.
+- Your codes, iCloud sync and settings are exactly where you left them.
 
 ## [2.4] — September 2026
 

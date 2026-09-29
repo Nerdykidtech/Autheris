@@ -55,6 +55,17 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.5",
+            version: "2.5",
+            date: "September 2026",
+            changes: [
+                "Autheris now speaks Spanish, French, German, Japanese, Simplified Chinese and Brazilian Portuguese — the same six languages the App Store listing has been translated into since 2.4. If your device is set to one of them, the app opens in it.",
+                "The Apple Watch app speaks them too, so the codes on your wrist read in the same language as the ones in your pocket.",
+                "The camera and Face ID permission prompts are translated as well. Those come from the system rather than the app, so they were the last English a translated app still showed.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.4",
             version: "2.4",
             date: "September 2026",
