@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- A watchOS app that carries its own UI, rather than a WatchKit
+	     extension hosted by one. This is what makes it a native watch app: the
+	     whole interface below is SwiftUI built for the watch, and none of it is
+	     the iPhone app relayed or scaled.
+
+	     Not `WKWatchOnly`: the watch app is a companion of the iPhone app and is
+	     installed from the Watch app, so it does not need its own App Store
+	     listing. -->
+	<key>WKApplication</key>
+	<true/>
+
+	<!-- The counterpart app. `WCSession` on both sides refuses to activate
+	     unless this matches the iPhone app's bundle id exactly. -->
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>com.eddingtontech.autheris</string>
+</dict>
+</plist>

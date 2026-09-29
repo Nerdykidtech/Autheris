@@ -8,11 +8,11 @@
   <a href="https://apps.apple.com/app/id6760686327">
     <img src="https://img.shields.io/badge/Download_on_the_App_Store-0D96F6?style=for-the-badge&logo=apple&logoColor=white" alt="Download on the App Store">
   </a>
-  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%20%7C%20macOS%2026.0%2B-000000?style=for-the-badge&logo=apple" alt="iOS, iPadOS and macOS 26.0+">
+  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20iPadOS%20%7C%20macOS%20%7C%20watchOS%2026.0%2B-000000?style=for-the-badge&logo=apple" alt="iOS, iPadOS, macOS and watchOS 26.0+">
   <img src="https://img.shields.io/badge/SwiftUI-FA7343?style=for-the-badge&logo=swift&logoColor=white" alt="SwiftUI">
 </p>
 
-**Autheris** is a secure, privacy-focused two-factor authentication (2FA) token manager for iPhone, iPad, and Mac. Built with SwiftUI and designed with zero-knowledge architecture — your tokens never leave your device unless you explicitly choose to export them or turn on iCloud Sync.
+**Autheris** is a secure, privacy-focused two-factor authentication (2FA) token manager for iPhone, iPad, Mac, and Apple Watch. Built with SwiftUI and designed with zero-knowledge architecture — your tokens never leave your device unless you explicitly choose to export them or turn on iCloud Sync.
 
 ## Features
 
@@ -20,6 +20,7 @@
 - 👁️ **Setup Key Access**: View, copy, or edit a token's secret — masked by default, tap to reveal
 - ☁️ **Optional iCloud Sync**: Off by default. When enabled, tokens sync across your own devices through your private iCloud database, with secret keys end-to-end encrypted
 - 📱 **Native Everywhere**: One SwiftUI codebase for iPhone, iPad, and Mac — no Catalyst, no "Designed for iPad"
+- ⌚ **Apple Watch App**: Your codes on your wrist, one per screen with a live countdown. Read-only by design — no copy, no editing and no settings on the watch
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
 - 📤 **Export & Backup**: Local backup files and QR exports you control (stored in the app sandbox, protected by the device passcode, not additionally encrypted)
 - 📥 **Easy Migration**: Import from Google Authenticator
@@ -155,7 +156,9 @@ The current app never reads or migrates it — the merge engine only ever sees `
 
 ## Tests
 
-`VaulticTests` (XCTest) covers the logic that is easy to get wrong and cheap to assert: the iCloud conflict-resolution rules, the tombstone and Recently-Deleted bookkeeping, pinned-first ordering and drag-to-reorder, `OTPCode`'s backward-compatible decoding, the mirrored preferences, the privacy-shield rules, and `BackupCrypto`. Each of those rule sets lives in a pure, dependency-free type — `SyncMergeEngine`, `SyncTombstoneStore`, `TrashBin`, `TokenOrdering`, `AppPreferences`, `PrivacyShield` — precisely so it can be asserted without a simulator.
+`VaulticTests` (XCTest) covers the logic that is easy to get wrong and cheap to assert: the iCloud conflict-resolution rules, the tombstone and Recently-Deleted bookkeeping, pinned-first ordering and drag-to-reorder, `OTPCode`'s backward-compatible decoding, the mirrored preferences, the privacy-shield rules, the phone↔watch payload contract, and `BackupCrypto`. Each of those rule sets lives in a pure, dependency-free type — `SyncMergeEngine`, `SyncTombstoneStore`, `TrashBin`, `TokenOrdering`, `AppPreferences`, `PrivacyShield`, `WatchTokenPayload` — precisely so it can be asserted without a simulator.
+
+`VaulticTests/WatchTokenPayloadTests.swift` is the exception worth naming: the phone app and the watch app are separate binaries that can be at **different versions**, so the cases that matter there are the ones where they disagree — a payload from a build that knows a newer format, a list arriving out of order, an empty list that has to mean "you have no codes" rather than "nothing has arrived".
 
 ```bash
 xcodebuild test -project Vaultic.xcodeproj -scheme Vaultic \
@@ -337,6 +340,103 @@ The two steps still to do, neither of which `asc` can finish on its own:
    To confirm a `.pkg` before uploading, without installing it: `pkgutil --check-signature X.pkg` should name *3rd Party Mac Developer Installer*, and `pkgutil --expand-full X.pkg /tmp/x` then `codesign -dv` on the app inside should name *Apple Distribution*.
 
 
+## watchOS
+
+Autheris ships a native watch app. It is a second Xcode target, **`VaulticWatch`**, embedded in the iPhone app at `Autheris.app/Watch/Autheris.app` — a real SwiftUI app built for the watch, not a WatchKit extension hosting a scaled-down phone UI.
+
+It is a **viewer and nothing else**. There is no add, no edit, no delete, no search, no settings, and no copy anywhere in it. Every one of those lives on the iPhone; the watch exists so a code can be read without taking the phone out of a pocket. One code fills the screen, and turning the Digital Crown pages between them.
+
+### How the codes get there
+
+Over **`WatchConnectivity` from the iPhone app** — deliberately *not* over iCloud. That choice is what makes the watch work for every user rather than only for the ones who turned iCloud Sync on, since iCloud Sync is off by default and the two features are otherwise unrelated. The iPhone stays the single source of truth; the watch never writes anything back.
+
+There is no "send codes to my watch" setting, because **installing the watch app is the opt-in**: the phone only sends to a watch it reports as paired *with the app installed* (`WCSession.isPaired && isWatchAppInstalled`). A user who has not chosen to put Autheris on their wrist never has a secret leave the phone. That is the same spirit as iCloud Sync being off until asked for — with the request made by installing the app rather than by flipping a switch.
+
+### Why an application context, and why there is a second transport
+
+The relay uses `WCSession.updateApplicationContext`, the one `WatchConnectivity` transport that describes *state* rather than events. It keeps only the newest dictionary, delivers it whenever the watch app is next reachable — running or not — and leaves it there for the watch to read on its next launch. A token list is exactly that shape: twenty edits while the user is in the app should arrive as one current list, not as a queue of twenty stale ones.
+
+An application context is capped in size and the system **rejects an oversized one outright** rather than truncating it, so a very large token list would silently never reach the watch. Past the cap the relay hands over a file instead. Both transports carry the same `sentAt` stamp (`WatchTokenPayload`), because nothing orders the two against each other — the payload is versioned and time-stamped so the watch applies whichever it sees last and cannot be rolled back by an older list arriving late. That is the same last-write-wins rule `SyncMergeEngine` uses for iCloud, for the same reason.
+
+### What lives where
+
+| Path | What it is |
+| --- | --- |
+| `Shared/` | One implementation of the OTP core, compiled into **both** targets: `OTPCode`, `OTPGenerator`, `OTPAlgorithm`, `ColorHex`, `KeychainStore`, and `WatchTokenPayload`. A `PBXFileSystemSynchronizedRootGroup` listed in each target's `fileSystemSynchronizedGroups`, so a file added here joins both builds. |
+| `VaulticWatch/` | The watch app: `AutherisWatchApp` (the scene), `WatchSessionModel` (the `WCSession` receiver), `WatchRootView` (paging and the empty states), `WatchCodePageView` (one code and its countdown). |
+| `Vaultic/Sync/WatchTokenRelay.swift` | The iPhone half. A `WatchTokenRelayService` protocol with a real `WatchConnectivity` implementation on iOS and an inert one elsewhere, so `OTPDataStore` — which is built on every platform — needs no `#if` at the call site. `OTPDataStore.saveCodes()` pushes from exactly one place. |
+
+The watch does **not** reorder anything. Pinned-first ordering and the user's manual arrangement are the phone's (`TokenOrdering`), and the list arrives already sorted, so the two devices cannot disagree about what order the codes are in.
+
+### When the phone actually sends
+
+Two things about the send are easy to get wrong, and both were caught by running the app against a paired watch rather than by reading the code:
+
+- **The list is offered once at launch, not only on edits.** `saveCodes()` is the obvious single push site, but the path a returning user takes — `loadCodes()` finding the codes already in the Keychain — calls `saveCodes()` *not at all*. Pushing only from there meant an app that launched with tokens already stored handed the relay nothing, so the watch stayed empty until the user happened to edit a token. That is precisely the case for someone who installs the watch app *after* filling their phone, so `OTPDataStore.init` offers the loaded list explicitly.
+- **A deferred offer is picked up on foreground, not only by the activation callback.** The launch-time offer always arrives before `WCSession` has finished activating, so something has to pick it up afterwards. `activationDidCompleteWith` is the natural candidate and is **not** reliable — it was observed to never arrive at all on some launches, leaving the watch on a stale list with nothing logged anywhere. The relay therefore also re-offers on `AppActivity.didBecomeActive`, which the system definitely delivers, and the app foregrounds immediately after launch.
+
+`WatchTokenPayloadTests` covers the payload those two triggers carry; the triggers themselves are exercised by running the app against a paired watch simulator.
+
+### Where the watch's copy lives
+
+The system re-delivers the last application context on activation, so the obvious design is to render `receivedApplicationContext` and be done. That is not good enough for a credential app: the redelivery is framework behaviour rather than a documented guarantee, and the failure mode if it changes is a user reaching for their watch and seeing **no codes**, with no explanation. The last list received is therefore written to the watch's own Keychain with the same `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` protection the phone uses, so the app opens on the real codes from the first frame whether or not the phone is anywhere near.
+
+The consequence worth being explicit about: **the codes are on the watch**, because a code cannot be shown without its secret. A paired, unlocked watch is now another place a token exists.
+
+### Deliberate differences from the phone
+
+- **The countdown ring uses the token's own colour or the accent.** The phone additionally falls back to an issuer brand colour from `IssuerBranding` — a type that also carries logo fetching and its caches, none of which belongs on a watch. A token with no custom colour is the accent on the watch and a brand colour on the phone.
+- **Codes are generated on the watch, from the tick that draws them.** `WatchCodePageView` drives a `TimelineView` anchored at the epoch, so a tick lands exactly on the TOTP period boundary; the code and the countdown beside it are for the same instant and cannot disagree by a frame. The "about to expire" red matches `HomeView`'s rule (five seconds, or a sixth of a longer period) so both devices turn red together.
+- **There is no app lock, no privacy blur and no screen-capture protection.** A watch screen is off unless the wrist is turned, which is a stronger control than the phone's, and the watch app has no UI that could set such a preference.
+
+### Project configuration
+
+| Setting | Value |
+| --- | --- |
+| Target | `VaulticWatch`, `PRODUCT_NAME = Autheris`, `PRODUCT_MODULE_NAME = AutherisWatch` |
+| Bundle id | `com.eddingtontech.autheris.watchkitapp` — the `watchkitapp` suffix is what makes iOS treat it as the companion rather than a second app |
+| Companion | `WKCompanionAppBundleIdentifier = com.eddingtontech.autheris` in `VaulticWatch/Info.plist`, plus `WKApplication = true` for a watch app that carries its own UI. `WKWatchOnly` is intentionally **not** set: the watch app is installed from the Watch app, so it needs no App Store listing of its own |
+| Platform | `SDKROOT = watchos`, `WATCHOS_DEPLOYMENT_TARGET = 26.0`, `TARGETED_DEVICE_FAMILY = 4` |
+| Entitlements | None. No iCloud, no push, no app group — the watch app talks only to its companion and its own Keychain |
+
+Two things about the target wiring are load-bearing and easy to undo by accident:
+
+- The "Embed Watch Content" copy phase and the `PBXTargetDependency` on `VaulticWatch` both carry `platformFilters = (ios, )`. Without them a **Mac** build would try to build the watch app (whose `SUPPORTED_PLATFORMS` is `watchos watchsimulator`) and embed it into the Mac bundle. The Mac app has no `Watch/` directory, and that is the check that the filter is still doing its job.
+- `VaulticWatch/Info.plist` is excluded from its folder's synchronized group by a `PBXFileSystemSynchronizedBuildFileExceptionSet`, exactly as `Vaultic/Info.plist` is. Without the exception the plist is copied into the bundle as a *resource* alongside the generated one.
+
+Verify a watch change with:
+
+```bash
+xcodebuild -project Vaultic.xcodeproj -scheme VaulticWatch \
+  -destination 'generic/platform=watchOS' build CODE_SIGNING_ALLOWED=NO
+```
+
+Building the `Vaultic` scheme for iOS or an iOS Simulator destination builds the watch app too and embeds it, so that is the check that the two fit together. Note that running the watch app needs a **watchOS simulator runtime**, which is a separate download from the SDK — the watch app targets watchOS 26, so a watchOS 26 or later runtime.
+
+## Development material inside the app target
+
+`Vaultic/` is one `PBXFileSystemSynchronizedRootGroup`, and a synchronized folder copies **every** non-Swift file it contains into the bundle as a resource. That is not a theoretical hazard: the folder used to hold a Teenybase/Cloudflare Workers scaffold at `Vaultic/backend/`, and its `.dev.vars` — real JWT signing secrets, an admin service token, a Mailgun API key — was being copied straight into `Autheris.app`, readable by anyone who downloaded the app. It sat there unnoticed across several releases.
+
+That scaffold has been **deleted**. Nothing used it: the app is a local-only authenticator that talks to no backend, the Blitz project registrations pointing at it were dangling symlinks, its `node_modules` were never installed, `wrangler.toml` still carried the starter template's placeholder account and database ids, and no dev server ever ran. It has gone along with the credentials it held — nothing is left to rotate or revoke. The same commit removed the Teenybase section from `Vaultic/CLAUDE.md` and the whole of `.claude/rules/teenybase.md`, which told agents to use a backend that no longer exists.
+
+Two files that are not app content remain in `Vaultic/` — `CLAUDE.md` (the Blitz agent guide) and `.mcp.json` — and they are excluded from the target's membership:
+
+```
+membershipExceptions = (
+    .mcp.json,
+    CLAUDE.md,
+    Info.plist,
+);
+```
+
+Three things are worth knowing before editing that list:
+
+- **A synchronized folder can only be told to leave files out one at a time.** Listing a directory does *not* exclude its contents: both `backend` and `backend/` were tried, and both left `backend/.dev.vars` in the bundle. Resources are also **flattened** as they are copied, so a source path of `Vaultic/backend/package.json` arrives at the bundle root as `package.json`.
+- **Xcode rewrites the list.** It reorders entries, drops any that no longer correspond to a real member, and removes quotes it does not need. That is normal, and useful — deleting `Vaultic/backend/` pruned its entries automatically — but it also means a hand-edit can be silently normalised away, so re-read the file after saving the project in Xcode.
+- **A blacklist that nothing checks is a blacklist that rots**, which this one demonstrably did. `VaulticTests/BundledResourcesTests.swift` now fails if developer material reaches the bundle again, matching both by name and by *shape* (extensions such as `.md`, `.toml`, `.ts`, and hidden files), so a renamed or newly-added file is caught too. It walks the whole bundle, so the embedded watch app is covered as well, and it asserts the app's real content is still copied so it cannot pass on an empty bundle.
+
+**One consequence is not fixable from here.** The `.dev.vars` values were committed from `169e539` onward, and deleting a file does not delete its history. The credentials belonged to a scaffold that was never deployed, so the practical exposure is small — but if any of those values were ever reused elsewhere, they should be treated as published and rotated at their source.
+
 ## Installation
 
 ```bash
@@ -345,7 +445,7 @@ cd Autheris
 open Vaultic.xcodeproj
 ```
 
-Requires the iOS 26 and macOS 26 SDKs (Xcode 26 or later). The Mac app also needs a Mac provisioning profile for `com.eddingtontech.autheris` — signing in with an Apple ID and building once with `-allowProvisioningUpdates` (or just ⌘R in Xcode) creates it.
+Requires the iOS 26, macOS 26 and watchOS 26 SDKs (Xcode 26 or later). The Mac app also needs a Mac provisioning profile for `com.eddingtontech.autheris` — signing in with an Apple ID and building once with `-allowProvisioningUpdates` (or just ⌘R in Xcode) creates it.
 
 ## Download
 

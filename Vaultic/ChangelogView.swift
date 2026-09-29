@@ -55,6 +55,18 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.4",
+            version: "2.4",
+            date: "September 2026",
+            changes: [
+                "Autheris now has an Apple Watch app. Your codes are on your wrist — one at a time, a swipe or a turn of the Digital Crown apart, each with its own countdown.",
+                "The watch app is deliberately read-only: there is no copy, no editing and no settings on the watch. Adding, changing and deleting codes still happens on your iPhone, and the iPhone sends the list over. Installing the watch app is what turns that on — if you never install it, nothing is sent.",
+                "Codes are generated on the watch itself, so they keep counting down with your iPhone out of reach or switched off. A code you add on your iPhone appears on the watch within seconds, and a code you delete disappears just as quickly.",
+                "The watch is a viewer, not a second vault to keep in step. Its copy of your codes gets the same protection the iPhone's does, and it is never edited there.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.3",
             version: "2.3",
             date: "September 2026",

@@ -39,10 +39,15 @@ final class OTPDataStore: ObservableObject {
 
     private var syncService: TokenSyncService
     private var syncTask: Task<Void, Never>?
+    /// Hands the token list to the paired Apple Watch. Inert on the Mac, which has
+    /// no watch to talk to.
+    private let watchRelay: WatchTokenRelayService
 
     /// - Parameter syncService: injectable so tests can drive the merge path with
     ///   a fake. Defaults to CloudKit, or to a no-op when iCloud Sync is off.
-    init(syncService: TokenSyncService? = nil) {
+    /// - Parameter watchRelay: injectable for the same reason. Defaults to the
+    ///   platform's real relay.
+    init(syncService: TokenSyncService? = nil, watchRelay: WatchTokenRelayService? = nil) {
         // Restore Keychain-backed preferences before anything reads UserDefaults.
         PreferencesStore.restoreIntoUserDefaults()
 
@@ -55,10 +60,25 @@ final class OTPDataStore: ObservableObject {
         let enabled = UserDefaults.standard.bool(forKey: Self.syncEnabledKey)
         isSyncEnabled = enabled
         self.syncService = syncService ?? CloudKitTokenSyncService(isEnabled: enabled)
+        // Before `loadCodes()`, which saves and therefore pushes: the relay has to
+        // exist by then, or the first launch after installing the watch app offers
+        // it nothing.
+        self.watchRelay = watchRelay ?? WatchTokenRelay.make()
 
         loadCodes()
         loadSyncMetadata()
         loadTrash()
+
+        // Offer the loaded list once, whatever path loaded it.
+        //
+        // `saveCodes()` pushes on every edit, and `loadCodes()` pushes when it
+        // *migrates* or finds nothing — but the path a returning user takes, where
+        // the Keychain already holds the codes, calls neither. Without this, an
+        // app that launches with tokens already stored would never hand the relay
+        // anything, and the watch would sit empty until the user happened to edit
+        // a token. That is exactly the case for someone who installs the watch app
+        // *after* filling the phone, so the missing push is not a rare one.
+        pushCodesToWatch()
 
         self.syncService.onStatusChange = { [weak self] status in
             self?.syncStatus = status
@@ -95,6 +115,20 @@ final class OTPDataStore: ObservableObject {
                 #endif
             }
         }
+
+        // Offer the list to the watch. Sent in *display* order — pinned first,
+        // then the user's own arrangement — because the watch has no reordering UI
+        // and should show the codes in the order the phone shows them, rather than
+        // in the order this array happens to be stored in.
+        pushCodesToWatch()
+    }
+
+    /// Hands the current codes to the paired watch.
+    ///
+    /// The single place the order the watch sees is decided, so `saveCodes()` and
+    /// the launch-time offer in `init` cannot disagree about it.
+    private func pushCodesToWatch() {
+        watchRelay.push(TokenOrdering.displayed(codes))
     }
 
     func loadCodes() {

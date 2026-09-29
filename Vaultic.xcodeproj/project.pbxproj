@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E1A000042F6A100000ABC004 /* Autheris.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E1A000022F6A100000ABC002 /* Autheris.app */; platformFilter = ios; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		A17E570B2F5D320E00198CC7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -14,20 +18,51 @@
 			remoteGlobalIDString = 18BDC6FC2F5D320E00198CC5;
 			remoteInfo = Vaultic;
 		};
+		E1A000062F6A100000ABC006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 18BDC6F52F5D320E00198CC5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E1A000012F6A100000ABC001;
+			remoteInfo = VaulticWatch;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E1A000032F6A100000ABC003 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				E1A000042F6A100000ABC004 /* Autheris.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		18BDC6FD2F5D320E00198CC5 /* Autheris.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Autheris.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A17E57022F5D320E00198CC7 /* VaulticTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VaulticTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1A000022F6A100000ABC002 /* Autheris.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Autheris.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		18F890EE2F5F36FB00E85B77 /* Exceptions for "Vaultic" folder in "Vaultic" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				.mcp.json,
+				CLAUDE.md,
 				Info.plist,
 			);
 			target = 18BDC6FC2F5D320E00198CC5 /* Vaultic */;
+		};
+		E1A0000E2F6A100000ABC00E /* Exceptions for "VaulticWatch" folder in "VaulticWatch" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E1A000012F6A100000ABC001 /* VaulticWatch */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -43,6 +78,19 @@
 		A17E57062F5D320E00198CC7 /* VaulticTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = VaulticTests;
+			sourceTree = "<group>";
+		};
+		E1A0000D2F6A100000ABC00D /* VaulticWatch */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E1A0000E2F6A100000ABC00E /* Exceptions for "VaulticWatch" folder in "VaulticWatch" target */,
+			);
+			path = VaulticWatch;
+			sourceTree = "<group>";
+		};
+		E1A0000F2F6A100000ABC00F /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -62,6 +110,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1A000082F6A100000ABC008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -69,6 +124,8 @@
 			isa = PBXGroup;
 			children = (
 				18BDC6FF2F5D320E00198CC5 /* Vaultic */,
+				E1A0000D2F6A100000ABC00D /* VaulticWatch */,
+				E1A0000F2F6A100000ABC00F /* Shared */,
 				A17E57062F5D320E00198CC7 /* VaulticTests */,
 				18BDC6FE2F5D320E00198CC5 /* Products */,
 			);
@@ -78,6 +135,7 @@
 			isa = PBXGroup;
 			children = (
 				18BDC6FD2F5D320E00198CC5 /* Autheris.app */,
+				E1A000022F6A100000ABC002 /* Autheris.app */,
 				A17E57022F5D320E00198CC7 /* VaulticTests.xctest */,
 			);
 			name = Products;
@@ -93,13 +151,16 @@
 				18BDC6F92F5D320E00198CC5 /* Sources */,
 				18BDC6FA2F5D320E00198CC5 /* Frameworks */,
 				18BDC6FB2F5D320E00198CC5 /* Resources */,
+				E1A000032F6A100000ABC003 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E1A000052F6A100000ABC005 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				18BDC6FF2F5D320E00198CC5 /* Vaultic */,
+				E1A0000F2F6A100000ABC00F /* Shared */,
 			);
 			name = Vaultic;
 			packageProductDependencies = (
@@ -131,6 +192,29 @@
 			productReference = A17E57022F5D320E00198CC7 /* VaulticTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		E1A000012F6A100000ABC001 /* VaulticWatch */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E1A0000A2F6A100000ABC00A /* Build configuration list for PBXNativeTarget "VaulticWatch" */;
+			buildPhases = (
+				E1A000072F6A100000ABC007 /* Sources */,
+				E1A000082F6A100000ABC008 /* Frameworks */,
+				E1A000092F6A100000ABC009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E1A0000D2F6A100000ABC00D /* VaulticWatch */,
+				E1A0000F2F6A100000ABC00F /* Shared */,
+			);
+			name = VaulticWatch;
+			packageProductDependencies = (
+			);
+			productName = VaulticWatch;
+			productReference = E1A000022F6A100000ABC002 /* Autheris.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -159,6 +243,9 @@
 						CreatedOnToolsVersion = 26.3;
 						TestTargetID = 18BDC6FC2F5D320E00198CC5;
 					};
+					E1A000012F6A100000ABC001 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 				};
 			};
 			buildConfigurationList = 18BDC6F82F5D320E00198CC5 /* Build configuration list for PBXProject "Vaultic" */;
@@ -176,6 +263,7 @@
 			projectRoot = "";
 			targets = (
 				18BDC6FC2F5D320E00198CC5 /* Vaultic */,
+				E1A000012F6A100000ABC001 /* VaulticWatch */,
 				A17E57012F5D320E00198CC7 /* VaulticTests */,
 			);
 		};
@@ -190,6 +278,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A17E57052F5D320E00198CC7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E1A000092F6A100000ABC009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -213,6 +308,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E1A000072F6A100000ABC007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -220,6 +322,12 @@
 			isa = PBXTargetDependency;
 			target = 18BDC6FC2F5D320E00198CC5 /* Vaultic */;
 			targetProxy = A17E570B2F5D320E00198CC7 /* PBXContainerItemProxy */;
+		};
+		E1A000052F6A100000ABC005 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilter = ios;
+			target = E1A000012F6A100000ABC001 /* VaulticWatch */;
+			targetProxy = E1A000062F6A100000ABC006 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -358,7 +466,7 @@
 				CODE_SIGN_ENTITLEMENTS = Vaultic/Vaultic.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Vaultic/Vaultic-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 19;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -378,7 +486,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris;
 				PRODUCT_MODULE_NAME = Vaultic;
 				PRODUCT_NAME = Autheris;
@@ -406,7 +514,7 @@
 				CODE_SIGN_ENTITLEMENTS = Vaultic/Vaultic.entitlements;
 				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Vaultic/Vaultic-macOS.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 19;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -426,7 +534,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris;
 				PRODUCT_MODULE_NAME = Vaultic;
 				PRODUCT_NAME = Autheris;
@@ -450,7 +558,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 19;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -460,7 +568,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -478,7 +586,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 19;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -488,7 +596,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -498,6 +606,76 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Autheris.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autheris";
+			};
+			name = Release;
+		};
+		E1A0000B2F6A100000ABC00B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 19;
+				DEVELOPMENT_TEAM = 37GWLWW278;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VaulticWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Autheris;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.eddingtontech.autheris;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.watchkitapp;
+				PRODUCT_MODULE_NAME = AutherisWatch;
+				PRODUCT_NAME = Autheris;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		E1A0000C2F6A100000ABC00C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 19;
+				DEVELOPMENT_TEAM = 37GWLWW278;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VaulticWatch/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Autheris;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.eddingtontech.autheris;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 2.4;
+				PRODUCT_BUNDLE_IDENTIFIER = com.eddingtontech.autheris.watchkitapp;
+				PRODUCT_MODULE_NAME = AutherisWatch;
+				PRODUCT_NAME = Autheris;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
@@ -527,6 +705,15 @@
 			buildConfigurations = (
 				A17E57072F5D320E00198CC7 /* Debug */,
 				A17E57082F5D320E00198CC7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E1A0000A2F6A100000ABC00A /* Build configuration list for PBXNativeTarget "VaulticWatch" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E1A0000B2F6A100000ABC00B /* Debug */,
+				E1A0000C2F6A100000ABC00C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

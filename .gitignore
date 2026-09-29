@@ -1,0 +1,20 @@
+# macOS and Xcode noise.
+.DS_Store
+xcuserdata/
+
+# Local secret files. Nothing in this repository reads one today — the Teenybase
+# backend that used to live under `Vaultic/backend/` has been removed — but these
+# are the file shapes that hold credentials for every tool that uses them, and
+# this repository did once commit a `.dev.vars` full of live secrets. Keeping the
+# rule is cheap; rediscovering it the hard way is not.
+.dev.vars
+.env
+.env.*
+
+# Note: a `.gitignore` only stops *new* files from being tracked. `.DS_Store` and
+# `Vaultic.xcodeproj/**/xcuserdata/**` are already tracked in this repository, so
+# those two lines document intent rather than removing anything — they need a
+# `git rm --cached` to take effect on files already committed.
+
+# Tool state written by the `asc` CLI (release checkpoints); never source.
+.asc/

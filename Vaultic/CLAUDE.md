@@ -21,38 +21,16 @@ After making code changes:
 
 ### Database (Teenybase)
 
-The database runs as a local Teenybase server. Get the URL via `app_get_state` (returns `database.url` when running). Then use `curl` directly:
+There is none. This project carried a Teenybase/Cloudflare Workers scaffold under
+`Vaultic/backend/`, but nothing used it: the app is a local-only authenticator, the
+Blitz project registrations that pointed at it were dangling symlinks, its
+`node_modules` were never installed, `wrangler.toml` still held the starter
+template's placeholder account and database ids, and no dev server ever ran. It
+has been removed along with the `ADMIN_SERVICE_TOKEN` it carried.
 
-```bash
-# Get schema
-curl -s "$DB_URL/api/v1/settings?raw=true" -H "Authorization: Bearer $TOKEN"
-
-# List records
-curl -s -X POST "$DB_URL/api/v1/table/TABLE_NAME/list" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"limit": 50, "offset": 0}'
-
-# Insert record
-curl -s -X POST "$DB_URL/api/v1/table/TABLE_NAME/insert" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"values": {"field": "value"}, "returning": "*"}'
-
-# Update record
-curl -s -X POST "$DB_URL/api/v1/table/TABLE_NAME/edit/RECORD_ID?returning=*" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"field": "newValue"}'
-
-# Delete record
-curl -s -X POST "$DB_URL/api/v1/table/TABLE_NAME/delete" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{"where": "id='\''RECORD_ID'\''"}'
-```
-
-The `ADMIN_SERVICE_TOKEN` is in the project's `.dev.vars` file.
+Autheris stores everything on the device (see the note on Keychain in the
+repository README) and talks to no backend. Do not reintroduce a database to
+support this app.
 
 ---
 

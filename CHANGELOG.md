@@ -9,9 +9,19 @@ A version number lives in four places, and a release is not finished until they 
 1. **`MARKETING_VERSION`** in `Vaultic.xcodeproj/project.pbxproj` — four build settings (app and tests, Debug and Release). This is what the app and the App Store report.
 2. **The `catalog`** in [`Vaultic/ChangelogView.swift`](Vaultic/ChangelogView.swift) — the release notes shown inside the app.
 3. **This file** — the same notes, and the copy the repository keeps.
-4. **[`metadata/version/<version>/en-US.strings`](metadata)** — the App Store listing: description, keywords, what's new, and promotional text.
+4. **[`metadata/version/<version>/<locale>.json`](metadata)** — the App Store listing: description, keywords, what's new, and promotional text. One file per locale (name and subtitle live in `metadata/app-info/<locale>.json`), in the canonical layout the `asc` CLI reads and writes — `asc metadata pull` to refresh it, `asc metadata push` to publish it.
+
+   These were `.strings` files until 2.4. They were converted because `asc metadata validate` refuses the old layout outright ("no metadata .json files found"), so nothing could read them; `plutil -convert json` did the conversion and the extracted lengths matched the live listing exactly.
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
+
+## [2.4] — September 2026
+
+- Autheris now has an Apple Watch app. Your codes are on your wrist — one at a time, a swipe or a turn of the Digital Crown apart, each with its own countdown.
+- The watch app is deliberately read-only: there is no copy, no editing and no settings on the watch. Adding, changing and deleting codes still happens on your iPhone, and the iPhone sends the list over. Installing the watch app is what turns that on — if you never install it, nothing is sent.
+- Codes are generated on the watch itself, so they keep counting down with your iPhone out of reach or switched off. A code you add on your iPhone appears on the watch within seconds, and a code you delete disappears just as quickly.
+- The watch is a viewer, not a second vault to keep in step. Its copy of your codes gets the same protection the iPhone's does, and it is never edited there.
+- Your codes, iCloud sync and settings are exactly where you left them.
 
 ## [2.3] — September 2026
 

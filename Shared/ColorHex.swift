@@ -1,11 +1,22 @@
 import SwiftUI
-#if os(iOS)
+
+// `canImport` rather than `os(iOS)`: this file is compiled into the watch app
+// too, and watchOS has UIKit as well — but a plain `os(iOS)` test would have left
+// `UIColor` unnamed there. macOS is the platform that genuinely has no UIKit, and
+// it takes the `usingColorSpace` branch below instead.
+#if canImport(UIKit)
 import UIKit
 #endif
 
 extension Color {
     /// Parses `#RRGGBB` or `RRGGBB` (6 hex digits).
-    init?(hex: String) {
+    ///
+    /// `nonisolated` because it is pure — it reads a string and returns a colour
+    /// and touches nothing else. Without it the module's default `MainActor`
+    /// isolation applies, and passing it as a function value
+    /// (`flatMap(Color.init(hex:))`) hands a main-actor function to a nonisolated
+    /// parameter, which the watch build warns about.
+    nonisolated init?(hex: String) {
         var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         if s.hasPrefix("#") {
             s.removeFirst()
