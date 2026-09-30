@@ -23,3 +23,18 @@ xcuserdata/
 # Not source and never something to `git add` — but it lands inside the repository, so
 # without this rule every `git status` carries twenty lines of it.
 .reasonix/tasks/
+
+# Local tooling: AI-assistant config, agent skills and IDE glue.
+#
+# These live in the working copy — they are how this machine drives the project —
+# but they are not part of Autheris, and committing them shipped one developer's
+# setup, and one machine's session transcripts, to every clone. Untracked and
+# ignored, they carry on working locally and stay out of the repository.
+.claude/
+.agents/
+.codex/
+.blitz/
+.reasonix/
+reasonix.toml
+Vaultic/CLAUDE.md
+Vaultic/.mcp.json

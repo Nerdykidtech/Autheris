@@ -660,9 +660,9 @@ Building the `Vaultic` scheme for iOS or an iOS Simulator destination builds the
 
 `Vaultic/` is one `PBXFileSystemSynchronizedRootGroup`, and a synchronized folder copies **every** non-Swift file it contains into the bundle as a resource. That is not a theoretical hazard: the folder used to hold a Teenybase/Cloudflare Workers scaffold at `Vaultic/backend/`, and its `.dev.vars` — real JWT signing secrets, an admin service token, a Mailgun API key — was being copied straight into `Autheris.app`, readable by anyone who downloaded the app. It sat there unnoticed across several releases.
 
-That scaffold has been **deleted**. Nothing used it: the app is a local-only authenticator that talks to no backend, the Blitz project registrations pointing at it were dangling symlinks, its `node_modules` were never installed, `wrangler.toml` still carried the starter template's placeholder account and database ids, and no dev server ever ran. It has gone along with the credentials it held — nothing is left to rotate or revoke. The same commit removed the Teenybase section from `Vaultic/CLAUDE.md` and the whole of `.claude/rules/teenybase.md`, which told agents to use a backend that no longer exists.
+That scaffold has been **deleted**. Nothing used it: the app is a local-only authenticator that talks to no backend, the project's own IDE registrations pointing at it were dangling symlinks, its `node_modules` were never installed, `wrangler.toml` still carried the starter template's placeholder account and database ids, and no dev server ever ran. It has gone along with the credentials it held — nothing is left to rotate or revoke.
 
-Two files that are not app content remain in `Vaultic/` — `CLAUDE.md` (the Blitz agent guide) and `.mcp.json` — and they are excluded from the target's membership:
+Some files in `Vaultic/` are not app content — local tooling configuration, and the project's own `Info.plist` — so they are excluded from the target's membership by name:
 
 ```
 membershipExceptions = (
