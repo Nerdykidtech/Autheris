@@ -94,6 +94,20 @@ final class CloudKitTokenSyncService: TokenSyncService {
         static let algorithm = "algorithm"
         static let digits = "digits"
         static let period = "period"
+        /// Time-based or counter-based (`OTPKind`'s raw value).
+        ///
+        /// Plain for the same reason `algorithm` is: it is a property of the code's
+        /// *construction*, not of the account, and it is what the fingerprint needs
+        /// to see. Unlike the legacy `AutherisSyncRecord` type's own `kind` field,
+        /// which is unrelated — CloudKit fields are per record type, so the two
+        /// cannot collide.
+        static let kind = "kind"
+        /// How many codes a counter-based token has produced.
+        ///
+        /// Plain, like `digits` and `period`: a count of uses is not a secret, and
+        /// it has to be comparable without decrypting for the fingerprint to work.
+        /// An `Int64` — `OTPCode.maximumCounter` is bounded by that on purpose.
+        static let counter = "counter"
 
         // End-to-end encrypted — read and written via `record.encryptedValues` only.
         //
@@ -108,7 +122,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         static let timerRingHex = "timerRingHex"
         static let isPinned = "isPinned"
 
-        static let plain = [modifiedAt, deleted, fingerprint, algorithm, digits, period]
+        static let plain = [modifiedAt, deleted, fingerprint, algorithm, digits, period, kind, counter]
         static let encrypted = [label, account, secret, timerRingHex, isPinned]
 
         /// The complete field set the `AutherisToken` schema must define.
@@ -507,6 +521,13 @@ final class CloudKitTokenSyncService: TokenSyncService {
             algorithm: algorithm,
             digits: digits,
             period: period,
+            // Both absent on every record written before counter-based codes
+            // existed, which is exactly what `.totp` and `0` mean — and a `kind`
+            // this build does not recognise reads as time-based rather than skipping
+            // the record, because one unreadable field should not cost the user the
+            // token. Deliberately *not* part of the `guard` above for that reason.
+            kind: OTPKind(rawValue: (record[Field.kind] as? String) ?? "") ?? .totp,
+            counter: (record[Field.counter] as? NSNumber)?.uint64Value ?? 0,
             timerRingHex: record.encryptedValues[Field.timerRingHex] as? String,
             // Absent on every record written before pinning existed, which is
             // exactly what `false` means. See `EncryptedBool` for why this is a
@@ -530,7 +551,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         if item.deleted {
             // A tombstone must not leave recoverable material behind.
             for key in Field.encrypted { record.encryptedValues[key] = nil }
-            for key in [Field.algorithm, Field.digits, Field.period] { record[key] = nil }
+            for key in [Field.algorithm, Field.digits, Field.period, Field.kind, Field.counter] { record[key] = nil }
         } else if let token = item.token {
             record.encryptedValues[Field.label] = token.label as CKRecordValue
             record.encryptedValues[Field.account] = token.account as CKRecordValue
@@ -546,6 +567,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
             record[Field.algorithm] = token.algorithm.rawValue as CKRecordValue
             record[Field.digits] = NSNumber(value: token.digits)
             record[Field.period] = NSNumber(value: token.period)
+            record[Field.kind] = token.kind.rawValue as CKRecordValue
+            // `Int64`, which is what the field is created as and what
+            // `OTPCode.maximumCounter` bounds the value to.
+            record[Field.counter] = NSNumber(value: token.counter)
         }
         return record
     }

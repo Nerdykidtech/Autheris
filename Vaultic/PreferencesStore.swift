@@ -22,7 +22,8 @@ enum PreferencesStore {
             hideCodesWhenScreenCaptured: defaults.bool(forKey: "hideCodesWhenScreenCaptured"),
             accentTheme: defaults.string(forKey: "accentTheme") ?? "",
             enableAppLock: defaults.bool(forKey: AppLockEnabledKey),
-            isICloudSyncEnabled: defaults.bool(forKey: OTPDataStore.syncEnabledKey)
+            isICloudSyncEnabled: defaults.bool(forKey: OTPDataStore.syncEnabledKey),
+            fetchIssuerLogos: defaults.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
         )
 
         if let data = try? JSONEncoder().encode(prefs) {
@@ -46,5 +47,6 @@ enum PreferencesStore {
         defaults.set(prefs.accentTheme, forKey: "accentTheme")
         defaults.set(prefs.enableAppLock, forKey: AppLockEnabledKey)
         defaults.set(prefs.isICloudSyncEnabled, forKey: OTPDataStore.syncEnabledKey)
+        defaults.set(prefs.fetchIssuerLogos, forKey: AppPreferences.fetchIssuerLogosKey)
     }
 }

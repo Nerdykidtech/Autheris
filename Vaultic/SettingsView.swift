@@ -31,6 +31,9 @@ struct SettingsView: View {
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage(AppLockEnabledKey) private var enableAppLock = false
+    /// Same key the logo lookup reads, so the switch and the network request cannot
+    /// drift apart.
+    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = true
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
@@ -468,6 +471,12 @@ struct SettingsView: View {
     
             Toggle(appLockToggleLabel, isOn: $enableAppLock)
                 .platformAccentToggle()
+
+            // The one switch here that reaches the network. It sits with the others
+            // because that is what it is — a privacy decision — and the footer says
+            // exactly what it does rather than leaving it to the label.
+            Toggle("Fetch service logos", isOn: $fetchIssuerLogos)
+                .platformAccentToggle()
         } header: {
             Text("Privacy")
         } footer: {
@@ -483,6 +492,7 @@ struct SettingsView: View {
                 Text("• **Hide codes while recording or mirroring**: Shows a privacy screen while the screen is being recorded or sent to another display.")
                 Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
                 #endif
+                Text("**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.")
             }
             .font(.caption)
             .foregroundColor(.secondary)

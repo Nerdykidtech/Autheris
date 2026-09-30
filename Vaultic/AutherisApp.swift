@@ -320,7 +320,9 @@ struct AutherisApp: App {
             secret: parsed.secret,
             algorithm: parsed.algorithm,
             digits: parsed.digits,
-            period: parsed.period
+            period: parsed.period,
+            kind: parsed.kind,
+            counter: parsed.counter
         )
 
         // Defer the mutation so it never lands in the middle of a SwiftUI List

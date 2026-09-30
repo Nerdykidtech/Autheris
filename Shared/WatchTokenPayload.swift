@@ -25,7 +25,15 @@ nonisolated enum WatchTokenPayload {
 
     /// Bumped whenever the meaning of anything below changes. A receiver only
     /// accepts a version it knows.
-    static let version = 1
+    ///
+    /// `2` when a token gained a `kind` and a `counter`. That is a change to what a
+    /// token *means*, and it is the case this versioning exists for: `OTPCode`'s
+    /// decoder tolerates missing keys, so a watch running the older build would
+    /// decode a counter-based token happily — as a time-based one, and show a code
+    /// that is silently wrong. A watch that does not know this version ignores the
+    /// payload instead and keeps showing the list it already had, which is a watch
+    /// that is briefly out of date rather than one that lies.
+    static let version = 2
 
     /// Keys inside the `WCSession` application-context dictionary.
     static let versionKey = "autherisPayloadVersion"

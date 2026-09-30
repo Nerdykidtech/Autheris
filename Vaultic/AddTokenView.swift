@@ -29,11 +29,30 @@ struct AddTokenView: View {
     @State private var digits = 6
     @State private var period = 30
 
+    /// Which kind of code this is, and — for a counter-based one — where its
+    /// counter starts.
+    ///
+    /// Time-based is the default because it is what a bare setup key means to
+    /// almost every service; the picker exists for the ones that hand you a
+    /// counter instead, which is otherwise impossible to enter by hand. A scanned
+    /// QR fills both in from the URL.
+    @State private var kind: OTPKind = .totp
+    @State private var counter = 0
+
     /// Account is deliberately optional: plenty of people never fill it in, and the
     /// edit screen has always allowed it to be blank. Requiring it here only meant
     /// the token had to be created and then immediately edited to clear it.
     private var isFormValid: Bool {
         !label.isEmpty && !secret.isEmpty
+    }
+
+    /// Typed explicitly: a ternary of two literals infers as `String`, which `Text`
+    /// renders verbatim and never looks up — so the string would ship in English in
+    /// all seven languages with nothing to notice.
+    private var advancedFooter: LocalizedStringKey {
+        kind == .totp
+            ? "Most services use SHA-1 and 30 seconds. If the service gave you a QR code, scan it instead — the QR carries these settings. Only change the algorithm if your codes are rejected, and your service says which it uses."
+            : "Counter-based codes do not expire. The code stays the same until you ask for the next one, which you do from the code's card. Only choose this if your service gave you a starting counter rather than a QR code."
     }
     
     var body: some View {
@@ -144,6 +163,15 @@ struct AddTokenView: View {
                         }
 
                         Section {
+                            // Which kind of code this is. Named with the acronyms
+                            // on purpose: "counter-based" is what the error message
+                            // from the service says when a time-based code is
+                            // rejected, and HOTP is what its documentation says.
+                            Picker("Type", selection: $kind) {
+                                Text("Time-based (TOTP)").tag(OTPKind.totp)
+                                Text("Counter-based (HOTP)").tag(OTPKind.hotp)
+                            }
+
                             // Defaults to SHA-1, which is what the otpauth spec
                             // assumes when it says nothing. Only worth changing if
                             // the service's setup instructions name another one.
@@ -154,11 +182,20 @@ struct AddTokenView: View {
                             }
 
                             Stepper("Digits: \(digits)", value: $digits, in: 6...10)
-                            Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+
+                            // A time-based code counts down against a period and a
+                            // counter-based one against a counter, so exactly one of
+                            // these is on screen. Showing the other would be a field
+                            // that does nothing.
+                            if kind == .totp {
+                                Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+                            } else {
+                                Stepper("Counter: \(counter)", value: $counter, in: 0...10_000)
+                            }
                         } header: {
                             Text("Advanced")
                         } footer: {
-                            Text("Most services use SHA-1 and 30 seconds. If the service gave you a QR code, scan it instead — the QR carries these settings. Only change the algorithm if your codes are rejected, and your service says which it uses.")
+                            Text(advancedFooter)
                         }
 
                         Section {
@@ -173,7 +210,7 @@ struct AddTokenView: View {
                             .listRowBackground(isFormValid ? Color.accentColor : Color.accentColor.opacity(0.4))
                             .foregroundStyle(.white)
                         } footer: {
-                            Text("Enter the same setup key you received when enabling two-factor authentication.")
+                            Text("Enter the same setup key you received when enabling two-factor authentication — or paste the setup link, if that is what the service gave you.")
                         }
                     }
                     .formStyle(.grouped)
@@ -560,111 +597,62 @@ struct AddTokenView: View {
         dismiss()
     }
     
+    /// A scanned setup URL (`otpauth://totp/...` or `otpauth://hotp/...`).
+    ///
+    /// The parsing lives in `OTPAuthURLParser`, which the deep-link path
+    /// (`AutherisApp`) and the confirmation sheet (`OTPAuthURLView`) also use.
+    /// Three copies of it used to exist here and there, and they had already
+    /// drifted: this one was the only one that even noticed a `counter`, it only
+    /// printed it, and none of the three read the URL's host — so a counter-based
+    /// code was saved as a time-based one and silently never worked.
     private func parseOTPAuthURL(_ url: URL) {
-        // Extract path components
-        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        
-        // Handle various path formats
-        if path.contains(":") {
-            // Format: Service:Account
-            let components = path.components(separatedBy: ":")
-            if components.count >= 2 {
-                label = components[0]
-                account = components[1]
-            } else if components.count == 1 {
-                label = components[0]
-                account = ""
-            }
-        } else if !path.isEmpty {
-            // Just service name
-            label = path
-            account = ""
+        guard let parsed = OTPAuthURLParser.parse(url) else {
+            // Either the label or the secret is missing, and no fallback can invent
+            // one. The manual form is what is left, and it is where this has always
+            // sent people.
+            selectedTab = 1
+            alertMessage = String(localized: "No secret key found in QR code. Please enter manually.")
+            showingAlert = true
+            return
         }
-        
-        // Default values
-        var algorithm: OTPAlgorithm = .sha1
-        var digits: Int = 6
-        var period: Int = 30
-        var secretFound = false
-        
-        // Extract parameters from query
-        if let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems {
-            for item in queryItems {
-                switch item.name.lowercased() {
-                case "secret":
-                    if let value = item.value, !value.isEmpty {
-                        secret = value
-                        secretFound = true
-                    }
-                case "algorithm":
-                    if let value = item.value?.uppercased() {
-                        // Handle various algorithm formats
-                        switch value {
-                        case "SHA1", "SHA-1":
-                            algorithm = .sha1
-                        case "SHA256", "SHA-256":
-                            algorithm = .sha256
-                        case "SHA512", "SHA-512":
-                            algorithm = .sha512
-                        default:
-                            algorithm = .sha1
-                        }
-                    }
-                case "digits":
-                    if let value = item.value, let digitValue = Int(value) {
-                        digits = digitValue
-                    }
-                case "period":
-                    if let value = item.value, let periodValue = Int(value) {
-                        period = periodValue
-                    }
-                case "issuer":
-                    // Issuer takes precedence over label from path
-                    if let issuer = item.value, !issuer.isEmpty {
-                        label = issuer
-                    }
-                case "counter":
-                    // For HOTP (counter-based OTP)
-                    if let value = item.value, let counterValue = Int(value) {
-                        // We'll use this if we add HOTP support
-                        #if DEBUG
-                        print("HOTP counter: \(counterValue)")
-                        #endif
-                    }
-                default:
-                    break
-                }
-            }
+
+        guard OTPGenerator.isValidSecret(parsed.secret) else {
+            // Prefilled rather than thrown away: the key is there, it is only not
+            // Base32, and correcting it by hand beats scanning the code again.
+            prefill(from: parsed)
+            selectedTab = 1
+            alertMessage = String(localized: "Invalid secret key in QR code. Please enter manually.")
+            showingAlert = true
+            return
         }
-        
+
         // Auto-save if we have enough info
-        if !label.isEmpty && secretFound && OTPGenerator.isValidSecret(secret) {
-            let newCode = OTPCode(
-                label: label,
-                account: account,
-                secret: secret,
-                algorithm: algorithm,
-                digits: digits,
-                period: period
-            )
-            dataStore.addCode(newCode)
-            dismiss()
-        } else {
-            // If secret is invalid or missing, show error
-            if !secretFound {
-                alertMessage = String(localized: "No secret key found in QR code. Please enter manually.")
-                showingAlert = true
-            } else if !OTPGenerator.isValidSecret(secret) {
-                alertMessage = String(localized: "Invalid secret key in QR code. Please enter manually.")
-                showingAlert = true
-            } else if label.isEmpty {
-                alertMessage = String(localized: "Service name missing in QR code. Please enter manually.")
-                showingAlert = true
-            } else {
-                // Switch to manual entry tab with pre-filled data
-                selectedTab = 1
-            }
-        }
+        dataStore.addCode(OTPCode(
+            label: parsed.label,
+            account: parsed.account,
+            secret: parsed.secret,
+            algorithm: parsed.algorithm,
+            digits: parsed.digits,
+            period: parsed.period,
+            kind: parsed.kind,
+            counter: parsed.counter
+        ))
+        dismiss()
+    }
+
+    /// Fills the manual form from a parsed URL, so a setup code that cannot be saved
+    /// outright still arrives on screen in one piece instead of being retyped.
+    private func prefill(from parsed: ParsedOTPAuth) {
+        label = parsed.label
+        account = parsed.account
+        secret = parsed.secret
+        algorithm = parsed.algorithm
+        // Clamped into the ranges the steppers offer, so a URL carrying a value
+        // outside them opens as a usable one rather than leaving a control blank.
+        digits = min(max(parsed.digits, 6), 10)
+        period = min(max(parsed.period, 15), 300)
+        kind = parsed.kind
+        counter = Int(min(parsed.counter, UInt64(Int.max)))
     }
     
     private func parseOtherOTPFormats(_ qrCode: String) -> (label: String, account: String, secret: String, algorithm: OTPAlgorithm, digits: Int, period: Int)? {
@@ -672,9 +660,15 @@ struct AddTokenView: View {
         if qrCode.starts(with: "otpauth-migration://") {
             return parseMigrationFormat(qrCode)
         }
-        
-        // Try to parse as plain parameters string
-        // Format: otpauth://totp/Service:Account?secret=ABC&issuer=Service
+
+        // Try to parse as a bare parameters string.
+        //
+        // Whatever reaches this point is *not* a well-formed `otpauth://` URL —
+        // everything with an `otpauth` scheme went to `OTPAuthURLParser` above — so
+        // there is no host here to say which kind of code it is and the result is
+        // time-based. That is what this has always produced, and it is the right
+        // answer for the inputs it sees: a `secret=…&issuer=…` string with no host at
+        // all.
         if qrCode.contains("secret=") {
             return parseParameterString(qrCode)
         }
@@ -742,6 +736,34 @@ struct AddTokenView: View {
     }
     
     private func validateAndSave() {
+        // A pasted setup *link* rather than a bare key. Plenty of services hand you
+        // one on their website — and on a Mac, or for anyone who was sent the link
+        // in a message, that is the only thing there is to copy. The field used to
+        // reject it outright, because a URL is not Base32: "please enter a valid
+        // Base32 secret key", with the link still sitting in the box.
+        //
+        // Parsed exactly as a scanned QR code is, so the link's own kind, algorithm
+        // and counter win over the defaults on screen — and a counter-based link
+        // arrives as a counter-based code, which is the case that was silently wrong
+        // before this release.
+        if let parsed = OTPAuthURLParser.parseLink(secret),
+           OTPGenerator.isValidSecret(parsed.secret) {
+            dataStore.addCode(OTPCode(
+                label: parsed.label,
+                account: parsed.account,
+                secret: parsed.secret,
+                algorithm: parsed.algorithm,
+                digits: parsed.digits,
+                period: parsed.period,
+                kind: parsed.kind,
+                counter: parsed.counter
+            ))
+            dismiss()
+            return
+        }
+
+        // Not a link, or a link whose secret is unusable: the ordinary Base32 path,
+        // including its message about what a valid key looks like.
         if !OTPGenerator.isValidSecret(secret) {
             alertMessage = String(localized: "Please enter a valid Base32 secret key (letters A-Z, numbers 2-7, minimum 16 characters).")
             showingAlert = true
@@ -754,7 +776,9 @@ struct AddTokenView: View {
             secret: secret,
             algorithm: algorithm,
             digits: digits,
-            period: period
+            period: period,
+            kind: kind,
+            counter: UInt64(max(0, counter))
         )
         
         dataStore.addCode(newCode)

@@ -110,6 +110,68 @@ final class OTPGeneratorTests: XCTestCase {
         }
     }
 
+    // MARK: - RFC 4226 Appendix D, through `generateHOTP`
+
+    func testCounterBasedCountersMatchRFC4226() {
+        // The same table as above, read through the counter-based entry point rather
+        // than derived from a clock — which is the only difference between the two,
+        // and the reason the values have to agree.
+        let expected: [(UInt64, String)] = [
+            (0, "755224"), (1, "287082"), (2, "359152"), (3, "969429"), (4, "338314"),
+            (5, "254676"), (6, "287922"), (7, "162583"), (8, "399871"), (9, "520489")
+        ]
+
+        for (counter, value) in expected {
+            XCTAssertEqual(
+                OTPGenerator.generateHOTP(secret: sha1Secret, algorithm: .sha1,
+                                          digits: 6, counter: counter),
+                value,
+                "counter \(counter)"
+            )
+        }
+    }
+
+    func testACounterBasedCodeIsTheTimeBasedCodeForThatSameCounter() {
+        // The two kinds are one construction. This pins the seam: a time-based code
+        // for the instant that falls in counter N's window must equal the
+        // counter-based code for N, for every algorithm and every digit count. If the
+        // counter derivation is ever changed on one side only, this fails.
+        for period in [15, 30, 60] {
+            for counter in 0...3 {
+                let now = Date(timeIntervalSince1970: Double(counter) * Double(period) + 1)
+
+                for algorithm in OTPAlgorithm.allCases {
+                    for digits in [6, 8] {
+                        XCTAssertEqual(
+                            OTPGenerator.generateHOTP(secret: sha1Secret, algorithm: algorithm,
+                                                      digits: digits, counter: UInt64(counter)),
+                            OTPGenerator.generateOTP(secret: sha1Secret, algorithm: algorithm,
+                                                     digits: digits, period: period, now: now),
+                            "algorithm \(algorithm.rawValue), digits \(digits), counter \(counter), period \(period)"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    func testCounterBasedCodesDoNotDependOnTheClock() {
+        // What distinguishes the two kinds for the user: a counter-based code is not
+        // a snapshot of a moment, so the same counter yields the same code forever.
+        // RFC 4226's own vector for counter 0 is the oldest value in either appendix.
+        XCTAssertEqual(OTPGenerator.generateHOTP(secret: sha1Secret, digits: 6, counter: 0), "755224")
+    }
+
+    func testTheLargestCounterStillProducesACode() {
+        // `OTPCode.maximumCounter` allows a counter up to `Int64.max` — the ceiling
+        // the iCloud field imposes. The HMAC hashes the counter as eight bytes, so
+        // the whole range has to be encodable without trapping.
+        for counter in [UInt64(Int64.max), UInt64(Int64.max) + 1, UInt64.max] {
+            let code = OTPGenerator.generateHOTP(secret: sha1Secret, digits: 6, counter: counter)
+            XCTAssertEqual(code.count, 6, "counter \(counter)")
+        }
+    }
+
     // MARK: - Defaults and boundaries
 
     func testDefaultsAreSHA1SixDigitsThirtySeconds() {

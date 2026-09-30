@@ -33,6 +33,11 @@ final class AppPreferencesTests: XCTestCase {
         // ...and the key that did not exist yet falls back to its secure default
         // instead of failing the decode and taking the others down with it.
         XCTAssertTrue(prefs.hideCodesWhenScreenCaptured)
+        // The issuer-logo switch is newer still, and its default is the *other*
+        // direction: the app has always looked icons up, so a blob written before the
+        // switch existed must not read as "off" for someone restoring after a
+        // reinstall.
+        XCTAssertTrue(prefs.fetchIssuerLogos)
     }
 
     func testDecodesAnEmptyBlobToEveryDefault() throws {
@@ -44,7 +49,8 @@ final class AppPreferencesTests: XCTestCase {
                                              hideCodesWhenScreenCaptured: true,
                                              accentTheme: "",
                                              enableAppLock: false,
-                                             isICloudSyncEnabled: false))
+                                             isICloudSyncEnabled: false,
+                                             fetchIssuerLogos: true))
     }
 
     func testRoundTripPreservesEveryPreference() throws {
@@ -54,7 +60,8 @@ final class AppPreferencesTests: XCTestCase {
                                       hideCodesWhenScreenCaptured: false,
                                       accentTheme: "teal",
                                       enableAppLock: true,
-                                      isICloudSyncEnabled: true)
+                                      isICloudSyncEnabled: true,
+                                      fetchIssuerLogos: false)
 
         let decoded = try JSONDecoder().decode(AppPreferences.self,
                                                from: JSONEncoder().encode(original))

@@ -555,6 +555,46 @@
         }
       }
     },
+    "**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Dienst-Logos laden** sucht das Symbol jedes Dienstes namentlich bei logo.dev, wodurch dieser Logodienst erfährt, welche Marken Sie nutzen. Ist die Option aus, wird nichts Neues geladen und jeder Dienst ohne gespeichertes Symbol zeigt seinen Buchstaben."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Cargar logotipos de servicios** busca el icono de cada servicio por su nombre en logo.dev, lo que indica a ese servicio de logotipos qué marcas usas. Si se desactiva, no se busca nada nuevo y cada servicio sin icono guardado muestra su letra."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Charger les logos des services** recherche l’icône de chaque service par son nom auprès de logo.dev, ce qui indique à ce service de logos quelles marques vous utilisez. Désactivé, rien de nouveau n’est recherché et chaque service sans icône enregistrée affiche sa lettre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**サービスのロゴを取得** は、各サービスのアイコンを名前で logo.dev に問い合わせます。これにより、どのブランドを利用しているかがそのロゴサービスに伝わります。オフにすると新しい取得は行われず、保存済みのアイコンがないサービスは頭文字を表示します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Carregar logotipos dos serviços** procura o ícone de cada serviço pelo nome no logo.dev, o que informa a esse serviço de logotipos quais marcas você usa. Desativado, nada novo é procurado e cada serviço sem ícone salvo mostra sua letra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**获取服务图标** 会按名称在 logo.dev 查询每个服务的图标，这会让该图标服务知道你使用了哪些品牌。关闭后不会进行新的查询，没有已保存图标的服务会显示其首字母。"
+          }
+        }
+      }
+    },
     "100% local storage": {
       "localizations": {
         "de-DE": {
@@ -3352,6 +3392,166 @@
         }
       }
     },
+    "Counter %lld": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zähler %lld"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contador %lld"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カウンター %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contador %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计数器 %lld"
+          }
+        }
+      }
+    },
+    "Counter-based (HOTP)": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zählerbasiert (HOTP)"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basado en contador (HOTP)"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basé sur un compteur (HOTP)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カウンターベース (HOTP)"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baseado em contador (HOTP)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于计数器 (HOTP)"
+          }
+        }
+      }
+    },
+    "Counter-based codes do not expire. The code stays the same until you ask for the next one, which you do from the code's card. Only choose this if your service gave you a starting counter rather than a QR code.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zählerbasierte Codes laufen nicht ab. Der Code bleibt gleich, bis Sie den nächsten anfordern – über die Karte des Codes. Wählen Sie dies nur, wenn Ihr Dienst Ihnen einen Startzähler statt eines QR-Codes gegeben hat."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos basados en contador no caducan. El código no cambia hasta que pidas el siguiente, lo que haces desde la tarjeta del código. Elige esta opción solo si tu servicio te dio un contador inicial en lugar de un código QR."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes basés sur un compteur n’expirent pas. Le code reste identique jusqu’à ce que vous demandiez le suivant, depuis la fiche du code. Ne choisissez cette option que si votre service vous a fourni un compteur de départ plutôt qu’un QR code."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カウンターベースのコードは失効しません。次のコードを要求するまでコードは変わりません。次のコードはコードのカードから要求します。サービスが QR コードではなく開始カウンターを発行した場合にのみ選択してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos baseados em contador não expiram. O código permanece o mesmo até você pedir o próximo, o que é feito no cartão do código. Escolha esta opção apenas se o serviço tiver fornecido um contador inicial em vez de um código QR."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于计数器的代码不会过期。在你请求下一个代码之前，代码保持不变；请从代码卡片上请求下一个。仅当服务提供的是起始计数器而不是二维码时才选择此项。"
+          }
+        }
+      }
+    },
+    "Counter: %lld": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zähler: %lld"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contador: %lld"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compteur : %lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カウンター: %lld"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contador: %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计数器：%lld"
+          }
+        }
+      }
+    },
     "Create": {
       "localizations": {
         "de-DE": {
@@ -4390,6 +4590,46 @@
         }
       }
     },
+    "Encrypted Aegis exports aren't supported yet. Export an unencrypted Aegis vault instead.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verschlüsselte Aegis-Exporte werden noch nicht unterstützt. Exportieren Sie stattdessen einen unverschlüsselten Aegis-Tresor."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Las exportaciones cifradas de Aegis aún no son compatibles. Exporta en su lugar una bóveda Aegis sin cifrar."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les exports Aegis chiffrés ne sont pas encore pris en charge. Exportez plutôt un coffre Aegis non chiffré."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗号化された Aegis エクスポートはまだ対応していません。代わりに暗号化されていない Aegis ボルトをエクスポートしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportações criptografadas do Aegis ainda não são compatíveis. Exporte um cofre Aegis não criptografado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚不支持加密的 Aegis 导出。请改为导出未加密的 Aegis 保险库。"
+          }
+        }
+      }
+    },
     "Encrypted Backups": {
       "localizations": {
         "de-DE": {
@@ -4590,42 +4830,42 @@
         }
       }
     },
-    "Enter the same setup key you received when enabling two-factor authentication.": {
+    "Enter the same setup key you received when enabling two-factor authentication — or paste the setup link, if that is what the service gave you.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Geben Sie denselben Einrichtungsschlüssel ein, den Sie beim Aktivieren der Zwei-Faktor-Authentifizierung erhalten haben."
+            "value": "Geben Sie denselben Einrichtungsschlüssel ein, den Sie beim Aktivieren der Zwei-Faktor-Authentifizierung erhalten haben – oder fügen Sie den Einrichtungslink ein, falls der Dienst Ihnen einen gegeben hat."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Introduce la misma clave de configuración que recibiste al activar la verificación en dos pasos."
+            "value": "Introduce la misma clave de configuración que recibiste al activar la autenticación en dos pasos, o pega el enlace de configuración si es lo que te dio el servicio."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saisissez la même clé de configuration que celle reçue lors de l'activation de la double authentification."
+            "value": "Saisissez la même clé de configuration que celle reçue lors de l'activation de la validation en deux étapes — ou collez le lien de configuration si le service vous en a fourni un."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "二段階認証を有効にしたときに受け取ったセットアップキーを入力してください。"
+            "value": "2 段階認証を有効にしたときに受け取った設定キーを入力してください。サービスが設定リンクを発行した場合は、そのリンクを貼り付けてもかまいません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Digite a mesma chave de configuração que você recebeu ao ativar a verificação em duas etapas."
+            "value": "Digite a mesma chave de configuração que você recebeu ao ativar a verificação em duas etapas — ou cole o link de configuração, caso seja o que o serviço forneceu."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "请输入你在开启双重认证时收到的同一个设置密钥。"
+            "value": "请输入启用两步验证时收到的设置密钥——如果服务提供的是设置链接，也可以直接粘贴链接。"
           }
         }
       }
@@ -4866,6 +5106,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法解析导入数据。二维码可能已损坏。"
+          }
+        }
+      }
+    },
+    "Fetch service logos": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst-Logos laden"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargar logotipos de servicios"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Charger les logos des services"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サービスのロゴを取得"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carregar logotipos dos serviços"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "获取服务图标"
           }
         }
       }
@@ -6268,6 +6548,46 @@
         }
       }
     },
+    "Next Code": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächster Code"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siguiente código"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code suivant"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次のコード"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximo código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一个代码"
+          }
+        }
+      }
+    },
     "No Account Required": {
       "localizations": {
         "de-DE": {
@@ -6508,6 +6828,46 @@
         }
       }
     },
+    "No compatible one-time-password tokens were found in this file.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In dieser Datei wurden keine kompatiblen Einmalpasswort-Codes gefunden."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron códigos de un solo uso compatibles en este archivo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun code à usage unique compatible n'a été trouvé dans ce fichier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルに互換性のあるワンタイムパスワードは見つかりませんでした。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum código de uso único compatível foi encontrado neste arquivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件中没有找到兼容的一次性验证码。"
+          }
+        }
+      }
+    },
     "No secret key found in QR code. Please enter manually.": {
       "localizations": {
         "de-DE": {
@@ -6544,46 +6904,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "二维码中没有找到密钥，请手动输入。"
-          }
-        }
-      }
-    },
-    "No secret key found in the URL.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In der URL wurde kein Schlüssel gefunden."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se ha encontrado ninguna clave secreta en la URL."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucune clé secrète trouvée dans l'URL."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL 内にシークレットキーが見つかりません。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nenhuma chave secreta encontrada na URL."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "链接中没有找到密钥。"
           }
         }
       }
@@ -8348,86 +8668,6 @@
         }
       }
     },
-    "Service name missing in QR code. Please enter manually.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Im QR-Code fehlt der Dienstname. Bitte manuell eingeben."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Falta el nombre del servicio en el código QR. Introdúcelo manualmente."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom du service absent du QR code. Saisissez-le manuellement."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QR コードにサービス名がありません。手入力してください。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Falta o nome do serviço no QR code. Digite manualmente."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "二维码中缺少服务名称，请手动输入。"
-          }
-        }
-      }
-    },
-    "Service name missing in the URL.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "In der URL fehlt der Dienstname."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Falta el nombre del servicio en la URL."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nom du service absent de l'URL."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL にサービス名がありません。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Falta o nome do serviço na URL."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "链接中缺少服务名称。"
-          }
-        }
-      }
-    },
     "Settings": {
       "localizations": {
         "de-DE": {
@@ -9506,6 +9746,46 @@
         }
       }
     },
+    "This code changes only when you ask for the next one. Raise the counter if the service has moved ahead of it — for instance after a code was used on a device that no longer has this account.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Code ändert sich nur, wenn Sie den nächsten anfordern. Erhöhen Sie den Zähler, wenn der Dienst voraus ist – etwa nachdem ein Code auf einem Gerät verwendet wurde, das dieses Konto nicht mehr hat."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este código solo cambia cuando pides el siguiente. Aumenta el contador si el servicio se ha adelantado; por ejemplo, después de usar un código en un dispositivo que ya no tiene esta cuenta."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce code ne change que lorsque vous demandez le suivant. Augmentez le compteur si le service est en avance — par exemple après avoir utilisé un code sur un appareil qui n’a plus ce compte."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このコードは、次のコードを要求したときだけ変わります。サービスのカウンターが進んでいる場合はカウンターを増やしてください。たとえば、このアカウントがない別の端末でコードを使用した後などです。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este código só muda quando você pede o próximo. Aumente o contador se o serviço estiver à frente — por exemplo, depois de usar um código em um dispositivo que não tem mais esta conta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此代码仅在你请求下一个时才更改。如果服务的计数器已经前进，请提高计数器——例如，在不再拥有此账户的设备上使用过代码之后。"
+          }
+        }
+      }
+    },
     "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead.": {
       "localizations": {
         "de-DE": {
@@ -9542,6 +9822,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "这个导出内容太大，一个二维码装不下。请改用菜单里的“备份”，以文件方式转移账户。"
+          }
+        }
+      }
+    },
+    "This file isn't a supported Aegis, andOTP, or 2FAS export.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist kein unterstützter Export von Aegis, andOTP oder 2FAS."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo no es una exportación compatible de Aegis, andOTP o 2FAS."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier n'est pas un export Aegis, andOTP ou 2FAS pris en charge."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルは対応している Aegis、andOTP、2FAS のエクスポートではありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo não é uma exportação compatível do Aegis, andOTP ou 2FAS."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件不是受支持的 Aegis、andOTP 或 2FAS 导出文件。"
+          }
+        }
+      }
+    },
+    "Time-based (TOTP)": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeitbasiert (TOTP)"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basado en tiempo (TOTP)"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basé sur le temps (TOTP)"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "時間ベース (TOTP)"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Baseado em tempo (TOTP)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "基于时间 (TOTP)"
           }
         }
       }
@@ -9942,6 +10302,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "关闭 iCloud 同步？"
+          }
+        }
+      }
+    },
+    "Type": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Typ"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "種類"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tipo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "类型"
           }
         }
       }

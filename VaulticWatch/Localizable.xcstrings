@@ -81,6 +81,86 @@
         }
       }
     },
+    "Advance the counter on your iPhone" : {
+      "localizations" : {
+        "de-DE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zähler auf dem iPhone erhöhen"
+          }
+        },
+        "es-ES" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avanza el contador en tu iPhone"
+          }
+        },
+        "fr-FR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avancez le compteur sur votre iPhone"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カウンターは iPhone で進めます"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avance o contador no seu iPhone"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 iPhone 上增加计数器"
+          }
+        }
+      }
+    },
+    "Counter %lld" : {
+      "localizations" : {
+        "de-DE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zähler %lld"
+          }
+        },
+        "es-ES" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contador %lld"
+          }
+        },
+        "fr-FR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compteur %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カウンター %lld"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contador %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "计数器 %lld"
+          }
+        }
+      }
+    },
     "No Codes" : {
       "localizations" : {
         "de-DE" : {

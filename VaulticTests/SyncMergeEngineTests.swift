@@ -22,12 +22,15 @@ final class SyncMergeEngineTests: XCTestCase {
         algorithm: OTPAlgorithm = .sha1,
         digits: Int = 6,
         period: Int = 30,
+        kind: OTPKind = .totp,
+        counter: UInt64 = 0,
         timerRingHex: String? = nil,
         isPinned: Bool = false,
         modifiedAt: Date
     ) -> OTPCode {
         OTPCode(id: id, label: label, account: account, secret: secret,
                 algorithm: algorithm, digits: digits, period: period,
+                kind: kind, counter: counter,
                 timerRingHex: timerRingHex, isPinned: isPinned, modifiedAt: modifiedAt)
     }
 
@@ -326,6 +329,12 @@ final class SyncMergeEngineTests: XCTestCase {
         // Pinning has to be visible to the fingerprint, or toggling a pin would
         // look like "no change" and never reach the user's other devices.
         XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, isPinned: true, modifiedAt: now)))
+        // And so do the two halves of a counter-based code. The counter is the one
+        // that matters most: a fingerprint that ignored it would make spending a
+        // code look like "no change", so the device the user is *not* holding would
+        // keep offering the code they just used.
+        XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, kind: .hotp, modifiedAt: now)))
+        XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, counter: 4, modifiedAt: now)))
     }
 
     func testTombstoneFingerprintIsTheConstantSentinel() {

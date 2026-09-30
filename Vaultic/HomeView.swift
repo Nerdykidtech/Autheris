@@ -425,7 +425,10 @@ struct OTPCardView: View {
     }
 
     private var isExpiring: Bool {
-        remainingSeconds <= warningThreshold
+        // Only a time-based code expires. A counter-based one is spent by use, so
+        // there is no moment at which it is about to stop working and nothing for
+        // the red state to mean.
+        code.isTimeBased && remainingSeconds <= warningThreshold
     }
 
     private var countdownProgress: Double {
@@ -480,6 +483,17 @@ struct OTPCardView: View {
                     } label: {
                         Label(code.isPinned ? "Unpin" : "Pin",
                               systemImage: code.isPinned ? "pin.slash" : "pin")
+                    }
+
+                    // Only for a counter-based code: a time-based one gets its next
+                    // code from the clock, and there is nothing to ask for.
+                    if !code.isTimeBased {
+                        Button {
+                            Haptics.impact(.light)
+                            dataStore.advanceCounter(for: code)
+                        } label: {
+                            Label("Next Code", systemImage: "arrow.clockwise")
+                        }
                     }
 
                     Button {
@@ -555,14 +569,81 @@ struct OTPCardView: View {
                         .foregroundColor(isExpiring ? .red : .primary)
                 }
 
-                HStack(spacing: 6) {
-                    ProgressView(value: countdownProgress)
-                        .frame(width: countdownWidth)
-                        .tint(isExpiring ? .red : timerRingColor)
+                if code.isTimeBased {
+                    HStack(spacing: 6) {
+                        ProgressView(value: countdownProgress)
+                            .frame(width: countdownWidth)
+                            .tint(isExpiring ? .red : timerRingColor)
 
-                    Text("\(remainingSeconds)s")
-                        .font(.caption.monospacedDigit())
-                        .foregroundColor(isExpiring ? .red : .secondary)
+                        Text("\(remainingSeconds)s")
+                            .font(.caption.monospacedDigit())
+                            .foregroundColor(isExpiring ? .red : .secondary)
+                    }
+                } else {
+                    // A counter-based code has nothing to count down and no colour to
+                    // warn with — it is valid until it is spent. What the row offers
+                    // instead is the one action such a code has: spending it. The
+                    // counter is shown beside it because it is what the service's own
+                    // prompt may quote back, and the two together are how a user tells
+                    // which code is on screen.
+                    //
+                    // Deliberately *not* wired to the card's tap. Tapping the card
+                    // copies, and a copy is not proof the service accepted the code —
+                    // spending a counter on a copy would take away a code the user
+                    // may still need to retype.
+                    HStack(spacing: 8) {
+                        // `Int` rather than the model's `UInt64` so the catalog key is
+                        // `Counter %lld`, like every other number in it; the value is
+                        // bounded by `OTPCode.maximumCounter`, so the conversion is
+                        // lossless.
+                        Text("Counter \(Int(clamping: code.counter))")
+                            .font(.caption.monospacedDigit())
+                            .foregroundColor(.secondary)
+                            // Fixed rather than flexible. This column shares the row
+                            // with the service name, and a squeezable label here is
+                            // what wrapped "Counter" onto two lines and stretched the
+                            // button into a tall lozenge — the name is the thing that
+                            // is *meant* to give way, and its own `lineLimit(1)`
+                            // already says so.
+                            .lineLimit(1)
+                            .fixedSize()
+
+                        // Painted rather than left to `.bordered`, which drew a grey,
+                        // full-weight system capsule: the loudest thing on a card whose
+                        // whole design is the app's own colour. This is the app's
+                        // action colour instead — the same tint as the "Copied" label
+                        // that appears here in its place, and as the toolbar above it.
+                        //
+                        // Deliberately not the issuer's colour, which the card already
+                        // wears on its icon: a brand tint that happens to be pale (an
+                        // amber, say) leaves the label unreadable on its own 15% fill,
+                        // and a *control* is not the place to be tasteful about that.
+                        Button {
+                            Haptics.impact(.light)
+                            dataStore.advanceCounter(for: code)
+                        } label: {
+                            Label("Next", systemImage: "arrow.clockwise")
+                                // Pinned: left to itself, `Label` drops its title when
+                                // the proposed width is tight — which is this column —
+                                // and renders the icon alone inside a capsule sized for
+                                // both, so the chip looked empty and off-centre.
+                                .labelStyle(.titleAndIcon)
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(.accentColor)
+                                .lineLimit(1)
+                                .fixedSize()
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
+                                .contentShape(Capsule())
+                                .fixedSize()
+                        }
+                        // `.plain` on iOS keeps the capsule the only chrome; on macOS
+                        // it is what stops the system drawing a second bezel around it.
+                        .buttonStyle(.plain)
+                        .platformPlainButton()
+                        .accessibilityLabel(Text("Next Code"))
+                    }
                 }
             }
         }
@@ -590,6 +671,10 @@ struct OTPCardView: View {
     }
     
     private func updateRemainingSeconds() {
+        // A counter-based card has no countdown to keep current, and updating the
+        // value every second would re-render the card to show the same code.
+        guard code.isTimeBased else { return }
+
         let currentTime = Date().timeIntervalSince1970
         let period = Double(code.effectivePeriod)
         let elapsed = currentTime.truncatingRemainder(dividingBy: period)
@@ -636,6 +721,9 @@ struct EditTokenView: View {
     @State private var algorithm: OTPAlgorithm
     @State private var digits: Int
     @State private var period: Int
+    /// The counter, as an `Int` because that is what `Stepper` binds to. Kept and
+    /// saved only for a counter-based token; see `codeSection`.
+    @State private var counter: Int
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
@@ -650,6 +738,7 @@ struct EditTokenView: View {
         algorithm != code.algorithm ||
         digits != code.effectiveDigits ||
         period != code.effectivePeriod ||
+        counter != Int(clamping: code.counter) ||
         ringHexForSave() != code.timerRingHex
     }
     
@@ -663,6 +752,7 @@ struct EditTokenView: View {
         // opens as a usable one rather than leaving a control out of range.
         _digits = State(initialValue: min(max(code.effectiveDigits, 6), 10))
         _period = State(initialValue: min(max(code.effectivePeriod, 15), 300))
+        _counter = State(initialValue: Int(clamping: code.counter))
         let branding = IssuerBranding.forLabel(code.label)
         if let hex = code.timerRingHex, let c = Color(hex: hex) {
             _ringColor = State(initialValue: c)
@@ -677,7 +767,11 @@ struct EditTokenView: View {
                 headerSection
                 identitySection
                 codeSection
-                appearanceSection
+                // A counter-based code has no countdown ring, so a ring colour would
+                // be a setting that changes nothing on screen.
+                if code.isTimeBased {
+                    appearanceSection
+                }
             }
             .formStyle(.grouped)
             .navigationTitle("Edit Token")
@@ -751,11 +845,15 @@ struct EditTokenView: View {
 
                 Spacer(minLength: 8)
 
-                // Ticks, so the preview does not sit frozen on a stale code.
-                TimelineView(.periodic(from: .now, by: 1)) { _ in
-                    Text(previewCode)
-                        .font(.system(.body, design: .monospaced).weight(.semibold))
-                        .foregroundColor(.secondary)
+                // Ticks, so the preview does not sit frozen on a stale code — unless
+                // the code has no clock to tick with, in which case it is redrawn
+                // when the counter changes instead.
+                if code.isTimeBased {
+                    TimelineView(.periodic(from: .now, by: 1)) { _ in
+                        previewText
+                    }
+                } else {
+                    previewText
                 }
             }
             .padding(.vertical, 2)
@@ -781,12 +879,31 @@ struct EditTokenView: View {
             }
 
             Stepper("Digits: \(digits)", value: $digits, in: 6...10)
-            Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+
+            // A period and a counter are the two halves of "when does this code
+            // change", and a token has one of them. The kind itself is not offered
+            // here: changing it would turn a working token into one whose codes stop
+            // being accepted, with no way to check first — the kind is settled by the
+            // QR the service gave you, and a mis-scanned one is better re-added.
+            if code.isTimeBased {
+                Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+            } else {
+                Stepper("Counter: \(counter)", value: $counter, in: 0...10_000)
+            }
         } header: {
             Text("Code")
         } footer: {
-            Text("Scanning a service's QR code fills these in. If your codes are rejected, check the service's instructions — most use SHA-1 and 30 seconds, but some (myGov, for example) need SHA-256.")
+            Text(codeFooter)
         }
+    }
+
+    /// Typed explicitly: a ternary of two literals infers as `String`, which `Text`
+    /// renders verbatim and never looks up — so the string would ship in English in
+    /// all seven languages with nothing to notice.
+    private var codeFooter: LocalizedStringKey {
+        code.isTimeBased
+            ? "Scanning a service's QR code fills these in. If your codes are rejected, check the service's instructions — most use SHA-1 and 30 seconds, but some (myGov, for example) need SHA-256."
+            : "This code changes only when you ask for the next one. Raise the counter if the service has moved ahead of it — for instance after a code was used on a device that no longer has this account."
     }
 
     private var appearanceSection: some View {
@@ -832,8 +949,18 @@ struct EditTokenView: View {
     /// What the code would be with the values currently on screen, rather than the
     /// stored ones.
     private var previewCode: String {
-        OTPGenerator.generateOTP(secret: code.secret, algorithm: algorithm,
-                                 digits: digits, period: period)
+        guard code.isTimeBased else {
+            return OTPGenerator.generateHOTP(secret: code.secret, algorithm: algorithm,
+                                             digits: digits, counter: UInt64(max(0, counter)))
+        }
+        return OTPGenerator.generateOTP(secret: code.secret, algorithm: algorithm,
+                                         digits: digits, period: period)
+    }
+
+    private var previewText: some View {
+        Text(previewCode)
+            .font(.system(.body, design: .monospaced).weight(.semibold))
+            .foregroundColor(.secondary)
     }
 
     private var ringColorMatchesBranding: Bool {
@@ -873,6 +1000,7 @@ struct EditTokenView: View {
             algorithm: algorithm,
             digits: digits,
             period: period,
+            counter: UInt64(max(0, counter)),
             timerRingHex: .some(ringHexForSave())
         )
         

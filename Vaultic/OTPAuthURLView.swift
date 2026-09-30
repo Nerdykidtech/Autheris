@@ -65,87 +65,32 @@ struct OTPAuthURLView: View {
             return
         }
         
-        // Use existing parsing logic from AddTokenView
-        let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        var label = ""
-        var account = ""
-        var secret = ""
-        var algorithm: OTPAlgorithm = .sha1
-        var digits = 6
-        var period = 30
-        var secretFound = false
-        
-        // Handle various path formats
-        if path.contains(":") {
-            let components = path.components(separatedBy: ":")
-            if components.count >= 2 {
-                label = components[0]
-                account = components[1]
-            } else if components.count == 1 {
-                label = components[0]
-                account = ""
-            }
-        } else if !path.isEmpty {
-            label = path
-            account = ""
-        }
-        
-        // Extract parameters from query
-        if let queryItems = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems {
-            for item in queryItems {
-                switch item.name.lowercased() {
-                case "secret":
-                    if let value = item.value, !value.isEmpty {
-                        secret = value
-                        secretFound = true
-                    }
-                case "algorithm":
-                    if let value = item.value?.uppercased() {
-                        switch value {
-                        case "SHA256", "SHA-256": algorithm = .sha256
-                        case "SHA512", "SHA-512": algorithm = .sha512
-                        default: algorithm = .sha1
-                        }
-                    }
-                case "digits":
-                    if let value = item.value, let digitValue = Int(value) {
-                        digits = digitValue
-                    }
-                case "period":
-                    if let value = item.value, let periodValue = Int(value) {
-                        period = periodValue
-                    }
-                case "issuer":
-                    if let issuer = item.value, !issuer.isEmpty {
-                        label = issuer
-                    }
-                default:
-                    break
-                }
-            }
-        }
-        
-        // Validate and add
-        if !label.isEmpty && secretFound && OTPGenerator.isValidSecret(secret) {
-            let newCode = OTPCode(
-                label: label,
-                account: account,
-                secret: secret,
-                algorithm: algorithm,
-                digits: digits,
-                period: period
-            )
-            dataStore.addCode(newCode)
-            isPresented = false
-        } else {
-            if !secretFound {
-                alertMessage = String(localized: "No secret key found in the URL.")
-            } else if !OTPGenerator.isValidSecret(secret) {
-                alertMessage = String(localized: "Invalid secret key in the URL.")
-            } else if label.isEmpty {
-                alertMessage = String(localized: "Service name missing in the URL.")
-            }
+        // The parsing lives in `OTPAuthURLParser`, which the scanner and the
+        // deep-link path also use. This used to be a third copy of it, and a third
+        // copy is a third place for a `hotp` URL to be read as a time-based one.
+        guard let parsed = OTPAuthURLParser.parse(url) else {
+            alertMessage = String(localized: "Invalid OTP URL")
             showingAlert = true
+            return
         }
+
+        guard OTPGenerator.isValidSecret(parsed.secret) else {
+            alertMessage = String(localized: "Invalid secret key in the URL.")
+            showingAlert = true
+            return
+        }
+
+        let newCode = OTPCode(
+            label: parsed.label,
+            account: parsed.account,
+            secret: parsed.secret,
+            algorithm: parsed.algorithm,
+            digits: parsed.digits,
+            period: parsed.period,
+            kind: parsed.kind,
+            counter: parsed.counter
+        )
+        dataStore.addCode(newCode)
+        isPresented = false
     }
 }

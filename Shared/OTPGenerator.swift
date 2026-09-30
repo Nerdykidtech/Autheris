@@ -42,13 +42,34 @@ nonisolated struct OTPGenerator {
     ///   same reason `SyncMergeEngine.merge` takes `now`. Defaulted, so no caller
     ///   has to know about it.
     static func generateOTP(secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30, now: Date = Date()) -> String {
-        let key = decodeBase32(secret)
-        let safeDigits = effectiveDigits(digits)
         let safePeriod = effectivePeriod(period)
 
         // `max(0,)` so a pre-1970 date cannot trap converting a negative value to
         // `UInt64`.
         let counter = UInt64(max(0, now.timeIntervalSince1970) / Double(safePeriod))
+
+        return generate(secret: secret, algorithm: algorithm, digits: digits, counter: counter)
+    }
+
+    /// The code for a counter-based token (RFC 4226).
+    ///
+    /// The only thing that differs from `generateOTP` is where the counter comes
+    /// from: the clock there, the token's stored counter here. Everything after
+    /// that — the HMAC, the dynamic truncation, the modulus and the padding — is
+    /// the same construction *and deliberately the same code*, so the two kinds
+    /// cannot drift apart in the parts they have to agree on.
+    ///
+    /// - Parameter counter: Taken as given. A counter-based code does not expire,
+    ///   so a lower counter is the valid code *for that counter* rather than a
+    ///   stale one, and there is nothing here that should correct it.
+    static func generateHOTP(secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, counter: UInt64) -> String {
+        generate(secret: secret, algorithm: algorithm, digits: digits, counter: counter)
+    }
+
+    /// One code, for one counter, however that counter was arrived at.
+    private static func generate(secret: String, algorithm: OTPAlgorithm, digits: Int, counter: UInt64) -> String {
+        let key = decodeBase32(secret)
+        let safeDigits = effectiveDigits(digits)
 
         // Convert counter to 8-byte big-endian data
         let counterBytes = withUnsafeBytes(of: counter.bigEndian) { Array($0) }

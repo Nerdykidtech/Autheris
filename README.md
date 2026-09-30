@@ -1,7 +1,7 @@
 # Autheris
 
 <p align="center">
-  <img src="https://autheris.app/assets/img/og-image.jpg" alt="Autheris - Secure 2FA Token Manager for iOS and macOS" width="600">
+  <img src="https://autheris.app/assets/img/og-image.jpg" alt="Autheris — Secure 2FA Token Manager for iPhone, iPad, Mac and Apple Watch" width="600">
 </p>
 
 <p align="center">
@@ -14,6 +14,52 @@
 
 **Autheris** is a secure, privacy-focused two-factor authentication (2FA) token manager for iPhone, iPad, Mac, and Apple Watch. Built with SwiftUI and designed with zero-knowledge architecture — your tokens never leave your device unless you explicitly choose to export them or turn on iCloud Sync.
 
+<details>
+<summary><b>Table of contents</b></summary>
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Security](#security)
+  - [Issuer icons](#issuer-icons)
+  - [Where tokens actually live](#where-tokens-actually-live)
+  - [What the privacy screen covers](#what-the-privacy-screen-covers)
+  - [Recently Deleted](#recently-deleted)
+  - [Counter-based codes](#counter-based-codes)
+  - [What iCloud Sync sends, and how](#what-icloud-sync-sends-and-how)
+- [iCloud Sync](#icloud-sync)
+  - [Required project configuration](#required-project-configuration)
+  - [Deploying the CloudKit schema](#deploying-the-cloudkit-schema)
+  - [The legacy `AutherisSyncRecord` type](#the-legacy-autherissyncrecord-type)
+- [Tests](#tests)
+- [Localization](#localization)
+  - [Every entry says `translated`, and nobody has read one](#every-entry-says-translated-and-nobody-has-read-one)
+  - [Where the languages are declared](#where-the-languages-are-declared)
+  - [Keeping the catalogs in step with the code](#keeping-the-catalogs-in-step-with-the-code)
+  - [A `String` property is a localization bug](#a-string-property-is-a-localization-bug)
+  - [Plurals](#plurals)
+  - [What is deliberately not localized](#what-is-deliberately-not-localized)
+  - [The test](#the-test)
+- [Releasing](#releasing)
+  - [Submitting the iOS app](#submitting-the-ios-app)
+- [macOS](#macos)
+  - [Submitting the Mac app](#submitting-the-mac-app)
+- [watchOS](#watchos)
+  - [How the codes get there](#how-the-codes-get-there)
+  - [Why an application context, and why there is a second transport](#why-an-application-context-and-why-there-is-a-second-transport)
+  - [What lives where](#what-lives-where)
+  - [When the phone actually sends](#when-the-phone-actually-sends)
+  - [Where the watch's copy lives](#where-the-watchs-copy-lives)
+  - [Deliberate differences from the phone](#deliberate-differences-from-the-phone)
+  - [Project configuration](#project-configuration)
+- [Development material inside the app target](#development-material-inside-the-app-target)
+- [Installation](#installation)
+- [Download](#download)
+- [Privacy Policy](#privacy-policy)
+- [License](#license)
+- [Author](#author)
+
+</details>
+
 ## Features
 
 - 🔐 **Privacy-First Design**: Blur app content when backgrounded, hide codes in app switcher, and cover them while the screen is being recorded or mirrored
@@ -22,12 +68,35 @@
 - 📱 **Native Everywhere**: One SwiftUI codebase for iPhone, iPad, and Mac — no Catalyst, no "Designed for iPad"
 - ⌚ **Apple Watch App**: Your codes on your wrist, one per screen with a live countdown. Read-only by design — no copy, no editing and no settings on the watch
 - 📸 **QR Code Scanning**: Quick token setup from any 2FA QR code
+- 🔢 **Time-Based and Counter-Based Codes**: RFC 6238 (`otpauth://totp/…`) and RFC 4226 (`otpauth://hotp/…`), each with SHA-1, SHA-256 or SHA-512 and 6–10 digits. A counter-based code does not expire: its card carries **Next Code**, which spends the current one and shows the next. See [Counter-based codes](#counter-based-codes)
 - 📤 **Export & Backup**: Local backup files and QR exports you control (stored in the app sandbox, protected by the device passcode, not additionally encrypted)
-- 📥 **Easy Migration**: Import from Google Authenticator
+- 📥 **Easy Migration**: Import from Google Authenticator, Aegis, andOTP or 2FAS — counter-based accounts included, with the counter they were on
 - 🗑️ **Recently Deleted**: A deleted code stays recoverable on your device for 7 days before it is removed for good
 - 📌 **Pin and Reorder**: Pin the codes you use most to the top, and drag the rest into whatever order suits you
 - 🔍 **Quick Search**: Find tokens instantly
 - 🎨 **Clean Interface**: Simple, distraction-free design
+
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/iphone/autheris-iphone-01-codes.png" width="24%" alt="The iPhone app: the code list, with a counter-based code showing its counter and a Next button">
+  <img src="screenshots/ipad/autheris-ipad-01-codes.png" width="48%" alt="The iPad app: the same codes as a two-column grid of larger cards">
+  <img src="screenshots/mac/autheris-mac-01-codes.png" width="24%" alt="The Mac app: the code list with countdown rings">
+</p>
+
+<p align="center">
+  <sub><b>iPhone, iPad and Mac</b> — one codebase, three layouts. The third code is counter-based: it shows the counter it is on and a <b>Next</b> button instead of a countdown, because that kind of code expires when it is spent rather than when the clock ticks over.</sub>
+</p>
+
+<p align="center">
+  <img src="screenshots/mac/autheris-mac-02-settings.png" width="32%" alt="The Mac preferences window, grouped into General, Privacy, iCloud, Data and Help">
+  <img src="screenshots/mac/autheris-mac-03-add-token.png" width="32%" alt="Adding a token on the Mac, by camera or from a screenshot">
+  <img src="screenshots/watch/autheris-watch-01-code.png" width="16%" alt="The Apple Watch app: one code per screen with its countdown">
+</p>
+
+<p align="center">
+  <sub><b>Mac and Apple Watch</b> — Settings is a real preferences window rather than a stretched phone sheet; the watch is one code per screen, read-only by design.</sub>
+</p>
 
 ## Tech Stack
 
@@ -36,7 +105,7 @@
 - **Architecture**: MVVM with Combine
 - **Storage**: JSON in the Keychain (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly`) — the data protection keychain on macOS, via `kSecUseDataProtectionKeychain`. See [Security](#security) for what this does and does not protect
 - **Sync**: CloudKit private database (optional, opt-in per device)
-- **Backend**: Cloudflare Workers (optional, used for issuer logo lookups only)
+- **Backend**: none. The app has no server of its own and stores nothing off the device. The one network call it can make is an issuer-icon lookup at `img.logo.dev`, which sends the service's *name* and is controlled by **Settings → Privacy → Fetch service logos** — see [Issuer icons](#issuer-icons). This entry previously read "Cloudflare Workers (optional, used for issuer logo lookups only)": that scaffold was never deployed and was deleted in 2.4 (see [Development material inside the app target](#development-material-inside-the-app-target)).
 
 ## Security
 
@@ -46,6 +115,17 @@ Autheris is designed with security in mind:
 - No analytics or tracking
 - No cloud storage unless explicitly enabled in Settings
 - Open source for transparency
+
+### Issuer icons
+
+Every service in the list shows a brand icon, and it is looked up by name at **`img.logo.dev`** with a publishable key in `Vaultic/Info.plist` (`Vaultic/IssuerBranding.swift` is the only place that talks to it). Two things are worth being precise about, because the surrounding copy says "nothing leaves your device":
+
+- The lookup sends the **service's name** — "GitHub", say — and the request's IP address. It does not send the secret, the account, or anything that identifies the user to us, and no result is stored anywhere but the device's own cache (`Caches/IssuerLogos`).
+- It is still a statement about *which services someone has accounts with*, and that belongs to the user rather than to the app. **Settings → Privacy → Fetch service logos** turns it off; with it off nothing is looked up, services whose icons are already cached keep showing them, and the rest fall back to a letter. It is **on by default**, which is what the app has always done.
+
+The honest summary: the *codes* never leave the device, and the *list of services* does unless that switch is off. A future release could bundle a small icon set or proxy the lookup so neither does — both are deliberate follow-ups rather than accidents.
+
+`Vaultic/PrivacyInfo.xcprivacy` is the privacy manifest: `NSPrivacyTracking` false, nothing collected, and the two required-reason APIs the app actually uses (`UserDefaults` for its own preferences, file timestamps to list backups). The watch app has no manifest because it touches neither. The App Store Connect privacy answers should be checked against the icon lookup — see the note above.
 
 ### Where tokens actually live
 
@@ -76,12 +156,31 @@ It is stored in the Keychain under its own account, with the same protection as 
 
 Known gap: `restoreFromBackup` replaces the token list wholesale and does **not** route the replaced codes through the trash, so restoring a backup is still irreversible.
 
+### Counter-based codes
+
+Autheris generates two kinds of one-time password, and the difference is not cosmetic:
+
+- **Time-based (TOTP, RFC 6238)** — derived from the clock. What nearly every service uses. The code is replaced by the next one when its period runs out, and the card counts that period down.
+- **Counter-based (HOTP, RFC 4226)** — derived from a **counter the user moves**. The code does not expire; it stays valid until it is spent. The card shows the counter instead of a countdown and carries a **Next Code** button, and the context menu has the same action for the times the button is covered.
+
+Both are the same HMAC construction with a different counter, which is why they share one generator: `OTPGenerator.generateOTP` derives its counter from the clock and `generateHOTP` takes one. They are deliberately the same code path from the HMAC onwards (`OTPGenerator.generate`), so they cannot drift apart in the dynamic truncation or the padding — `VaulticTests/OTPGeneratorTests.swift` pins the seam.
+
+What `OTPKind` and `OTPCode.counter` are for:
+
+- The **counter is user state**, so it persists, syncs, travels in backups and QR exports, and crosses to the watch. A code that lost its counter would start generating time-based codes the service rejects, with nothing on screen looking wrong.
+- **Advancing is explicit, never automatic.** Copying a code does not spend it: a copy is not evidence the service accepted it, and a counter spent by accident is a code the user can no longer read off the screen to retype. The only paths that advance it are the card's button, its context menu, and the counter stepper in **Edit** (which exists to catch up a counter the service has moved past).
+- The counter is capped at `OTPCode.maximumCounter`, `Int64.max` — the largest value the CloudKit `counter` field carries back. `OTPAuthURLParser` and the import parsers clamp to it rather than trusting a number a stranger wrote into a QR code or a backup.
+- **The watch shows it and cannot move it.** The watch app is read-only by design and advancing is a write, so a counter-based page says which counter it is and that advancing happens on the iPhone.
+- **Sync of the counter is best effort.** Two devices that each spend a code before syncing produce two different counters and the newer `modifiedAt` wins, so one increment is lost; the service usually accepts a few counters ahead, and **Next Code** is there if it does not. This is the same last-write-wins rule the rest of sync uses, applied to a field where the "loser" is a spent code rather than an edit — worth knowing before reporting a code that "stopped working" on a second device.
+
+Imports: Aegis and andOTP HOTP entries are imported with their counters, and so are Google Authenticator's (its export has carried HOTP entries all along; the parser used to drop them silently). 2FAS HOTP entries are still skipped — see the note on `ExternalImportParser`.
+
 ### What iCloud Sync sends, and how
 
 Sync is opt-in and only ever uses the **private** CloudKit database, which is scoped to the signed-in iCloud account and is not readable by the developer.
 
 - `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written exclusively through `CKRecord.encryptedValues`, so CloudKit encrypts them end to end with keys it manages on the user's behalf. They never appear as readable fields and are not visible in the CloudKit dashboard. (`isPinned` is not a secret, but it is still a statement about which accounts matter to this user, so it is encrypted alongside the label rather than left readable on Apple's servers.)
-- Only `modifiedAt`, `deleted`, `fingerprint`, `algorithm`, `digits` and `period` are plain fields. None of them reveal a secret: `fingerprint` is a SHA-256 over the record content (including the token id, so identical secrets on two records never collide) and is a one-way hash of a high-entropy base32 secret.
+- Only `modifiedAt`, `deleted`, `fingerprint`, `algorithm`, `digits`, `period`, `kind` and `counter` are plain fields. None of them reveal a secret: `kind` says whether the code is time- or counter-based and `counter` how many times it has been used, neither of which describes the account; `fingerprint` is a SHA-256 over the record content (including the token id, so identical secrets on two records never collide) and is a one-way hash of a high-entropy base32 secret.
 - Deleting a token replaces its record with a **tombstone** whose encrypted fields are explicitly cleared, so the secret does not linger in iCloud after a delete.
 
 ## iCloud Sync
@@ -116,7 +215,7 @@ The container identifier in `Vaultic.entitlements` is tied to the `com.eddington
 Records use the record type **`AutherisToken`** in the private database. In development, CloudKit creates the schema implicitly on the first successful save — no manual setup is needed to run from Xcode. Before shipping, or if `/usr/bin/log` shows `did not find record type: AutherisToken`:
 
 1. Open the CloudKit Console for the container.
-2. Confirm `AutherisToken` exists with fields `modifiedAt` (Date), `deleted` (Int64), `fingerprint` (String), `algorithm` (String), `digits` (Int64), `period` (Int64), plus the encrypted fields `label`, `account`, `secret`, `timerRingHex`, `isPinned`. In the app these names live in exactly one place — the nested `CloudKitTokenSyncService.Field` enum, whose `plain` / `encrypted` / `all` lists are the authoritative form of this table. Compare the Console against *that*, not against a copy of this README: a CloudKit field name is a string, so a typo silently creates a new field instead of failing to compile, and a field that should be encrypted but is written plainly ends up readable on Apple's servers.
+2. Confirm `AutherisToken` exists with fields `modifiedAt` (Date), `deleted` (Int64), `fingerprint` (String), `algorithm` (String), `digits` (Int64), `period` (Int64), `kind` (String), `counter` (Int64), plus the encrypted fields `label`, `account`, `secret`, `timerRingHex`, `isPinned`. In the app these names live in exactly one place — the nested `CloudKitTokenSyncService.Field` enum, whose `plain` / `encrypted` / `all` lists are the authoritative form of this table. Compare the Console against *that*, not against a copy of this README: a CloudKit field name is a string, so a typo silently creates a new field instead of failing to compile, and a field that should be encrypted but is written plainly ends up readable on Apple's servers.
 
 **Every encrypted field holds a String.** `label`, `account`, `secret`, `timerRingHex` and `isPinned` are all String-typed in the Console — including `isPinned`, which stores `"1"` / `"0"` (see `EncryptedBool`). Give the new field the same type the Console already shows for `timerRingHex` rather than a numeric one for the boolean: that is the only encrypted shape exercised against the production container, and CloudKit fixes a field's type once it exists, so a wrong choice can only be undone by picking a different field name.
 3. **Add a Queryable index on `recordName`** — see below. This is not optional and is the step most likely to be missed.
@@ -126,13 +225,14 @@ A first sync against a container that has never stored a record is expected to f
 
 #### Upgrading a container that already holds records
 
-Adding `isPinned` changes the `AutherisToken` schema, so an existing container needs the new encrypted field deployed (step 2 above covers what to check). Three consequences worth expecting, none of which needs code changes:
+Every release that adds a field changes the `AutherisToken` schema, so an existing container needs the new field deployed (step 2 above covers what to check). Four consequences worth expecting, none of which needs code changes:
 
-- **The field is absent from existing records, which reads as `false`.** `CloudKitTokenSyncService.decode` treats a missing `isPinned` as unpinned, and `OTPCode`'s hand-written decoder does the same for a local token persisted before pinning existed. Nothing has to be back-filled.
-- **The value is a String (`"1"` / `"0"`), not a number.** `EncryptedBool` owns both directions and reads leniently, so an integer-typed field left over from a development experiment still reads correctly rather than reporting every pin as `false`.
-- **`SyncFingerprint`'s canonical version moved from `v1` to `v2`**, because a fingerprint has to see every field the user can change — otherwise toggling a pin would look like "no change" and never sync. Every token's fingerprint therefore differs from the `v1` value its iCloud record still carries, so the first sync after upgrading re-exchanges each record once and settles. That is expected and one-time.
+- **A field that is absent from existing records reads as its default.** `CloudKitTokenSyncService.decode` treats a missing `isPinned` as unpinned, a missing `kind` as time-based and a missing `counter` as 0, and `OTPCode`'s hand-written decoder does exactly the same for a local token persisted before either existed. Nothing has to be back-filled.
+- **The value is a String (`"1"` / `"0"`), not a number**, for every *encrypted* field — `EncryptedBool` owns both directions and reads leniently, so an integer-typed field left over from a development experiment still reads correctly rather than reporting every pin as `false`. The plain fields keep the types the table above names: `kind` is a String holding `TOTP` / `HOTP`, and `counter` an Int64, which is why `OTPCode.maximumCounter` is `Int64.max` — a larger counter would be written as one number and read back as another.
+- **`SyncFingerprint`'s canonical version moves whenever a field joins it** — `v1` → `v2` when `isPinned` arrived, → `v3` when `kind` and `counter` did, because a fingerprint has to see every field the user can change. Otherwise toggling a pin, or spending a code, would look like "no change" and never sync. Every token's fingerprint therefore differs from the value its iCloud record still carries, so the first sync after upgrading re-exchanges each record once and settles. That is expected and one-time. **The counter is the case where this is not bookkeeping:** a fingerprint that ignored it would leave the device the user is *not* holding generating the code they just spent.
+- **A counter-based token on the watch needs the watch app updated too.** `WatchTokenPayload.version` moved from 1 to 2 for this reason: a watch still on 1 refuses the payload rather than decoding a counter-based token as a time- or counter-based one it cannot honour. It keeps showing the list it already had until its own app updates, which is a watch that is briefly out of date rather than one showing codes that cannot work.
 
-If `isPinned` already exists in your development container with the wrong type, delete the field and let the next save recreate it — CloudKit will not change a field's type in place.
+If a new field already exists in your development container with the wrong type, delete it and let the next save recreate it — CloudKit will not change a field's type in place.
 
 #### The `recordName` index is required
 
@@ -157,6 +257,8 @@ The current app never reads or migrates it — the merge engine only ever sees `
 ## Tests
 
 `VaulticTests` (XCTest) covers the logic that is easy to get wrong and cheap to assert: the iCloud conflict-resolution rules, the tombstone and Recently-Deleted bookkeeping, pinned-first ordering and drag-to-reorder, `OTPCode`'s backward-compatible decoding, the mirrored preferences, the privacy-shield rules, the phone↔watch payload contract, and `BackupCrypto`. Each of those rule sets lives in a pure, dependency-free type — `SyncMergeEngine`, `SyncTombstoneStore`, `TrashBin`, `TokenOrdering`, `AppPreferences`, `PrivacyShield`, `WatchTokenPayload` — precisely so it can be asserted without a simulator.
+
+`VaulticTests/OTPGeneratorTests.swift` checks both code kinds against the published vectors rather than against themselves: RFC 6238 Appendix B for the time-based ones and RFC 4226 Appendix D for the counter-based ones, plus a case that pins the *seam* between them — the time-based code for the instant in counter N's window must equal the counter-based code for N, for every algorithm, digit count and period. `VaulticTests/OTPAuthURLParserTests.swift` holds the parser, including the host cases that used to be wrong: an `otpauth://hotp/` URL is counter-based and a `counter` on an `otpauth://totp/` one is ignored, and a counter larger than the iCloud field can hold is clamped rather than truncated.
 
 `VaulticTests/WatchTokenPayloadTests.swift` is the exception worth naming: the phone app and the watch app are separate binaries that can be at **different versions**, so the cases that matter there are the ones where they disagree — a payload from a build that knows a newer format, a list arriving out of order, an empty list that has to mean "you have no codes" rather than "nothing has arrived".
 
@@ -502,8 +604,8 @@ An application context is capped in size and the system **rejects an oversized o
 
 | Path | What it is |
 | --- | --- |
-| `Shared/` | One implementation of the OTP core, compiled into **both** targets: `OTPCode`, `OTPGenerator`, `OTPAlgorithm`, `ColorHex`, `KeychainStore`, and `WatchTokenPayload`. A `PBXFileSystemSynchronizedRootGroup` listed in each target's `fileSystemSynchronizedGroups`, so a file added here joins both builds. |
-| `VaulticWatch/` | The watch app: `AutherisWatchApp` (the scene), `WatchSessionModel` (the `WCSession` receiver), `WatchRootView` (paging and the empty states), `WatchCodePageView` (one code and its countdown). |
+| `Shared/` | One implementation of the OTP core, compiled into **both** targets: `OTPCode`, `OTPGenerator`, `OTPAlgorithm`, `OTPKind`, `ColorHex`, `KeychainStore`, and `WatchTokenPayload`. A `PBXFileSystemSynchronizedRootGroup` listed in each target's `fileSystemSynchronizedGroups`, so a file added here joins both builds. |
+| `VaulticWatch/` | The watch app: `AutherisWatchApp` (the scene), `WatchSessionModel` (the `WCSession` receiver), `WatchRootView` (paging and the empty states), `WatchCodePageView` (one code, its countdown, or its counter). |
 | `Vaultic/Sync/WatchTokenRelay.swift` | The iPhone half. A `WatchTokenRelayService` protocol with a real `WatchConnectivity` implementation on iOS and an inert one elsewhere, so `OTPDataStore` — which is built on every platform — needs no `#if` at the call site. `OTPDataStore.saveCodes()` pushes from exactly one place. |
 
 The watch does **not** reorder anything. Pinned-first ordering and the user's manual arrangement are the phone's (`TokenOrdering`), and the list arrives already sorted, so the two devices cannot disagree about what order the codes are in.
@@ -526,7 +628,8 @@ The consequence worth being explicit about: **the codes are on the watch**, beca
 ### Deliberate differences from the phone
 
 - **The countdown ring uses the token's own colour or the accent.** The phone additionally falls back to an issuer brand colour from `IssuerBranding` — a type that also carries logo fetching and its caches, none of which belongs on a watch. A token with no custom colour is the accent on the watch and a brand colour on the phone.
-- **Codes are generated on the watch, from the tick that draws them.** `WatchCodePageView` drives a `TimelineView` anchored at the epoch, so a tick lands exactly on the TOTP period boundary; the code and the countdown beside it are for the same instant and cannot disagree by a frame. The "about to expire" red matches `HomeView`'s rule (five seconds, or a sixth of a longer period) so both devices turn red together.
+- **Codes are generated on the watch, from the tick that draws them.** `WatchCodePageView` drives a `TimelineView` anchored at the epoch, so a tick lands exactly on the TOTP period boundary; the code and the countdown beside it are for the same instant and cannot disagree by a frame. The "about to expire" red matches `HomeView`'s rule (five seconds, or a sixth of a longer period) so both devices turn red together. A counter-based token gets no timeline at all — there is nothing to tick towards, and a once-a-second wake for a page that cannot change is battery on a watch — so it is redrawn when the phone sends a new payload.
+- **A counter-based code can be read here but not advanced.** Advancing is a write, and the watch has no writes by design, so the page shows which counter it is and says to advance it on the iPhone. A stale counter is therefore possible on the watch until the phone relays the new one, which it does on the edit within seconds.
 - **There is no app lock, no privacy blur and no screen-capture protection.** A watch screen is off unless the wrist is turned, which is a stronger control than the phone's, and the watch app has no UI that could set such a preference.
 
 ### Project configuration

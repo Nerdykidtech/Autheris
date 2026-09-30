@@ -18,3 +18,8 @@ xcuserdata/
 
 # Tool state written by the `asc` CLI (release checkpoints); never source.
 .asc/
+
+# Scratch written by agent tooling next to its own config, one directory per command.
+# Not source and never something to `git add` — but it lands inside the repository, so
+# without this rule every `git status` carries twenty lines of it.
+.reasonix/tasks/

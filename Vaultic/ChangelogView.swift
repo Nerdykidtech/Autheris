@@ -55,6 +55,20 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.6",
+            version: "2.6",
+            date: "September 2026",
+            changes: [
+                "Autheris can now generate counter-based codes as well as the time-based ones it has always used. Some services hand you a counter instead of a code that changes on a timer: that code stays the same until you ask for the next one, and its card shows which counter it is on, with a Next button beside it.",
+                "Scanning one of those codes used to add it as a time-based one, so its codes were always rejected and nothing on screen explained why. It now adds the right kind of code.",
+                "Importing got the same fix. Counter-based accounts in a Google Authenticator export used to be skipped without a word, and Aegis and andOTP backups now bring their counters across too.",
+                "The Apple Watch shows counter-based codes as well, with the counter where the countdown would be. The watch stays read-only, so you advance the counter on your iPhone.",
+                "Settings → Privacy has a new switch, Fetch service logos. It controls the one request Autheris can make over the network — looking a service's icon up by name at logo.dev, which tells that logo service which brands you have. With it off, nothing is looked up and every service falls back to its letter.",
+                "Autheris now speaks Spanish, French, German, Japanese, Simplified Chinese and Brazilian Portuguese — the same six languages the App Store listing has been translated into — including the camera and Face ID permission prompts and the Apple Watch app. If your device is set to one of them, the app opens in it.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.5",
             version: "2.5",
             date: "September 2026",

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Autheris collects nothing. There is no account, no analytics and no server of
+	  ours: the tokens live in the Keychain on the device and the only network call
+	  the app makes is the optional issuer-icon lookup (see the "Fetch issuer logos"
+	  switch in Settings and the note in README.md).
+
+	  The list below is therefore the one thing Apple actually requires of a
+	  first-party app: a declaration of every "required reason" API it touches.
+	  Both of the entries are real and are visible in the sources —
+
+	  - UserDefaults (NSPrivacyAccessedAPICategoryUserDefaults, CA92.1): the app's own
+	    preferences — the privacy switches, the accent theme, the sync flag, and the
+	    `AppPreferences` blob `PreferencesStore` mirrors into the Keychain so they
+	    survive a reinstall. The reason code CA92.1 is the one for "accessing
+	    information from the same app, per its documentation". Nothing here is shared
+	    with another app, which is what the code asserts.
+
+	  - File timestamps (NSPrivacyAccessedAPICategoryFileTimestamp, C617.1): the
+	    backup list reads each backup file's creation date to show and sort it
+	    (`BackupView` and `OTPDataStore.listBackups`). Those files are the app's own,
+	    inside its own container, which is the C617.1 reason.
+
+	  If an API is added later — disk space, system boot time, active keyboards — it
+	  needs an entry here and a reason code that matches how it is used. Apple's list
+	  of codes is at https://developer.apple.com/documentation/bundleresources/privacy_manifest_files/describing_use_of_required_reason_api
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

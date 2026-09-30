@@ -17,12 +17,15 @@ final class WatchTokenPayloadTests: XCTestCase {
         algorithm: OTPAlgorithm = .sha1,
         digits: Int = 6,
         period: Int = 30,
+        kind: OTPKind = .totp,
+        counter: UInt64 = 0,
         timerRingHex: String? = nil,
         isPinned: Bool = false,
         modifiedAt: Date = Date()
     ) -> OTPCode {
         OTPCode(label: label, account: account, secret: secret,
                 algorithm: algorithm, digits: digits, period: period,
+                kind: kind, counter: counter,
                 timerRingHex: timerRingHex, isPinned: isPinned, modifiedAt: modifiedAt)
     }
 
@@ -34,6 +37,10 @@ final class WatchTokenPayloadTests: XCTestCase {
             token(label: "AWS", account: "root", secret: "GEZDGNBVGY3TQOJQ",
                   algorithm: .sha256, digits: 8, period: 60,
                   timerRingHex: "FF9900", isPinned: true),
+            // A counter-based code has to cross the wire with its counter intact:
+            // the same counter is what makes the watch's code and the phone's the
+            // same code.
+            token(label: "Counter", secret: "GEZDGNBVGY3TQOJQ", kind: .hotp, counter: 12),
         ]
 
         let blob = try WatchTokenPayload.encode(tokens, sentAt: Date(timeIntervalSince1970: 1_700_000_000))
@@ -41,6 +48,20 @@ final class WatchTokenPayloadTests: XCTestCase {
 
         XCTAssertEqual(decoded.tokens, tokens)
         XCTAssertEqual(decoded.sentAt, Date(timeIntervalSince1970: 1_700_000_000))
+        XCTAssertEqual(decoded.tokens.last?.kind, .hotp)
+        XCTAssertEqual(decoded.tokens.last?.counter, 12)
+    }
+
+    /// The version is not decoration: it is what stops an older watch from rendering
+    /// a payload it cannot honour.
+    ///
+    /// A counter-based token decodes happily in a build that has never heard of one —
+    /// `OTPCode`'s decoder tolerates the missing keys and defaults to time-based — so
+    /// without a version bump that watch would show a plausible code that the service
+    /// rejects. Ignoring the whole payload instead leaves it showing the list it
+    /// already had, which is out of date rather than wrong.
+    func testThePayloadVersionIsWhatMakesAnOlderWatchRefuseTheCounter() {
+        XCTAssertEqual(WatchTokenPayload.version, 2)
     }
 
     /// The watch shows the codes in the order it receives them and has no

@@ -69,12 +69,15 @@ nonisolated enum SyncFingerprint {
     /// Version prefix so the canonical form can change without silently making
     /// old and new fingerprints incomparable.
     ///
-    /// Bumped to `v2` when `isPinned` joined the field list. Every token's
-    /// fingerprint therefore differs from the `v1` value its iCloud record still
-    /// carries, so the first sync after upgrading re-exchanges each record once
-    /// and settles. That is expected and one-time; it is the price of a fingerprint
-    /// that can see every field the user can change.
-    private static let version = "v2"
+    /// Bumped to `v2` when `isPinned` joined the field list, and to `v3` when
+    /// `kind` and `counter` did. Every token's fingerprint therefore differs from
+    /// the value its iCloud record still carries, so the first sync after upgrading
+    /// re-exchanges each record once and settles. That is expected and one-time; it
+    /// is the price of a fingerprint that can see every field the user can change —
+    /// and for the counter it is not just bookkeeping: a fingerprint that ignored it
+    /// would make spending a code look like "no change", so the device the user was
+    /// *not* holding would keep generating the spent one.
+    private static let version = "v3"
 
     static func forToken(_ token: OTPCode) -> String {
         let fields = [
@@ -85,6 +88,8 @@ nonisolated enum SyncFingerprint {
             token.algorithm.rawValue,
             String(token.digits),
             String(token.period),
+            token.kind.rawValue,
+            String(token.counter),
             token.timerRingHex ?? "",
             token.isPinned ? "1" : "0"
         ]

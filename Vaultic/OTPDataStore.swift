@@ -301,6 +301,30 @@ final class OTPDataStore: ObservableObject {
         scheduleSync()
     }
 
+    /// Spends a counter-based code and generates the next one.
+    ///
+    /// This is the whole life cycle of an HOTP code: the counter is the state, and
+    /// moving it forward is the equivalent of waiting out a period. Deliberately
+    /// *only* reachable from a control the user presses, never from copying the
+    /// code — a copy is not evidence that the service accepted it, and a counter
+    /// spent by accident is a code the user can no longer read off the screen to
+    /// retype. Services usually accept a few counters ahead, so a mistake costs the
+    /// code on screen rather than the account, but it is still a mistake.
+    ///
+    /// Syncs like any other edit: the counter is a property of the code, and a
+    /// phone and a watch that disagree about it disagree about which code works.
+    func advanceCounter(for code: OTPCode) {
+        guard let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
+        // A time-based code has no counter to spend, and advancing one would be a
+        // no-op that still wrote a new `modifiedAt` — enough to make two devices
+        // re-exchange a token for nothing.
+        guard codes[index].kind == .hotp else { return }
+
+        codes[index] = codes[index].edited(counter: codes[index].counter + 1)
+        saveCodes()
+        scheduleSync()
+    }
+
     /// Applies a drag-to-reorder from the token list.
     ///
     /// `offsets` and `destination` index `orderedCodes`, which is what the `List`

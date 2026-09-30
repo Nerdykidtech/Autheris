@@ -34,7 +34,18 @@ struct IssuerBranding: Equatable {
 // MARK: - Logo Cache Manager
 class LogoCacheManager {
     static let shared = LogoCacheManager()
-    
+
+    /// Whether the user allows the issuer-logo lookup at all.
+    ///
+    /// Read straight from `UserDefaults` rather than through `@AppStorage`, because
+    /// the callers are not views. `true` when the key has never been written, which
+    /// is the default the Settings switch and `AppPreferences` both declare — a
+    /// plain `bool(forKey:)` would read as `false` and silently turn the feature off
+    /// for everyone who has never opened Settings.
+    static var isFetchingEnabled: Bool {
+        UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
+    }
+
     private let fileManager = FileManager.default
     private lazy var cacheDirectory: URL = {
         let urls = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
@@ -80,6 +91,17 @@ class LogoCacheManager {
     }
     
     func fetchAndCacheLogo(for branding: IssuerBranding, completion: @escaping (PlatformImage?) -> Void) {
+        // Nothing leaves the device unless the user has left this on. The lookup sends
+        // the *issuer's name* to logo.dev — not a secret, but a statement about which
+        // services this person has accounts with, which is the kind of thing a
+        // privacy-first app should ask about rather than decide. The switch that
+        // writes this key is in Settings; icons already in the cache keep showing
+        // either way, because this only stops the request.
+        guard Self.isFetchingEnabled else {
+            completion(nil)
+            return
+        }
+
         guard let token = logoDevPublishableKey, token.hasPrefix("pk_") else {
             // No API key, don't fetch
             completion(nil)

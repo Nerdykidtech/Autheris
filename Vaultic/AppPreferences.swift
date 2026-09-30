@@ -15,6 +15,15 @@ struct AppPreferences: Codable, Equatable {
     var accentTheme: String
     var enableAppLock: Bool
     var isICloudSyncEnabled: Bool
+    var fetchIssuerLogos: Bool
+
+    /// The `@AppStorage` key the Settings switch and the logo lookup share, so the
+    /// one that writes and the one that reads cannot drift apart.
+    ///
+    /// `nonisolated` so it can be used in an `@AppStorage` attribute, which is
+    /// evaluated outside an actor context — the same reason
+    /// `OTPDataStore.syncEnabledKey` is.
+    nonisolated static let fetchIssuerLogosKey = "fetchIssuerLogos"
 
     init(hasCompletedOnboarding: Bool,
          enablePrivacyBlur: Bool,
@@ -22,7 +31,8 @@ struct AppPreferences: Codable, Equatable {
          hideCodesWhenScreenCaptured: Bool,
          accentTheme: String,
          enableAppLock: Bool,
-         isICloudSyncEnabled: Bool) {
+         isICloudSyncEnabled: Bool,
+         fetchIssuerLogos: Bool) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.enablePrivacyBlur = enablePrivacyBlur
         self.hideCodesInAppSwitcher = hideCodesInAppSwitcher
@@ -30,6 +40,7 @@ struct AppPreferences: Codable, Equatable {
         self.accentTheme = accentTheme
         self.enableAppLock = enableAppLock
         self.isICloudSyncEnabled = isICloudSyncEnabled
+        self.fetchIssuerLogos = fetchIssuerLogos
     }
 
     enum CodingKeys: String, CodingKey {
@@ -40,6 +51,7 @@ struct AppPreferences: Codable, Equatable {
         case accentTheme
         case enableAppLock
         case isICloudSyncEnabled
+        case fetchIssuerLogos
     }
 
     /// Every key is optional on the way in.
@@ -62,5 +74,9 @@ struct AppPreferences: Codable, Equatable {
         accentTheme = try container.decodeIfPresent(String.self, forKey: .accentTheme) ?? ""
         enableAppLock = try container.decodeIfPresent(Bool.self, forKey: .enableAppLock) ?? false
         isICloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .isICloudSyncEnabled) ?? false
+        // On by default, because that is what the app has always done and what most
+        // people expect an authenticator's list to look like. The switch is there for
+        // the ones who would rather the lookup never happened; see `SettingsView`.
+        fetchIssuerLogos = try container.decodeIfPresent(Bool.self, forKey: .fetchIssuerLogos) ?? true
     }
 }

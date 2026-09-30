@@ -66,6 +66,7 @@ enum GoogleMigrationParser {
         var algorithm: OTPAlgorithm = .sha1
         var digits: Int = 6
         var type: Int = 2 // TOTP
+        var counter: UInt64 = 0
         
         var offset = 0
         let bytes = [UInt8](data)
@@ -101,8 +102,9 @@ enum GoogleMigrationParser {
                     type = v
                 } else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
             case 7: // counter (varint/int64)
-                if wireType == 0 { _ = readVarint(bytes, offset: &offset) }
-                else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
+                if wireType == 0, let v = readVarint(bytes, offset: &offset) {
+                    counter = UInt64(max(0, v))
+                } else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
             default:
                 skipField(bytes, tag: tag, wireType: wireType, offset: &offset)
             }
@@ -129,16 +131,27 @@ enum GoogleMigrationParser {
             account = ""
         }
         
-        // We only support TOTP in the app for now; HOTP could be added later
-        guard type == 2 else { return nil }
-        
+        // HOTP entries are imported rather than dropped. They used to be skipped
+        // outright — this guard read `type == 2` — which meant a Google
+        // Authenticator user with a counter-based account silently lost it on
+        // import, with nothing on screen to say so.
+        //
+        // Anything that is not explicitly HOTP is time-based: 2 is TOTP, and 0
+        // (the protobuf's "unspecified") is what an unset field decodes to, which
+        // for a field Google itself always writes means the TOTP default.
+        let kind: OTPKind = (type == 1) ? .hotp : .totp
+
         return OTPCode(
             label: label,
             account: account,
             secret: secretBase32,
             algorithm: algorithm,
             digits: digits,
-            period: 30
+            period: 30,
+            kind: kind,
+            // Only meaningful for HOTP; a TOTP entry carries no counter and
+            // `OTPCode` ignores it.
+            counter: kind == .hotp ? counter : 0
         )
     }
     
