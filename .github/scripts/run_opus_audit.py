@@ -81,9 +81,16 @@ def main():
         ]
     )
 
-    report = response.content[0].text
+    # Safely iterate through all content blocks to ignore ThinkingBlocks and gather TextBlocks
+    report_text = "".join(
+        block.text for block in response.content if getattr(block, "type", None) == "text"
+    )
+
+    if not report_text.strip():
+        report_text = "No security or privacy weaknesses identified."
+
     print("Publishing findings to GitHub Security Advisories...")
-    create_private_advisory(report)
+    create_private_advisory(report_text)
 
 if __name__ == "__main__":
     main()
