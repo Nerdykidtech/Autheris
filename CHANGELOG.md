@@ -15,6 +15,13 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [Unreleased]
+
+### Security
+
+- Links that add codes — `autheris://import`, `otpauth://` and `otpauth-migration://` — now always show what they would add and wait for you to tap Import. They used to add codes the moment they arrived, and while App Lock was on, so another app or a web page could quietly plant entries in your list. A link that arrives while Autheris is locked now waits until you unlock it. ([GHSA-75h3-q43q-9338](https://github.com/Nerdykidtech/Autheris/security/advisories/GHSA-75h3-q43q-9338))
+- Thanks to [@NotAFlightRisk](https://github.com/NotAFlightRisk) for finding and responsibly reporting this.
+
 ## [2.7] — October 2026
 
 - This release changes how Autheris looks in the App Store, not how it works — the listing now carries a new set of screenshots for iPhone, iPad, Mac and Apple Watch.

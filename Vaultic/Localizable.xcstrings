@@ -675,6 +675,46 @@
         }
       }
     },
+    "A link is asking to add these codes to Autheris. Only import them if you expected this.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Link möchte diese Codes zu Autheris hinzufügen. Importieren Sie sie nur, wenn Sie das erwartet haben."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un enlace quiere añadir estos códigos a Autheris. Impórtalos solo si lo esperabas."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lien demande d'ajouter ces codes à Autheris. Ne les importez que si vous vous y attendiez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リンクがこれらのコードを Autheris に追加しようとしています。心当たりがある場合のみ読み込んでください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um link quer adicionar estes códigos ao Autheris. Importe-os apenas se você estava esperando por isso."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有链接请求将这些验证码添加到 Autheris。仅在你预期如此时才导入。"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "de-DE": {

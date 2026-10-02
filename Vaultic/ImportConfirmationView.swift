@@ -1,17 +1,14 @@
 import SwiftUI
 
 struct ImportConfirmationView: View {
-    let data: Data
+    /// Codes that arrived in a link, not yet in the vault. See `IncomingLink`.
+    let tokens: [OTPCode]
     @ObservedObject var dataStore: OTPDataStore
     @Binding var isPresented: Bool
     @State private var importResult: ImportResult?
-    @State private var isImporting = true
-    @State private var debugInfo: String = ""
-    @State private var hasStartedImport = false
     
     enum ImportResult {
         case success(total: Int, new: Int, duplicates: Int)
-        case failure(String)
         case allDuplicates(Int)
     }
     
@@ -32,7 +29,7 @@ struct ImportConfirmationView: View {
                     if let result = importResult {
                         resultView(for: result)
                     } else {
-                        importingView
+                        confirmationView
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -56,47 +53,18 @@ struct ImportConfirmationView: View {
             .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: -5)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .task {
-            guard !hasStartedImport else { return }
-            hasStartedImport = true
-            #if DEBUG
-            print("ImportConfirmationView appeared with data size: \(data.count) bytes")
-            #endif
-            isImporting = true
-            processImport()
-        }
         .preferredColorScheme(.light)
     }
     
     // MARK: - Subviews
     
-    private var importingView: some View {
-        VStack(spacing: 24) {
-            ProgressView()
-                .scaleEffect(1.3)
-                .tint(.accentColor)
-            
-            VStack(spacing: 8) {
-                Text("Importing tokens...")
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
-                Text(debugInfo)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-        }
-        .padding(.vertical, 40)
-    }
-    
+    /// Shown first, every time. A link can come from another app or a web page,
+    /// so the user sees exactly what it would add before anything is written.
     private var confirmationView: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             // Icon
             Image(systemName: "square.and.arrow.down")
-                .font(.system(size: 52))
+                .font(.system(size: 44))
                 .foregroundColor(.accentColor)
                 .symbolRenderingMode(.hierarchical)
             
@@ -107,19 +75,38 @@ struct ImportConfirmationView: View {
                 .foregroundColor(.primary)
             
             // Description
-            Text("You've scanned a QR code with authentication tokens. Would you like to import them?")
+            Text("A link is asking to add these codes to Autheris. Only import them if you expected this.")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
+
+            // What would be added, verbatim
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(tokens) { token in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(verbatim: token.label)
+                                .font(.callout.weight(.semibold))
+                                .foregroundColor(.primary)
+                            if !token.account.isEmpty {
+                                Text(verbatim: token.account)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+            }
+            .frame(maxHeight: 120)
             
             // Buttons
             VStack(spacing: 12) {
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isImporting = true
-                        processImport()
+                        importTokens()
                     }
                 }) {
                     Text("Import")
@@ -150,7 +137,6 @@ struct ImportConfirmationView: View {
                 }
             }
         }
-        .padding(.vertical, 40)
     }
     
     private func resultView(for result: ImportResult) -> some View {
@@ -161,8 +147,6 @@ struct ImportConfirmationView: View {
                     successView(total: total, new: new, duplicates: duplicates)
                 case .allDuplicates(let count):
                     duplicatesView(count: count)
-                case .failure(let message):
-                    failureView(message: message)
                 }
             }
         }
@@ -279,65 +263,6 @@ struct ImportConfirmationView: View {
         }
     }
     
-    private func failureView(message: String) -> some View {
-        VStack(spacing: 20) {
-            // Error icon
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 52))
-                .foregroundColor(.red)
-                .symbolRenderingMode(.hierarchical)
-            
-            // Title
-            Text("Import Failed")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            // Error message
-            Text(message)
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            // Buttons
-            VStack(spacing: 12) {
-                Button(action: {
-                    importResult = nil
-                    isImporting = true
-                    processImport()
-                }) {
-                    Text("Try Again")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            Capsule()
-                                .fill(Color.accentColor)
-                        )
-                }
-                
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        isPresented = false
-                    }
-                }) {
-                    Text("Cancel")
-                        .font(.headline)
-                        .foregroundColor(.accentColor)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            Capsule()
-                                .stroke(Color.accentColor, lineWidth: 2)
-                        )
-                }
-            }
-            .padding(.top, 8)
-        }
-    }
-    
     private func statRow(label: LocalizedStringKey, value: LocalizedStringKey, color: Color, icon: String? = nil) -> some View {
         HStack(spacing: 8) {
             if let icon = icon {
@@ -360,158 +285,33 @@ struct ImportConfirmationView: View {
     
     // MARK: - Import Logic
     
-    private func processImport() {
-        #if DEBUG
-        print("Starting import process...")
-        debugInfo = "Parsing QR code data..."
-        #endif
+    /// The only place a link's codes reach the vault, and only from the Import
+    /// button above.
+    private func importTokens() {
+        let newTokens = IncomingLink.newTokens(tokens, existing: dataStore.codes)
 
-        // Snapshot the existing tokens while still on the main actor. The parsing
-        // below runs on a global queue, and store state is main-actor isolated, so
-        // it cannot be read from there. The import sheet is modal, so nothing can
-        // change the store while the parse is in flight.
-        let existingTokens = dataStore.codes
-        
-        DispatchQueue.global(qos: .userInitiated).async {
-            do {
-                // Try to decode as ExportData
-                if let exportData = try? JSONDecoder().decode(ExportData.self, from: data) {
-                    #if DEBUG
-                    print("Successfully parsed ExportData with \(exportData.tokens.count) tokens")
-                    #endif
-                    
-                    DispatchQueue.main.async {
-                        #if DEBUG
-                        self.debugInfo = "Found \(exportData.tokens.count) tokens. Checking for duplicates..."
-                        #endif
-                    }
-                    
-                    // Check for duplicates
-                    #if DEBUG
-                    print("Existing tokens count: \(existingTokens.count)")
-                    #endif
-                    
-                    let newTokens = exportData.tokens.filter { newToken in
-                        // Check if token already exists by label AND account
-                        let isDuplicate = existingTokens.contains { existingToken in
-                            existingToken.label == newToken.label && existingToken.account == newToken.account
-                        }
-                        
-                        return !isDuplicate
-                    }
-                    
-                    #if DEBUG
-                    print("Found \(newTokens.count) new tokens out of \(exportData.tokens.count) total")
-                    #endif
-                    
-                    DispatchQueue.main.async {
-                        self.isImporting = false
-                        
-                        if newTokens.isEmpty {
-                            self.importResult = .allDuplicates(exportData.tokens.count)
-                        } else {
-                            // Add new tokens
-                            #if DEBUG
-                            print("Adding \(newTokens.count) new tokens to data store")
-                            #endif
-                            for token in newTokens {
-                                #if DEBUG
-                                print("Adding token: \(token.label) - \(token.account)")
-                                #endif
-                                self.dataStore.addCode(token)
-                            }
-                            
-                            // Force save to ensure changes are persisted
-                            self.dataStore.saveCodes()
-                            
-                            // Post notification to refresh UI
-                            NotificationCenter.default.post(
-                                name: Notification.Name("TokensImported"),
-                                object: newTokens.count
-                            )
-                            
-                            self.importResult = .success(
-                                total: exportData.tokens.count,
-                                new: newTokens.count,
-                                duplicates: exportData.tokens.count - newTokens.count
-                            )
-                        }
-                    }
-                } else {
-                    // Try old format (plain array of OTPCode)
-                    let importedCodes = try JSONDecoder().decode([OTPCode].self, from: data)
-                    #if DEBUG
-                    print("Successfully parsed as plain array with \(importedCodes.count) tokens")
-                    #endif
-                    
-                    DispatchQueue.main.async {
-                        #if DEBUG
-                        self.debugInfo = "Found \(importedCodes.count) tokens. Checking for duplicates..."
-                        #endif
-                    }
-                    
-                    // Check for duplicates
-                    #if DEBUG
-                    print("Existing tokens count: \(existingTokens.count)")
-                    #endif
-                    
-                    let newTokens = importedCodes.filter { newToken in
-                        // Check if token already exists by label AND account
-                        let isDuplicate = existingTokens.contains { existingToken in
-                            existingToken.label == newToken.label && existingToken.account == newToken.account
-                        }
-                        
-                        return !isDuplicate
-                    }
-                    
-                    #if DEBUG
-                    print("Found \(newTokens.count) new tokens out of \(importedCodes.count) total")
-                    #endif
-                    
-                    DispatchQueue.main.async {
-                        self.isImporting = false
-                        
-                        if newTokens.isEmpty {
-                            self.importResult = .allDuplicates(importedCodes.count)
-                        } else {
-                            // Add new tokens
-                            #if DEBUG
-                            print("Adding \(newTokens.count) new tokens to data store")
-                            #endif
-                            for token in newTokens {
-                                #if DEBUG
-                                print("Adding token: \(token.label) - \(token.account)")
-                                #endif
-                                self.dataStore.addCode(token)
-                            }
-                            
-                            // Force save to ensure changes are persisted
-                            self.dataStore.saveCodes()
-                            
-                            // Post notification to refresh UI
-                            NotificationCenter.default.post(
-                                name: Notification.Name("TokensImported"),
-                                object: newTokens.count
-                            )
-                            
-                            self.importResult = .success(
-                                total: importedCodes.count,
-                                new: newTokens.count,
-                                duplicates: importedCodes.count - newTokens.count
-                            )
-                        }
-                    }
-                }
-            } catch {
-                #if DEBUG
-                print("Failed to parse import data: \(error)")
-                #endif
-                DispatchQueue.main.async {
-                    self.isImporting = false
-                    self.importResult = .failure(String(localized: "Could not parse the import data. The QR code may be corrupted or in an unsupported format."))
-                }
-            }
+        guard !newTokens.isEmpty else {
+            importResult = .allDuplicates(tokens.count)
+            return
         }
+
+        for token in newTokens {
+            dataStore.addCode(token)
+        }
+
+        // Force save to ensure changes are persisted
+        dataStore.saveCodes()
+
+        // Post notification to refresh UI
+        NotificationCenter.default.post(
+            name: Notification.Name("TokensImported"),
+            object: newTokens.count
+        )
+
+        importResult = .success(
+            total: tokens.count,
+            new: newTokens.count,
+            duplicates: tokens.count - newTokens.count
+        )
     }
 }
-

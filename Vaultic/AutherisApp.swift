@@ -25,7 +25,8 @@ struct AutherisApp: App {
     /// where capture can be detected instead.
     @StateObject private var captureExclusion = WindowCaptureExclusion()
     @State private var showingImportSheet = false
-    @State private var importData: Data?
+    /// Codes from an incoming link, waiting for the user to accept or reject them.
+    @State private var pendingImport: [OTPCode]?
     @State private var otpSetupResult: (title: String, body: String)?
     @State private var isAppActive = true
     @State private var isScreenCaptured = false
@@ -71,16 +72,19 @@ struct AutherisApp: App {
                         .opacity(shouldBlurContent ? 0.7 : 1)
                 }
                 
-                // Import sheet overlay - shows on top of everything
-                if showingImportSheet {
+                // Import sheet overlay - shows on top of everything, but only to
+                // someone who is past onboarding and App Lock. A link that
+                // arrives while the app is locked waits here until it is
+                // unlocked, rather than being offered on top of the lock screen.
+                if showingImportSheet && hasCompletedOnboarding && !appLock.isLocked {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .ignoresSafeArea()
                         .overlay(Color.black.opacity(0.25))
                         .transition(.opacity)
                     
-                    if let data = importData {
-                        ImportConfirmationView(data: data, dataStore: dataStore, isPresented: $showingImportSheet)
+                    if let tokens = pendingImport {
+                        ImportConfirmationView(tokens: tokens, dataStore: dataStore, isPresented: $showingImportSheet)
                             .transition(.scale.combined(with: .opacity))
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
@@ -133,18 +137,6 @@ struct AutherisApp: App {
                     hasCompletedOnboarding = true
                 }
 
-                // Check for pending import data
-                if let data = UserDefaults.standard.data(forKey: "pendingImportData") {
-                    #if DEBUG
-                    print("Found pending import data on app appear")
-                    #endif
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        importData = data
-                        showingImportSheet = true
-                        UserDefaults.standard.removeObject(forKey: "pendingImportData")
-                    }
-                }
-                
                 // Set up app state observers, then take an initial reading of the
                 // capture state in case the app launched into an active recording.
                 setupAppStateObservers()
@@ -152,16 +144,6 @@ struct AutherisApp: App {
 
                 // Apply the saved capture preference to the windows themselves.
                 captureExclusion.setExcluding(hideCodesWhenScreenCaptured)
-            }            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("AutherisImportData"))) { notification in
-                #if DEBUG
-                print("Received import data notification")
-                #endif
-                if let data = notification.object as? Data {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        importData = data
-                        showingImportSheet = true
-                    }
-                }
             }
             .onChange(of: isAppActive) { oldValue, newValue in
                 #if DEBUG
@@ -214,148 +196,25 @@ struct AutherisApp: App {
         #endif
     }
     
+    /// Every link Autheris is opened with lands here. Nothing is added to the
+    /// vault from this function: codes go to `ImportConfirmationView`, which
+    /// shows them only once the app is unlocked and adds them only on Import.
     private func handleIncomingURL(_ url: URL) {
         #if DEBUG
         // Redacted for the same reason as above: the payload is in the query.
         print("Handling incoming URL: \(url.scheme ?? "?")://\(url.host ?? "")")
         #endif
 
-        if url.scheme?.lowercased() == "otpauth" {
-            handleOTPAuthSetup(url)
-            return
-        }
-
-        if url.scheme?.lowercased() == "otpauth-migration" {
-            handleMigrationSetup(url)
-            return
-        }
-
-        guard url.scheme == "autheris" && url.host == "import" else {
+        switch IncomingLink.parse(url) {
+        case .tokens(let tokens):
+            pendingImport = tokens
+            showingImportSheet = true
+        case .failure(let title, let message):
+            otpSetupResult = (title, message)
+        case nil:
             #if DEBUG
-            print("Not an autheris import URL")
+            print("Not a URL Autheris handles")
             #endif
-            return
-        }
-        
-        #if DEBUG
-        print("Processing autheris import URL...")
-        #endif
-        
-        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-           let queryItems = components.queryItems,
-           let dataString = queryItems.first(where: { $0.name == "data" })?.value {
-            
-            #if DEBUG
-            print("Found data string in URL, length: \(dataString.count)")
-            #endif
-            
-            // Convert URL-safe Base64 back to standard Base64
-            let standardBase64String = dataString
-                .replacingOccurrences(of: "-", with: "+")
-                .replacingOccurrences(of: "_", with: "/")
-            
-            // Add padding if needed
-            var paddedBase64String = standardBase64String
-            let paddingLength = (4 - (standardBase64String.count % 4)) % 4
-            if paddingLength > 0 {
-                paddedBase64String = standardBase64String + String(repeating: "=", count: paddingLength)
-            }
-            
-            #if DEBUG
-            print("Decoding Base64 data...")
-            #endif
-            
-            if let data = Data(base64Encoded: paddedBase64String) {
-                #if DEBUG
-                print("Successfully decoded data, size: \(data.count) bytes")
-                #endif
-                
-                // Store and show the import sheet
-                importData = data
-                showingImportSheet = true
-            } else {
-                #if DEBUG
-                print("Failed to decode Base64 data")
-                #endif
-            }
-        } else {
-            #if DEBUG
-            print("No data parameter found in URL")
-            #endif
-        }
-    }
-
-    /// Handles the `otpauth://` setup links iOS delivers when the user chooses
-    /// "Set Up Codes In → Autheris" (or opens an OTP link directly).
-    private func handleOTPAuthSetup(_ url: URL) {
-        guard let parsed = OTPAuthURLParser.parse(url) else {
-            otpSetupResult = (
-                String(localized: "Couldn't Add Code"),
-                String(localized: "That verification-code link isn't in the expected otpauth format.")
-            )
-            return
-        }
-
-        guard OTPGenerator.isValidSecret(parsed.secret) else {
-            otpSetupResult = (
-                String(localized: "Couldn't Add Code"),
-                String(localized: "The setup key in that link isn't a valid Base32 secret.")
-            )
-            return
-        }
-
-        if dataStore.codes.contains(where: {
-            $0.label == parsed.label && $0.account == parsed.account
-        }) {
-            otpSetupResult = (
-                String(localized: "Already Added"),
-                String(localized: "\(parsed.label) is already in Autheris.")
-            )
-            return
-        }
-
-        let code = OTPCode(
-            label: parsed.label,
-            account: parsed.account,
-            secret: parsed.secret,
-            algorithm: parsed.algorithm,
-            digits: parsed.digits,
-            period: parsed.period,
-            kind: parsed.kind,
-            counter: parsed.counter
-        )
-
-        // Defer the mutation so it never lands in the middle of a SwiftUI List
-        // update cycle (which can trigger an "Invalid update" exception).
-        DispatchQueue.main.async {
-            self.dataStore.addCode(code)
-            self.otpSetupResult = (
-                String(localized: "Verification Code Added"),
-                String(localized: "\(parsed.label) was added to Autheris.")
-            )
-        }
-    }
-
-    /// Handles Google Authenticator migration links (a set of codes in one URL).
-    private func handleMigrationSetup(_ url: URL) {
-        let payload = url.absoluteString
-        guard let tokens = GoogleMigrationParser.parseMigrationURL(payload), !tokens.isEmpty else {
-            otpSetupResult = (
-                String(localized: "Couldn't Add Codes"),
-                String(localized: "Could not parse this Google Authenticator export.")
-            )
-            return
-        }
-
-        let count = tokens.count
-        DispatchQueue.main.async {
-            for token in tokens {
-                self.dataStore.addCode(token)
-            }
-            self.otpSetupResult = (
-                String(localized: "Verification Codes Added"),
-                String(localized: "Imported \(count) codes to Autheris.")
-            )
         }
     }
 
