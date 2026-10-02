@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import requests
 from datetime import datetime
@@ -37,7 +38,8 @@ def create_private_advisory(report_text):
     payload = {
         "summary": f"Daily iOS Security & Privacy Audit Report - {today_str}",
         "description": report_text,
-        "severity": "medium"
+        "severity": "medium",
+        "vulnerabilities": [{"package": {"ecosystem": "swift", "name": "Autheris"}}]
     }
 
     response = requests.post(url, headers=headers, json=payload)
@@ -45,6 +47,7 @@ def create_private_advisory(report_text):
         print("Successfully created private GitHub Security Advisory.")
     else:
         print(f"Failed to create advisory: {response.status_code} - {response.text}")
+        sys.exit(1)
 
 def main():
     print("Collecting Swift source files...")
@@ -86,8 +89,9 @@ def main():
         block.text for block in response.content if getattr(block, "type", None) == "text"
     )
 
-    if not report_text.strip():
-        report_text = "No security or privacy weaknesses identified."
+    if not report_text.strip() or "No security or privacy weaknesses identified." in report_text:
+        print("No security or privacy weaknesses identified. Skipping advisory.")
+        return
 
     print("Publishing findings to GitHub Security Advisories...")
     create_private_advisory(report_text)

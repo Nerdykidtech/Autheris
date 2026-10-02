@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write # Permits creating private security advisories
 
 jobs:
   security-audit:
@@ -31,6 +30,7 @@ jobs:
       - name: Run Claude Opus 5.5 Audit Script
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITHUB_TOKEN can't create repository advisories; use a fine-grained PAT
+          GITHUB_TOKEN: ${{ secrets.ADVISORY_TOKEN }}
         run: |
           python .github/scripts/run_opus_audit.py
