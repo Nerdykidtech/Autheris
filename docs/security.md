@@ -77,3 +77,27 @@ Sync is opt-in and only ever uses the **private** CloudKit database, which is sc
 - `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written exclusively through `CKRecord.encryptedValues`, so CloudKit encrypts them end to end with keys it manages on the user's behalf. They never appear as readable fields and are not visible in the CloudKit dashboard. (`isPinned` is not a secret, but it is still a statement about which accounts matter to this user, so it is encrypted alongside the label rather than left readable on Apple's servers.)
 - Only `modifiedAt`, `deleted`, `fingerprint`, `algorithm`, `digits`, `period`, `kind` and `counter` are plain fields. None of them reveal a secret: `kind` says whether the code is time- or counter-based and `counter` how many times it has been used, neither of which describes the account; `fingerprint` is a SHA-256 over the record content (including the token id, so identical secrets on two records never collide) and is a one-way hash of a high-entropy base32 secret.
 - Deleting a token replaces its record with a **tombstone** whose encrypted fields are explicitly cleared, so the secret does not linger in iCloud after a delete.
+
+## Contact
+
+Report a suspected vulnerability to **`security@autheris.app`**. That address reaches the
+maintainer directly — there is no bug-bounty programme and no automated triage sitting in
+front of it.
+
+Worth including, so the report can be reproduced rather than guessed at:
+
+- **The version and the platform** — the build number from **Settings → About**, and whether
+  it is iPhone, iPad, Mac or Apple Watch.
+- **What an attacker gains**, not only the mechanism: a secret read out, a code read off a
+  locked device, a sync write the user never made. The rest of this document separates
+  findings by what physical access they assume, and severity follows that split.
+- **The steps**, and whether they need a jailbroken device, a forensic extraction, or
+  physical access to an unlocked phone. A finding that presupposes an already-compromised
+  device is still worth reporting — it is just a different severity from one that does not.
+
+**We aim to acknowledge a report within 48 hours and give an initial assessment within 5
+working days.**
+
+This is a project maintained by one person, so please allow it to be fixed before the finding
+is made public. If you hear nothing back, a full inbox is far likelier than a decision to
+ignore you — send it again.
