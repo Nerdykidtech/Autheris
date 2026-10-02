@@ -63,10 +63,12 @@ enum ExternalImportParser {
     // MARK: - Aegis
 
     private static func parseAegis(_ root: [String: Any]) throws -> [OTPCode] {
-        // Unencrypted vaults have a null/empty header. Anything else means the
-        // export is encrypted, which we don't support yet.
+        // Unencrypted vaults have a null/empty header, or — as Aegis actually writes
+        // them — `{"slots": null, "params": null}`. Anything with a value in it means
+        // the export is encrypted, which we don't support yet.
         if let header = root["header"], !(header is NSNull) {
-            if let headerDict = header as? [String: Any], headerDict.isEmpty {
+            if let headerDict = header as? [String: Any],
+               headerDict.values.allSatisfy({ $0 is NSNull }) {
                 // plain
             } else {
                 throw ExternalImportError.encryptedAegisVault

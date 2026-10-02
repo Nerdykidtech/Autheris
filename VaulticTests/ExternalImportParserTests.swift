@@ -104,6 +104,55 @@ final class ExternalImportParserTests: XCTestCase {
         }
     }
 
+    func testARealPlainAegisExportWithNullSlotsAndParamsIsImported() throws {
+        // This is the header Aegis really writes for an unencrypted export, not `{}`.
+        // Reading any non-empty header as encrypted refused every plain export, so the
+        // import advertised in Settings never worked against a file from Aegis itself.
+        let json = """
+        {
+          "version": 1,
+          "header": { "slots": null, "params": null },
+          "db": {
+            "version": 2,
+            "entries": [
+              {
+                "type": "totp",
+                "name": "alice@example.com",
+                "issuer": "Example",
+                "info": { "secret": "\(secret)", "algo": "SHA1", "digits": 6, "period": 30 }
+              }
+            ]
+          }
+        }
+        """
+        let tokens = try parse(json)
+
+        XCTAssertEqual(tokens.count, 1)
+        XCTAssertEqual(tokens.first?.kind, .totp)
+        XCTAssertEqual(tokens.first?.label, "Example")
+        XCTAssertEqual(tokens.first?.period, 30)
+    }
+
+    func testAnEncryptedAegisExportWithSlotsAndParamsIsStillRefused() throws {
+        // The shape of a real encrypted export: key slots and nonce/tag filled in, and
+        // `db` a base64 string rather than an object. Letting null values through as
+        // plain must not let these through too.
+        let json = """
+        {
+          "version": 1,
+          "header": {
+            "slots": [{ "type": 1, "uuid": "01234567-89ab-cdef-0123-456789abcdef", "key": "00" }],
+            "params": { "nonce": "000000000000000000000000", "tag": "00000000000000000000000000000000" }
+          },
+          "db": "AAAA"
+        }
+        """
+
+        XCTAssertThrowsError(try parse(json)) { error in
+            XCTAssertEqual(error as? ExternalImportError, .encryptedAegisVault)
+        }
+    }
+
     // MARK: - andOTP
 
     private func andOTPEntry(type: String, counter: String?) -> String {
