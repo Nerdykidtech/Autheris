@@ -80,9 +80,9 @@ Sync is opt-in and only ever uses the **private** CloudKit database, which is sc
 
 ## Contact
 
-Report a suspected vulnerability to **`security@autheris.app`**. That address reaches the
-maintainer directly — there is no bug-bounty programme and no automated triage sitting in
-front of it.
+Please report security issues privately via GitHub's
+[Report a vulnerability](https://github.com/Nerdykidtech/Autheris/security/advisories/new)
+form, or email security@autheris.app. Please don't open a public issue.
 
 Worth including, so the report can be reproduced rather than guessed at:
 
