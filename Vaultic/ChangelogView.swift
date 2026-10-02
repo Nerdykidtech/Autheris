@@ -55,6 +55,17 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.8",
+            version: "2.8",
+            date: "October 2026",
+            changes: [
+                "Links that add codes — from another app, a web page, or a Google Authenticator export — now always show you what they would add, and nothing is added until you tap Import. They used to add codes the moment they arrived, which could put entries in your list that you never asked for.",
+                "A link that arrives while Autheris is locked now waits until you unlock it, instead of going through behind the lock screen.",
+                "Thanks to NotAFlightRisk for finding and responsibly reporting this.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.7",
             version: "2.7",
             date: "October 2026",
