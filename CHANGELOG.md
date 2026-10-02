@@ -15,6 +15,12 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [2.7] — October 2026
+
+- This release changes how Autheris looks in the App Store, not how it works — the listing now carries a new set of screenshots for iPhone, iPad, Mac and Apple Watch.
+- Nothing else changed: no new settings, no new permissions, and no new network requests.
+- Your codes, iCloud sync and settings are exactly where you left them.
+
 ## [2.6] — September 2026
 
 - Autheris can now generate counter-based codes as well as the time-based ones it has always used. Some services hand you a counter instead of a code that changes on a timer: that code stays the same until you ask for the next one, and its card shows which counter it is on, with a Next button beside it.

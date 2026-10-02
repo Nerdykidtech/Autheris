@@ -55,6 +55,16 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.7",
+            version: "2.7",
+            date: "October 2026",
+            changes: [
+                "This release changes how Autheris looks in the App Store, not how it works — the listing now carries a new set of screenshots for iPhone, iPad, Mac and Apple Watch.",
+                "Nothing else changed: no new settings, no new permissions, and no new network requests.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.6",
             version: "2.6",
             date: "September 2026",
