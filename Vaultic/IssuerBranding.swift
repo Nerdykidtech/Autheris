@@ -5,7 +5,6 @@ struct IssuerBranding: Equatable {
     let displayName: String
     let domain: String?
     let color: Color
-    let labelHash: Int // Store hash of original label for cache invalidation
     
     // Use company name for logo fetching (clean version of display name)
     var companyName: String {
@@ -17,17 +16,25 @@ struct IssuerBranding: Equatable {
         return cleaned
     }
     
-    // Add a computed property for cache key
+    /// The logo's file name in the cache, without the extension.
+    ///
+    /// Only the company name goes in, because that is all the logo is looked up
+    /// by: two labels that clean to the same name get the same picture anyway.
+    /// This used to carry a suffix of `hashValue`, which Swift seeds randomly on
+    /// every launch, so no launch could find what the previous one had cached —
+    /// each re-fetched every logo (sending the user's service names to logo.dev
+    /// again) and left the old file behind. `companyName` holds only letters,
+    /// digits and spaces, so an underscore after the `name_` prefix can only be
+    /// one of those old suffixes; `LogoCacheManager.migrateLegacyFiles(in:)`
+    /// relies on that. Matches Android's `cacheKey`.
     var cacheKey: String {
-        // Use company name for cache key to handle all services
-        return "name_\(companyName.lowercased())_\(labelHash)"
+        "name_\(companyName.lowercased())"
     }
     
     init(displayName: String, domain: String?, color: Color) {
         self.displayName = displayName
         self.domain = domain
         self.color = color
-        self.labelHash = displayName.lowercased().hashValue
     }
 }
 
@@ -46,6 +53,10 @@ class LogoCacheManager {
         UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
     }
 
+    /// Set once the hash-suffixed files from before `cacheKey` was made stable
+    /// have been renamed, so the directory is only walked for them once.
+    static let legacyCacheMigratedKey = "issuerLogoCacheKeysMigrated"
+
     private let fileManager = FileManager.default
     private lazy var cacheDirectory: URL = {
         let urls = fileManager.urls(for: .cachesDirectory, in: .userDomainMask)
@@ -55,8 +66,41 @@ class LogoCacheManager {
         if !fileManager.fileExists(atPath: cacheURL.path) {
             try? fileManager.createDirectory(at: cacheURL, withIntermediateDirectories: true)
         }
+
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: Self.legacyCacheMigratedKey) {
+            Self.migrateLegacyFiles(in: cacheURL, fileManager: fileManager)
+            defaults.set(true, forKey: Self.legacyCacheMigratedKey)
+        }
         return cacheURL
     }()
+
+    /// Renames logos cached under the old `name_<company>_<hashValue>.png` keys to
+    /// the stable `name_<company>.png`, so they are found again instead of
+    /// fetched again.
+    ///
+    /// The old suffix changed on every launch, so one company can have several of
+    /// these piled up: the first one wins and the rest are deleted (they are the
+    /// same picture). A file already under the new name is kept as it is.
+    static func migrateLegacyFiles(in directory: URL, fileManager: FileManager = .default) {
+        guard let files = try? fileManager.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil
+        ) else { return }
+
+        for file in files where file.pathExtension == "png" {
+            let key = file.deletingPathExtension().lastPathComponent
+            guard key.hasPrefix("name_") else { continue }
+            let rest = key.dropFirst("name_".count)
+            guard let suffixStart = rest.lastIndex(of: "_") else { continue }
+
+            let stable = directory.appendingPathComponent("name_\(rest[..<suffixStart]).png")
+            if fileManager.fileExists(atPath: stable.path) {
+                try? fileManager.removeItem(at: file)
+            } else {
+                try? fileManager.moveItem(at: file, to: stable)
+            }
+        }
+    }
     
     private let logoDevPublishableKey: String? = {
         Bundle.main.object(forInfoDictionaryKey: "LOGODEV_PUBLISHABLE_KEY") as? String
@@ -332,16 +376,28 @@ extension OTPDataStore {
 
 // MARK: - Updated Branding Logic
 extension IssuerBranding {
+    /// Colours for services without a brand colour of their own, picked by
+    /// `fallbackPaletteIndex(for:)`. The order is shared with Android's palette,
+    /// so changing it changes which colour every such service gets on both.
+    static let fallbackPalette: [Color] = [
+        hex(0x6366F1), // indigo
+        hex(0x06B6D4), // cyan
+        hex(0x10B981), // emerald
+        hex(0xF59E0B), // amber
+        hex(0xEF4444), // red
+        hex(0xA855F7)  // purple
+    ]
+
+    private static func hex(_ value: UInt32) -> Color {
+        let r = Double((value >> 16) & 0xFF) / 255.0
+        let g = Double((value >> 8) & 0xFF) / 255.0
+        let b = Double(value & 0xFF) / 255.0
+        return Color(red: r, green: g, blue: b)
+    }
+
     static func forLabel(_ rawLabel: String) -> IssuerBranding {
         let label = rawLabel.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = label.lowercased()
-        
-        func hex(_ value: UInt32) -> Color {
-            let r = Double((value >> 16) & 0xFF) / 255.0
-            let g = Double((value >> 8) & 0xFF) / 255.0
-            let b = Double(value & 0xFF) / 255.0
-            return Color(red: r, green: g, blue: b)
-        }
         
         // Common issuers for domain-based color matching
         if normalized.contains("github") {
@@ -376,18 +432,27 @@ extension IssuerBranding {
         }
         
         // Generic fallback (stable per label)
-        let hash = normalized.hashValue
-        let positiveHash = UInt32(bitPattern: Int32(truncatingIfNeeded: hash))
-        let palette: [Color] = [
-            hex(0x6366F1), // indigo
-            hex(0x06B6D4), // cyan
-            hex(0x10B981), // emerald
-            hex(0xF59E0B), // amber
-            hex(0xEF4444), // red
-            hex(0xA855F7)  // purple
-        ]
-        let color = palette[Int(positiveHash % UInt32(palette.count))]
+        let color = fallbackPalette[fallbackPaletteIndex(for: normalized)]
         return IssuerBranding(displayName: label, domain: nil, color: color)
     }
-}
 
+    /// Which `fallbackPalette` colour a trimmed, lowercased label gets.
+    ///
+    /// Deliberately not `hashValue`: Swift seeds `Hasher` randomly on every
+    /// launch, so a service's ring and monogram changed colour each time the app
+    /// started. FNV-1a gives the same answer on every launch and device, and is
+    /// exactly what Android uses, so a service is the same colour on both.
+    static func fallbackPaletteIndex(for normalized: String) -> Int {
+        Int(fnv1a(normalized) % UInt32(fallbackPalette.count))
+    }
+
+    /// 32-bit FNV-1a over the UTF-8 bytes of `text`. Byte for byte the same as
+    /// `fnv1a` in Android's `IssuerBranding.kt`.
+    static func fnv1a(_ text: String) -> UInt32 {
+        var hash: UInt32 = 0x811C_9DC5
+        for byte in text.utf8 {
+            hash = (hash ^ UInt32(byte)) &* 0x0100_0193
+        }
+        return hash
+    }
+}
