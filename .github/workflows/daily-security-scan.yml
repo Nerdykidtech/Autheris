@@ -1,9 +1,9 @@
-name: Daily iOS Security & Privacy Audit
+name: Monthly iOS Security & Privacy Audit
 
 on:
   schedule:
-    # Runs daily at midnight UTC
-    - cron: '0 0 * * *'
+    # Runs at midnight UTC on the 1st of each month
+    - cron: '0 0 1 * *'
   workflow_dispatch: # Enables 'Run workflow' button in GitHub
 
 permissions:

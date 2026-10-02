@@ -36,7 +36,7 @@ def create_private_advisory(report_text):
 
     today_str = datetime.now().strftime("%Y-%m-%d")
     payload = {
-        "summary": f"Daily iOS Security & Privacy Audit Report - {today_str}",
+        "summary": f"Monthly iOS Security & Privacy Audit Report - {today_str}",
         "description": report_text,
         "severity": "medium",
         "vulnerabilities": [{"package": {"ecosystem": "swift", "name": "Autheris"}}]
