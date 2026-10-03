@@ -190,8 +190,21 @@ struct AutherisApp: App {
         // A real preferences window rather than a sheet: it gives Autheris the
         // standard "Settings…" menu item and ⌘, for free, and it is what a Mac user
         // reaches for. The iPad keeps the sheet.
+        //
+        // It is its own window, outside the `WindowGroup` above, so it needs its
+        // own App Lock gate: otherwise ⌘, on a locked Mac opens QR transfer,
+        // unencrypted backups and the App Lock toggle itself.
         Settings {
-            SettingsView(dataStore: dataStore, presentation: .preferences)
+            Group {
+                if appLock.isLocked {
+                    AppLockView(manager: appLock)
+                        // The preferences window's size, so it doesn't jump on unlock.
+                        .frame(width: 620, height: 520)
+                } else {
+                    SettingsView(dataStore: dataStore, presentation: .preferences)
+                }
+            }
+            .windowCaptureExclusion(captureExclusion)
         }
         #endif
     }
