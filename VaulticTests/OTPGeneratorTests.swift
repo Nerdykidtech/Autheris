@@ -291,4 +291,23 @@ final class OTPGeneratorTests: XCTestCase {
         XCTAssertEqual(OTPGenerator.encodeBase32(Data("foobar".utf8)), "MZXW6YTBOI")
         XCTAssertEqual(OTPGenerator.encodeBase32(Data("f".utf8)), "MY")
     }
+
+    // MARK: - OTPCode.code(at:)
+
+    func testATimeBasedCodeIsTheOneForTheGivenTime() {
+        let code = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let then = Date(timeIntervalSince1970: 59)
+
+        XCTAssertEqual(code.code(at: then),
+                       OTPGenerator.generateOTP(secret: "JBSWY3DPEHPK3PXP", now: then))
+        XCTAssertNotEqual(code.code(at: then), code.code(at: then.addingTimeInterval(30)),
+                          "the next period must give a different code")
+    }
+
+    func testACounterBasedCodeIgnoresTheTime() {
+        let code = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                           kind: .hotp, counter: 3)
+
+        XCTAssertEqual(code.code(at: .distantPast), code.code(at: .distantFuture))
+    }
 }

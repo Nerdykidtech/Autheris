@@ -84,11 +84,15 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     /// one of them ends up asking the other way round.
     var isTimeBased: Bool { kind == .totp }
 
-    var currentCode: String {
+    var currentCode: String { code(at: Date()) }
+
+    /// The code shown at `now`. A counter-based code ignores the time.
+    func code(at now: Date) -> String {
         switch kind {
         case .totp:
             return OTPGenerator.generateOTP(secret: secret, algorithm: algorithm,
-                                             digits: effectiveDigits, period: effectivePeriod)
+                                             digits: effectiveDigits, period: effectivePeriod,
+                                             now: now)
         case .hotp:
             return OTPGenerator.generateHOTP(secret: secret, algorithm: algorithm,
                                               digits: effectiveDigits, counter: counter)

@@ -20,7 +20,6 @@ struct HomeView: View {
     @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
-    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var searchText = ""
     @State private var showingSettings = false
     
@@ -109,9 +108,9 @@ struct HomeView: View {
     /// `List` is what makes the one-column list reorderable, but its drag moves a
     /// whole row — and in a grid a row is two codes. So the grid does its own
     /// dragging, one card at a time.
-    private func cardGrid(columns: Int, rearranging: Bool) -> some View {
+    private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
         ScrollView {
-            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging)
+            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
         }
@@ -120,10 +119,10 @@ struct HomeView: View {
 
     /// The list as it has always been: one card per row, reordered by `List`'s own
     /// drag — which moves exactly one code, because a row is one code.
-    private func singleColumnList() -> some View {
+    private func singleColumnList(now: Date) -> some View {
         List {
             ForEach(filteredCodes) { code in
-                OTPCardView(code: code, dataStore: dataStore)
+                OTPCardView(code: code, dataStore: dataStore, now: now)
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -213,11 +212,18 @@ struct HomeView: View {
                 Group {
                     if filteredCodes.isEmpty {
                         emptyState
-                    } else if isGridLayout(width: proxy.size.width) {
-                        cardGrid(columns: columns(forWidth: proxy.size.width),
-                                 rearranging: isRearrangingGrid && canReorder)
                     } else {
-                        singleColumnList()
+                        // One clock for every card, ticking on the second so each
+                        // countdown changes when the second does.
+                        TimelineView(.periodic(from: Self.startOfCurrentSecond, by: 1)) { timeline in
+                            if isGridLayout(width: proxy.size.width) {
+                                cardGrid(columns: columns(forWidth: proxy.size.width),
+                                         rearranging: isRearrangingGrid && canReorder,
+                                         now: timeline.date)
+                            } else {
+                                singleColumnList(now: timeline.date)
+                            }
+                        }
                     }
                 }
                 .toolbar { toolbarContent(width: proxy.size.width) }
@@ -242,10 +248,11 @@ struct HomeView: View {
             } message: { result in
                 Text(result.body)
             }
-            .onReceive(timer) { _ in
-                // Force view update every second for countdown
-            }
         }
+    }
+
+    private static var startOfCurrentSecond: Date {
+        Date(timeIntervalSince1970: Date().timeIntervalSince1970.rounded(.down))
     }
 }
 
@@ -260,6 +267,8 @@ private struct TokenGridView: View {
     let codes: [OTPCode]
     let columns: Int
     let rearranging: Bool
+    /// The time every card's code and countdown are shown for.
+    let now: Date
 
     @EnvironmentObject private var dataStore: OTPDataStore
 
@@ -295,7 +304,7 @@ private struct TokenGridView: View {
     private func cell(_ code: OTPCode) -> some View {
         let isDragged = draggedID == code.id
 
-        return OTPCardView(code: code, dataStore: dataStore, isRearranging: rearranging)
+        return OTPCardView(code: code, dataStore: dataStore, now: now, isRearranging: rearranging)
             .overlay(alignment: .trailing) {
                 if rearranging {
                     grabber(for: code)
@@ -395,6 +404,9 @@ private struct TokenGridView: View {
 struct OTPCardView: View {
     let code: OTPCode
     let dataStore: OTPDataStore
+    /// The time to show the code and countdown for. Handed down from the list's
+    /// single `TimelineView`, so the cards don't each need a timer of their own.
+    let now: Date
     /// `true` while this card is being rearranged in the iPad grid.
     ///
     /// Tapping it to copy, or holding it for its menu, would then compete with the
@@ -402,8 +414,6 @@ struct OTPCardView: View {
     /// being picked up.
     var isRearranging: Bool = false
     
-    @State private var remainingSeconds: Int = 30
-    @State private var timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var isCopied = false
     @State private var showEditSheet = false
     @State private var showSecretSheet = false
@@ -422,6 +432,13 @@ struct OTPCardView: View {
             return c
         }
         return branding.color
+    }
+
+    /// Seconds left in the current period. A counter-based code has no period
+    /// running, and nothing reads this for one.
+    private var remainingSeconds: Int {
+        let period = Double(code.effectivePeriod)
+        return Int(period - now.timeIntervalSince1970.truncatingRemainder(dividingBy: period))
     }
 
     private var isExpiring: Bool {
@@ -453,12 +470,6 @@ struct OTPCardView: View {
             }
             .sheet(isPresented: $showSecretSheet) {
                 TokenSecretView(code: code, dataStore: dataStore)
-            }
-            .onAppear {
-                updateRemainingSeconds()
-            }
-            .onReceive(timer) { _ in
-                updateRemainingSeconds()
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
             .animation(.easeInOut(duration: 0.2), value: isCopied)
@@ -570,7 +581,7 @@ struct OTPCardView: View {
                         .font(.subheadline.weight(.semibold))
                         .foregroundColor(.accentColor)
                 } else {
-                    Text(code.currentCode)
+                    Text(code.code(at: now))
                         .font(.system(codeTextStyle, design: .monospaced).weight(.bold))
                         .foregroundColor(isExpiring ? .red : .primary)
                 }
@@ -674,21 +685,6 @@ struct OTPCardView: View {
                     lineWidth: isExpiring ? 1 : 0.5
                 )
         )
-    }
-    
-    private func updateRemainingSeconds() {
-        // A counter-based card has no countdown to keep current, and updating the
-        // value every second would re-render the card to show the same code.
-        guard code.isTimeBased else { return }
-
-        let currentTime = Date().timeIntervalSince1970
-        let period = Double(code.effectivePeriod)
-        let elapsed = currentTime.truncatingRemainder(dividingBy: period)
-        let newRemainingSeconds = Int(period - elapsed)
-        
-        if newRemainingSeconds != remainingSeconds {
-            remainingSeconds = newRemainingSeconds
-        }
     }
     
     private func copyToClipboard() {
