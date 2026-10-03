@@ -22,6 +22,10 @@ A version number lives in four places, and a release is not finished until they 
 - On the Mac, the Settings window now shows the lock screen while Autheris is locked. It used to open with ⌘, without asking for Touch ID or your password, which gave access to QR transfer (every secret), unencrypted backups and the App Lock toggle itself. The Settings window is also now kept out of screen capture when "Hide codes while recording or mirroring" is on, like the main window.
 - On the Mac, App Lock now re-locks 30 seconds after you switch to another app, as the Privacy settings say. It used to start counting only when Autheris was hidden or minimised, so switching away and back left it unlocked however long you were gone.
 
+### Fixed
+
+- With iCloud sync on, deleting a code on one device now removes it from your other devices too. The other devices used to put it straight back. A code you deleted, re-added or restored from Recently Deleted while a sync was running could also be undone when that sync finished; it now stays the way you left it.
+
 ## [2.8] — October 2026
 
 - Links that add codes — `autheris://import`, `otpauth://` and `otpauth-migration://` — now always show what they would add and wait for you to tap Import. They used to add codes the moment they arrived, and while App Lock was on, so another app or a web page could quietly plant entries in your list. A link that arrives while Autheris is locked now waits until you unlock it. ([GHSA-75h3-q43q-9338](https://github.com/Nerdykidtech/Autheris/security/advisories/GHSA-75h3-q43q-9338))
