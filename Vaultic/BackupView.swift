@@ -83,6 +83,7 @@ struct BackupView: View {
     @State private var showingPasswordAlert = false
     @State private var backupPassword = ""
     @State private var showingRestoreError = false
+    @State private var showingRestoredAlert = false
     @State private var restoreErrorMessage = ""
     @State private var isImportingFile = false
     @State private var shareURL: URL?
@@ -153,7 +154,7 @@ struct BackupView: View {
                 Button("Restore", role: .destructive) {
                     if let pendingRestore,
                        dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: false) {
-                        dismiss()
+                        showingRestoredAlert = true
                     }
                 }
             } message: {
@@ -169,6 +170,11 @@ struct BackupView: View {
                 }
             } message: {
                 Text("This backup is encrypted. Enter the password used when it was created.")
+            }
+            .alert("Backup Restored", isPresented: $showingRestoredAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("Your tokens have been restored from the backup.")
             }
             .alert("Restore Failed", isPresented: $showingRestoreError) {
                 Button("OK", role: .cancel) { }
@@ -348,7 +354,7 @@ struct BackupView: View {
         guard let pendingRestore, !backupPassword.isEmpty else { return }
 
         if dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: true, password: backupPassword) {
-            dismiss()
+            showingRestoredAlert = true
         } else {
             restoreErrorMessage = String(localized: "Incorrect password or corrupted backup.")
             showingRestoreError = true

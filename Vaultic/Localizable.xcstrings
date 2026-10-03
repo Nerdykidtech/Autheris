@@ -2072,6 +2072,46 @@
         }
       }
     },
+    "Backup Restored": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sicherung wiederhergestellt"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia de seguridad restaurada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde restaurée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップを復元しました"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup restaurado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份已恢复"
+          }
+        }
+      }
+    },
     "Biometric authentication is unavailable.": {
       "localizations": {
         "de-DE": {
@@ -11542,6 +11582,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "账户已成功备份。"
+          }
+        }
+      }
+    },
+    "Your tokens have been restored from the backup.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ihre Codes wurden aus der Sicherung wiederhergestellt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus códigos se han restaurado desde la copia de seguridad."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos codes ont été restaurés à partir de la sauvegarde."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをバックアップから復元しました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seus códigos foram restaurados a partir do backup."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账户已从备份中恢复。"
           }
         }
       }
