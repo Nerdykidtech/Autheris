@@ -47,11 +47,33 @@ final class OTPDataStore: ObservableObject {
     /// no watch to talk to.
     private let watchRelay: WatchTokenRelayService
 
+    /// `false` until the tokens, tombstones and trash have actually been read
+    /// from the Keychain.
+    ///
+    /// They are `WhenUnlocked` items, so a launch while the device is locked — a
+    /// silent push, say — can't read them, and `codes` is then an empty list
+    /// that only *looks* like an empty vault. Until this is set nothing is
+    /// saved, synced or offered to the watch, because each of those would treat
+    /// that list as the truth: the next save would write it over the real
+    /// vault. The load is retried when the device unlocks and when the app
+    /// becomes active.
+    private(set) var isVaultLoaded = false
+    /// Retry observers for a load that found the Keychain locked.
+    ///
+    /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
+    /// can read it. It is written once in `init` and read once in `deinit`.
+    nonisolated(unsafe) private var vaultRetryObservers: [NSObjectProtocol] = []
+    private let readKeychain: @MainActor (String) -> KeychainStore.ReadResult
+
     /// - Parameter syncService: injectable so tests can drive the merge path with
     ///   a fake. Defaults to CloudKit, or to a no-op when iCloud Sync is off.
     /// - Parameter watchRelay: injectable for the same reason. Defaults to the
     ///   platform's real relay.
-    init(syncService: TokenSyncService? = nil, watchRelay: WatchTokenRelayService? = nil) {
+    /// - Parameter readKeychain: injectable so tests can stand in for a locked
+    ///   device. Writes still go to the real Keychain.
+    init(syncService: TokenSyncService? = nil,
+         watchRelay: WatchTokenRelayService? = nil,
+         readKeychain: @escaping @MainActor (String) -> KeychainStore.ReadResult = KeychainStore.read(account:)) {
         // Restore Keychain-backed preferences before anything reads UserDefaults.
         PreferencesStore.restoreIntoUserDefaults()
 
@@ -65,25 +87,20 @@ final class OTPDataStore: ObservableObject {
         let enabled = UserDefaults.standard.bool(forKey: Self.syncEnabledKey)
         isSyncEnabled = enabled
         self.syncService = syncService ?? CloudKitTokenSyncService(isEnabled: enabled)
-        // Before `loadCodes()`, which saves and therefore pushes: the relay has to
+        // Before `loadVault()`, which saves and therefore pushes: the relay has to
         // exist by then, or the first launch after installing the watch app offers
         // it nothing.
         self.watchRelay = watchRelay ?? WatchTokenRelay.make()
+        self.readKeychain = readKeychain
 
-        loadCodes()
-        loadSyncMetadata()
-        loadTrash()
+        loadVault()
 
-        // Offer the loaded list once, whatever path loaded it.
-        //
-        // `saveCodes()` pushes on every edit, and `loadCodes()` pushes when it
-        // *migrates* or finds nothing — but the path a returning user takes, where
-        // the Keychain already holds the codes, calls neither. Without this, an
-        // app that launches with tokens already stored would never hand the relay
-        // anything, and the watch would sit empty until the user happened to edit
-        // a token. That is exactly the case for someone who installs the watch app
-        // *after* filling the phone, so the missing push is not a rare one.
-        pushCodesToWatch()
+        let center = NotificationCenter.default
+        vaultRetryObservers = AppActivity.keychainMayHaveBecomeReadable.map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.retryVaultLoad() }
+            }
+        }
 
         self.syncService.onStatusChange = { [weak self] status in
             self?.syncStatus = status
@@ -104,7 +121,14 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
+    deinit {
+        vaultRetryObservers.forEach(NotificationCenter.default.removeObserver)
+    }
+
     func saveCodes() {
+        // Saving before the vault has loaded would replace it with whatever
+        // happens to be in memory; see `isVaultLoaded`.
+        guard isVaultLoaded else { return }
         // Persist a deduplicated copy, but don't reassign `codes` here:
         // reassigning during a delete/insert turns one user action into
         // two array mutations, which can make SwiftUI's List diff assert.
@@ -133,13 +157,63 @@ final class OTPDataStore: ObservableObject {
     /// The single place the order the watch sees is decided, so `saveCodes()` and
     /// the launch-time offer in `init` cannot disagree about it.
     private func pushCodesToWatch() {
+        // An unloaded vault would tell the watch to clear its cache.
+        guard isVaultLoaded else { return }
         watchRelay.push(TokenOrdering.displayed(codes))
     }
 
-    func loadCodes() {
+    /// Reads the tokens, tombstones and trash, or leaves everything untouched if
+    /// the Keychain can't be read yet.
+    ///
+    /// All three are read before any is applied, so the store is never left
+    /// half-loaded. They share an accessibility class, so in practice they are
+    /// readable together or not at all.
+    private func loadVault() {
+        guard !isVaultLoaded else { return }
+        let storedCodes = readKeychain("otpCodes")
+        let storedTombstones = readKeychain(tombstonesKey)
+        let storedTrash = readKeychain(trashKey)
+        for result in [storedCodes, storedTombstones, storedTrash] {
+            if case .unavailable(let status) = result {
+                #if DEBUG
+                print("Keychain not readable yet (status \(status)); deferring the vault load")
+                #endif
+                return
+            }
+        }
+
+        isVaultLoaded = true
+        loadCodes(from: storedCodes.data)
+        loadSyncMetadata(from: storedTombstones.data)
+        loadTrash(from: storedTrash.data)
+
+        // Offer the loaded list once, whatever path loaded it.
+        //
+        // `saveCodes()` pushes on every edit, and `loadCodes()` pushes when it
+        // *migrates* or finds nothing — but the path a returning user takes, where
+        // the Keychain already holds the codes, calls neither. Without this, an
+        // app that launches with tokens already stored would never hand the relay
+        // anything, and the watch would sit empty until the user happened to edit
+        // a token. That is exactly the case for someone who installs the watch app
+        // *after* filling the phone, so the missing push is not a rare one.
+        pushCodesToWatch()
+    }
+
+    /// Picks up a load that `init` had to defer because the device was locked,
+    /// and runs the sync that was skipped along with it.
+    private func retryVaultLoad() {
+        guard !isVaultLoaded else { return }
+        loadVault()
+        guard isVaultLoaded, isSyncEnabled else { return }
+        Task { [weak self] in
+            await self?.syncNow()
+        }
+    }
+
+    private func loadCodes(from data: Data?) {
         // Keychain is authoritative. Fall back to the pre-Keychain UserDefaults
         // blob exactly once, then migrate it and delete the plaintext copy.
-        if let data = KeychainStore.load(account: "otpCodes"),
+        if let data,
            let decoded = try? JSONDecoder().decode([OTPCode].self, from: data) {
             codes = Self.deduplicated(decoded)
         } else if let legacyData = UserDefaults.standard.data(forKey: saveKey),
@@ -290,19 +364,20 @@ final class OTPDataStore: ObservableObject {
     /// and when the trash is opened, so an entry cannot outlive its window just
     /// because the app happened to stay running.
     func purgeExpiredTrash(now: Date = Date()) {
+        guard isVaultLoaded else { return }
         let sweep = TrashBin.sweep(trash, now: now)
         guard sweep.didExpireAnything else { return }
         trash = sweep.kept
         persistTrash()
     }
 
-    private func loadTrash() {
-        trash = TrashBin.decode(KeychainStore.load(account: trashKey))
+    private func loadTrash(from data: Data?) {
+        trash = TrashBin.decode(data)
         purgeExpiredTrash()
     }
 
     private func persistTrash() {
-        guard let data = TrashBin.encode(trash) else { return }
+        guard isVaultLoaded, let data = TrashBin.encode(trash) else { return }
         if !KeychainStore.save(data, account: trashKey) {
             #if DEBUG
             print("Failed to save the trash to Keychain")
@@ -457,7 +532,9 @@ final class OTPDataStore: ObservableObject {
     /// was uploaded. Instead it is remembered here, and one more sync runs as soon
     /// as the current one finishes — with a fresh snapshot, so it includes the edit.
     private func performSync() async {
-        guard isSyncEnabled else { return }
+        // Merging against a vault that hasn't loaded would upload its emptiness;
+        // `retryVaultLoad()` syncs once it has.
+        guard isSyncEnabled, isVaultLoaded else { return }
         guard !isSyncInFlight else {
             needsResync = true
             return
@@ -524,9 +601,9 @@ final class OTPDataStore: ObservableObject {
         return true
     }
 
-    private func loadSyncMetadata() {
+    private func loadSyncMetadata(from keychain: Data?) {
         let resolution = SyncTombstoneStore.resolve(
-            keychain: KeychainStore.load(account: tombstonesKey),
+            keychain: keychain,
             legacyDefaults: UserDefaults.standard.data(forKey: tombstonesKey)
         )
         tombstones = resolution.tombstones
@@ -539,7 +616,7 @@ final class OTPDataStore: ObservableObject {
     }
 
     private func persistTombstones() {
-        guard let data = SyncTombstoneStore.encode(tombstones) else { return }
+        guard isVaultLoaded, let data = SyncTombstoneStore.encode(tombstones) else { return }
 
         // The legacy `UserDefaults` copy is only dropped once the Keychain write
         // has succeeded, so a failure leaves the data recoverable instead of

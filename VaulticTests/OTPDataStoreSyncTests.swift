@@ -254,6 +254,59 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(snapshots.count, 2, "the sync requested mid-sync must run, once")
         XCTAssertEqual(Set(snapshots.last?.tokens.map(\.id) ?? []), [existing.id, added.id])
     }
+
+    // MARK: - Launching while the device is locked
+
+    func testALaunchThatCannotReadTheKeychainLeavesTheVaultAloneUntilItCan() async throws {
+        let existing = token("GitHub")
+        let stored = try JSONEncoder().encode([existing])
+        XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
+
+        // What a silent push sees on a locked phone: every `WhenUnlocked` read
+        // fails with errSecInteractionNotAllowed.
+        let device = DeviceLockState()
+        let relay = RecordingWatchTokenRelay()
+        let lockedSync = FakeTokenSyncService()
+        let locked = OTPDataStore(syncService: lockedSync, watchRelay: relay) { account in
+            device.isLocked ? .unavailable(errSecInteractionNotAllowed) : KeychainStore.read(account: account)
+        }
+
+        XCTAssertFalse(locked.isVaultLoaded)
+        XCTAssertTrue(locked.codes.isEmpty)
+        XCTAssertTrue(relay.pushes.isEmpty, "an empty push would clear the watch's cache")
+
+        locked.setSyncEnabled(true)
+        await locked.syncNow()
+        XCTAssertEqual(lockedSync.syncCallCount, 0, "an unloaded vault must not be merged with iCloud")
+
+        locked.addCode(token("GitLab"))
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored,
+                       "a save before the vault loads would overwrite it")
+
+        // Unlocking the device retries the load.
+        device.isLocked = false
+        for name in AppActivity.keychainMayHaveBecomeReadable {
+            NotificationCenter.default.post(name: name, object: nil)
+        }
+        for _ in 0..<100 where !locked.isVaultLoaded { await Task.yield() }
+
+        XCTAssertTrue(locked.isVaultLoaded)
+        XCTAssertEqual(locked.codes.map(\.id), [existing.id])
+        XCTAssertEqual(relay.pushes.last?.map(\.id), [existing.id])
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored)
+    }
+}
+
+/// Whether the simulated device is locked, shared with the store's Keychain reader.
+@MainActor
+private final class DeviceLockState {
+    var isLocked = true
+}
+
+/// Records what the store offers the watch.
+private final class RecordingWatchTokenRelay: WatchTokenRelayService {
+    private(set) var pushes: [[OTPCode]] = []
+    func push(_ tokens: [OTPCode]) { pushes.append(tokens) }
 }
 
 /// A `TokenSyncService` whose `sync(local:)` result each test supplies.

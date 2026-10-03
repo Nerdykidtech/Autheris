@@ -37,6 +37,18 @@ enum AppActivity {
         #endif
     }
 
+    /// The moments a launch that found the Keychain locked should read it again:
+    /// the device being unlocked, and the app coming to the front. macOS posts
+    /// no unlock notification to apps, so there it is only the second.
+    static var keychainMayHaveBecomeReadable: [Notification.Name] {
+        #if os(macOS)
+        [NSApplication.didBecomeActiveNotification]
+        #else
+        [UIApplication.protectedDataDidBecomeAvailableNotification,
+         UIApplication.didBecomeActiveNotification]
+        #endif
+    }
+
     /// The app is no longer on screen at all: backgrounded on iOS, hidden on the
     /// Mac.
     static var didLeaveForeground: Notification.Name {
