@@ -1749,6 +1749,166 @@
         }
       }
     },
+    "Authenticate to back up your tokens.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um Ihre Codes zu sichern."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para hacer una copia de seguridad de tus códigos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour sauvegarder vos codes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをバックアップするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para fazer backup dos seus códigos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以备份你的账户。"
+          }
+        }
+      }
+    },
+    "Authenticate to export your tokens.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um Ihre Codes zu exportieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para exportar tus códigos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour exporter vos codes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを書き出すには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para exportar seus códigos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以导出你的账户。"
+          }
+        }
+      }
+    },
+    "Authenticate to turn off App Lock.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um die App-Sperre auszuschalten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para desactivar el bloqueo de la app."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour désactiver le verrouillage de l'app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックをオフにするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para desativar o bloqueio do app."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以关闭 App 锁定。"
+          }
+        }
+      }
+    },
+    "Authenticate to view this setup key.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um diesen Einrichtungsschlüssel anzuzeigen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para ver esta clave de configuración."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour afficher cette clé de configuration."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このセットアップキーを表示するには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para ver esta chave de configuração."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以查看此设置密钥。"
+          }
+        }
+      }
+    },
     "Authentication failed.": {
       "localizations": {
         "de-DE": {

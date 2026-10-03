@@ -503,7 +503,13 @@ struct OTPCardView: View {
                     }
 
                     Button {
-                        showSecretSheet = true
+                        Task {
+                            if await AppLockManager.reauthenticate(
+                                reason: String(localized: "Authenticate to view this setup key.")
+                            ) {
+                                showSecretSheet = true
+                            }
+                        }
                     } label: {
                         Label("View Secret", systemImage: "key")
                     }

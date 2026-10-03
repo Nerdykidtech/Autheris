@@ -23,6 +23,7 @@ A version number lives in four places, and a release is not finished until they 
 - On the Mac, App Lock now re-locks 30 seconds after you switch to another app, as the Privacy settings say. It used to start counting only when Autheris was hidden or minimised, so switching away and back left it unlocked however long you were gone.
 - Backups you create in Backup & Restore now stay on this device. They used to be copied into iCloud Backup and Finder backups along with the rest of the app's documents, so an unencrypted backup put every secret into those backups in plain text. Backups made by earlier versions get the same protection the next time Autheris opens.
 - Encrypted backups now take much longer to guess the password of. Their key is derived with 600,000 rounds of PBKDF2 instead of 120,000, and a new encrypted backup needs a password of at least 10 characters. Encrypted backups made by earlier versions still restore.
+- With App Lock on, Autheris now asks for Face ID, Touch ID or your passcode again before turning App Lock off, opening Backup, transferring codes by QR code, or showing a setup key. Because of the 30-second grace period, someone holding a phone you had just unlocked could otherwise export every code.
 
 ### Fixed
 

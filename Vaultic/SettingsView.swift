@@ -469,7 +469,7 @@ struct SettingsView: View {
             Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
                 .platformAccentToggle()
     
-            Toggle(appLockToggleLabel, isOn: $enableAppLock)
+            Toggle(appLockToggleLabel, isOn: appLockToggleBinding)
                 .platformAccentToggle()
 
             // The one switch here that reaches the network. It sits with the others
@@ -498,6 +498,27 @@ struct SettingsView: View {
             .foregroundColor(.secondary)
             .padding(.top, 4)
         }
+    }
+
+    /// Turning App Lock on takes effect straight away; turning it off asks for
+    /// authentication first, so a phone unlocked moments ago can't be stripped of it.
+    private var appLockToggleBinding: Binding<Bool> {
+        Binding(
+            get: { enableAppLock },
+            set: { newValue in
+                guard !newValue else {
+                    enableAppLock = true
+                    return
+                }
+                Task {
+                    if await AppLockManager.reauthenticate(
+                        reason: String(localized: "Authenticate to turn off App Lock.")
+                    ) {
+                        enableAppLock = false
+                    }
+                }
+            }
+        )
     }
 
     /// The App Lock switch's label.
@@ -618,14 +639,26 @@ struct SettingsView: View {
             .platformPlainButton()
     
             Button {
-                showingBackupView = true
+                Task {
+                    if await AppLockManager.reauthenticate(
+                        reason: String(localized: "Authenticate to back up your tokens.")
+                    ) {
+                        showingBackupView = true
+                    }
+                }
             } label: {
                 actionRowLabel("Backup", systemImage: "externaldrive.badge.plus")
             }
             .platformPlainButton()
             
             Button {
-                showingQRCodeView = true
+                Task {
+                    if await AppLockManager.reauthenticate(
+                        reason: String(localized: "Authenticate to export your tokens.")
+                    ) {
+                        showingQRCodeView = true
+                    }
+                }
             } label: {
                 actionRowLabel("Transfer via QR Code", systemImage: "qrcode")
             }
