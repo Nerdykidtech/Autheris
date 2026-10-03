@@ -117,6 +117,7 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
+                self?.pruneFinishedTransfers()
                 self?.sendIfPossible()
             }
         }
@@ -173,10 +174,17 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     private func sendAsFile(_ tokens: [OTPCode], sentAt: Date, over session: WCSession) {
         do {
             try FileManager.default.createDirectory(at: stagingDirectory, withIntermediateDirectories: true)
-            pruneFinishedTransfers(in: session)
+            pruneFinishedTransfers()
 
+            // The file holds every secret in plain JSON, so it is protected
+            // rather than left at the default class, which can be read whenever the
+            // phone has been unlocked once since it started. "Unless open" rather
+            // than "complete": `transferFile` keeps reading in the background, and
+            // a transfer that has already opened the file must be able to finish if
+            // the phone locks part-way through.
             let url = stagingDirectory.appendingPathComponent("tokens-\(UUID().uuidString).json")
-            try WatchTokenPayload.encode(tokens, sentAt: sentAt).write(to: url, options: .atomic)
+            try WatchTokenPayload.encode(tokens, sentAt: sentAt)
+                .write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
 
             // The transfer object is deliberately not kept: it reports progress
             // and failure, and there is nothing useful to do with either. The list
@@ -196,7 +204,13 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// This is the only safe way to clean up after `transferFile`: it has no
     /// completion callback, but `outstandingFileTransfers` is exactly the set of
     /// files still in flight, so anything not in it can go.
-    private func pruneFinishedTransfers(in session: WCSession) {
+    ///
+    /// Runs on every foreground as well as before each send, so a finished
+    /// transfer's plaintext copy doesn't sit around until the next large send.
+    private func pruneFinishedTransfers() {
+        // Without an activated session `outstandingFileTransfers` can't be read,
+        // and every staged file would look finished.
+        guard let session, session.activationState == .activated else { return }
         let inFlight = Set(session.outstandingFileTransfers.map { $0.file.fileURL.standardizedFileURL })
         let staged = (try? FileManager.default.contentsOfDirectory(
             at: stagingDirectory,
