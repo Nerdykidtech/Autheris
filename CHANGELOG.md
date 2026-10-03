@@ -20,6 +20,7 @@ A version number lives in four places, and a release is not finished until they 
 ### Security
 
 - On the Mac, the Settings window now shows the lock screen while Autheris is locked. It used to open with ⌘, without asking for Touch ID or your password, which gave access to QR transfer (every secret), unencrypted backups and the App Lock toggle itself. The Settings window is also now kept out of screen capture when "Hide codes while recording or mirroring" is on, like the main window.
+- On the Mac, App Lock now re-locks 30 seconds after you switch to another app, as the Privacy settings say. It used to start counting only when Autheris was hidden or minimised, so switching away and back left it unlocked however long you were gone.
 
 ## [2.8] — October 2026
 
