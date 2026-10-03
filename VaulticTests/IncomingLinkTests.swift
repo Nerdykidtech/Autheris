@@ -82,4 +82,40 @@ final class IncomingLinkTests: XCTestCase {
         XCTAssertNil(try parse("https://example.com/import?data=W10"))
         XCTAssertNil(try parse("autheris://settings"))
     }
+
+    // MARK: - Scanned QR codes
+
+    func testAScannedTransferOrExportIsABatchForReview() throws {
+        let tokens: [OTPCode] = [OTPCode(label: "GitHub", account: "a", secret: "JBSWY3DPEHPK3PXP"),
+                                 OTPCode(label: "GitLab", account: "b", secret: "JBSWY3DPEHPK3PXQ")]
+        let export = try JSONEncoder().encode(ExportData(version: "1.0", timestamp: Date(), tokens: tokens))
+
+        // The bare payload older transfer codes held, as Base64 and as JSON text.
+        for payload in [export.base64EncodedString(), String(decoding: export, as: UTF8.self)] {
+            guard case .tokens(let batch) = IncomingLink.scannedBatch(payload) else {
+                return XCTFail("an export must go to review, not be added")
+            }
+            XCTAssertEqual(batch.map(\.label), ["GitHub", "GitLab"])
+        }
+    }
+
+    func testAScannedTransferLinkIsABatchAndABrokenOneIsAFailure() {
+        let good = "autheris://import?data=W3siaWQiOiIxMTExMTExMS0yMjIyLTMzMzMtNDQ0NC01NTU1NTU1NTU1NTUiLCJsYWJlbCI6IkdpdEh1YiAiLCJhY2NvdW50IjoieW91QGV4YW1wbGUuY29tIiwic2VjcmV0IjoiSkJTV1kzRFBFSFBLM1BYUCIsImlzUGlubmVkIjp0cnVlfV0"
+        guard case .tokens = IncomingLink.scannedBatch(good) else {
+            return XCTFail("a transfer link must go to review")
+        }
+        guard case .failure = IncomingLink.scannedBatch("autheris://import?data=not-a-payload") else {
+            return XCTFail("a broken transfer link must say so")
+        }
+        guard case .failure = IncomingLink.scannedBatch("otpauth-migration://offline?data=garbage") else {
+            return XCTFail("a broken Google export must say so")
+        }
+    }
+
+    func testASingleCodeOrASetupKeyIsNotABatch() {
+        // These the scanner adds itself, as it always has.
+        XCTAssertNil(IncomingLink.scannedBatch("otpauth://totp/GitHub:alice?secret=JBSWY3DPEHPK3PXP"))
+        XCTAssertNil(IncomingLink.scannedBatch("JBSWY3DPEHPK3PXP"))
+        XCTAssertNil(IncomingLink.scannedBatch("https://example.com"))
+    }
 }

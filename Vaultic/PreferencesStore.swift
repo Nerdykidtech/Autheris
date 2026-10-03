@@ -16,6 +16,14 @@ enum PreferencesStore {
     /// The `UserDefaults` observer installed by `startMirroringChanges()`.
     private static var mirrorObserver: NSObjectProtocol?
 
+    /// Whether this process has read the Keychain copy — or found there is none.
+    ///
+    /// Until it has, `persist()` writes nothing. A launch while the device is
+    /// locked can't read it, and saving `UserDefaults` over it then would skip
+    /// whatever the read was for: the one-time privacy repair, most of all.
+    /// Internal so tests can reset it.
+    static var hasReadStoredPreferences = false
+
     /// Persists to the Keychain on every `UserDefaults` change, from now until the
     /// app quits.
     ///
@@ -37,6 +45,7 @@ enum PreferencesStore {
     }
 
     static func persist() {
+        guard hasReadStoredPreferences else { return }
         let prefs = snapshot(of: .standard)
 
         if let data = try? JSONEncoder().encode(prefs) {
@@ -68,10 +77,21 @@ enum PreferencesStore {
         )
     }
 
+    /// `restoreIntoUserDefaults()`, for a launch that couldn't read the Keychain:
+    /// called once the device unlocks.
+    static func restoreIfNotYetRead() {
+        guard !hasReadStoredPreferences else { return }
+        restoreIntoUserDefaults()
+    }
+
     /// Copies the Keychain-backed preferences back into UserDefaults. Call this
     /// before anything reads `@AppStorage` / UserDefaults-backed state.
     static func restoreIntoUserDefaults() {
-        guard let data = KeychainStore.load(account: account),
+        let stored = KeychainStore.read(account: account)
+        if case .unavailable = stored { return }
+        hasReadStoredPreferences = true
+
+        guard let data = stored.data,
               var prefs = try? JSONDecoder().decode(AppPreferences.self, from: data) else {
             return
         }

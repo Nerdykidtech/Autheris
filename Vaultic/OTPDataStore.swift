@@ -57,7 +57,19 @@ final class OTPDataStore: ObservableObject {
     /// that list as the truth: the next save would write it over the real
     /// vault. The load is retried when the device unlocks and when the app
     /// becomes active.
-    private(set) var isVaultLoaded = false
+    ///
+    /// Published so the token list can say the codes can't be read, instead of
+    /// showing an empty vault, and every edit is refused until it is set — an
+    /// edit made meanwhile would look saved and then be gone.
+    @Published private(set) var isVaultLoaded = false
+    /// Whether the tombstones and the trash were readable when the vault loaded.
+    ///
+    /// The codes decide whether the vault loads at all. These two can't hold it
+    /// up — a damaged trash item must not stop anyone reaching their codes — so
+    /// an unreadable one loads as empty instead, and is then never written:
+    /// writing would replace whatever it still holds.
+    private var canPersistTombstones = false
+    private var canPersistTrash = false
     /// Retry observers for a load that found the Keychain locked.
     ///
     /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
@@ -167,27 +179,43 @@ final class OTPDataStore: ObservableObject {
     }
 
     /// Reads the tokens, tombstones and trash, or leaves everything untouched if
-    /// the Keychain can't be read yet.
+    /// the codes can't be read yet.
     ///
-    /// All three are read before any is applied, so the store is never left
-    /// half-loaded. They share an accessibility class, so in practice they are
-    /// readable together or not at all.
+    /// The codes are the vault: if they can't be read — the device is locked, or
+    /// they are stored but won't decode — nothing is applied, and nothing will
+    /// be saved over them. The tombstones and the trash can't hold the vault up;
+    /// see `canPersistTombstones`.
     private func loadVault() {
         guard !isVaultLoaded else { return }
         let storedCodes = readKeychain("otpCodes")
-        let storedTombstones = readKeychain(tombstonesKey)
-        let storedTrash = readKeychain(trashKey)
-        for result in [storedCodes, storedTombstones, storedTrash] {
-            if case .unavailable(let status) = result {
+        let decodedCodes: [OTPCode]?
+        switch storedCodes {
+        case .unavailable(let status):
+            #if DEBUG
+            print("Keychain not readable yet (status \(status)); deferring the vault load")
+            #endif
+            return
+        case .found(let data):
+            guard let decoded = try? JSONDecoder().decode([OTPCode].self, from: data) else {
+                // Present but unreadable. Starting empty would save `[]` over it
+                // with the first edit, so the vault stays unloaded instead.
                 #if DEBUG
-                print("Keychain not readable yet (status \(status)); deferring the vault load")
+                print("The stored codes could not be decoded; leaving them untouched")
                 #endif
                 return
             }
+            decodedCodes = decoded
+        case .notFound:
+            decodedCodes = nil
         }
 
+        let storedTombstones = readKeychain(tombstonesKey)
+        let storedTrash = readKeychain(trashKey)
+        canPersistTombstones = Self.isReadable(storedTombstones)
+        canPersistTrash = Self.isReadable(storedTrash)
+
         isVaultLoaded = true
-        loadCodes(from: storedCodes.data)
+        loadCodes(decodedCodes)
         loadSyncMetadata(from: storedTombstones.data)
         loadTrash(from: storedTrash.data)
 
@@ -203,10 +231,17 @@ final class OTPDataStore: ObservableObject {
         pushCodesToWatch()
     }
 
+    private static func isReadable(_ result: KeychainStore.ReadResult) -> Bool {
+        if case .unavailable = result { return false }
+        return true
+    }
+
     /// Picks up a load that `init` had to defer because the device was locked,
     /// and runs the sync that was skipped along with it.
     private func retryVaultLoad() {
         guard !isVaultLoaded else { return }
+        // The preferences are in the Keychain too, and were just as unreadable.
+        PreferencesStore.restoreIfNotYetRead()
         loadVault()
         guard isVaultLoaded, isSyncEnabled else { return }
         Task { [weak self] in
@@ -214,12 +249,13 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
-    private func loadCodes(from data: Data?) {
+    /// `stored` is what the Keychain held, already decoded; `nil` when it held
+    /// nothing.
+    private func loadCodes(_ stored: [OTPCode]?) {
         // Keychain is authoritative. Fall back to the pre-Keychain UserDefaults
         // blob exactly once, then migrate it and delete the plaintext copy.
-        if let data,
-           let decoded = try? JSONDecoder().decode([OTPCode].self, from: data) {
-            codes = Self.uniqueIDs(decoded)
+        if let stored {
+            codes = Self.uniqueIDs(stored)
         } else if let legacyData = UserDefaults.standard.data(forKey: saveKey),
                   let decoded = try? JSONDecoder().decode([OTPCode].self, from: legacyData) {
             codes = Self.uniqueIDs(decoded)
@@ -239,7 +275,7 @@ final class OTPDataStore: ObservableObject {
         // Don't let the same token (or the same id) enter twice; SwiftUI's List
         // diffing crashes on duplicate row identities, and a re-added token
         // would otherwise fight with sync.
-        guard !TrashBin.collides(code, with: codes) else { return false }
+        guard isVaultLoaded, !TrashBin.collides(code, with: codes) else { return false }
 
         codes.append(code)
         // A re-added token must not stay tombstoned, or sync would delete it again.
@@ -260,6 +296,7 @@ final class OTPDataStore: ObservableObject {
     /// the same payload, is skipped and counted as such.
     @discardableResult
     func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int) {
+        guard isVaultLoaded else { return (0, incoming.count) }
         let now = Date()
         var added: [OTPCode] = []
         for token in incoming {
@@ -292,11 +329,13 @@ final class OTPDataStore: ObservableObject {
     /// Two codes that only share a name both stay: hiding one would hide a
     /// secret, and the user can tell them apart by renaming one.
     private static func withoutCopies(_ tokens: [OTPCode]) -> [OTPCode] {
-        var result: [OTPCode] = []
-        for token in tokens where !result.contains(where: { $0.isCopy(of: token) }) {
-            result.append(token)
+        // Read on every render, so one pass with two sets rather than comparing
+        // each code with all the others.
+        var seenIDs = Set<UUID>()
+        var seenCopyKeys = Set<String>()
+        return tokens.filter { token in
+            seenIDs.insert(token.id).inserted && seenCopyKeys.insert(token.copyKey).inserted
         }
-        return result
     }
 
     /// The list the token screen renders: pinned first, then everything else, each
@@ -318,6 +357,7 @@ final class OTPDataStore: ObservableObject {
     /// The list shows copies as one row, so deleting that row removes them all — but
     /// a different token that only shares the name is left alone.
     func removeCode(_ code: OTPCode) {
+        guard isVaultLoaded else { return }
         let removed = codes.filter { $0.isCopy(of: code) }
         guard !removed.isEmpty else { return }
 
@@ -345,6 +385,7 @@ final class OTPDataStore: ObservableObject {
     /// so rather than leaving a silent no-op.
     @discardableResult
     func restoreFromTrash(_ entry: TrashBin.Entry) -> TrashBin.RestoreOutcome {
+        guard isVaultLoaded else { return .collides }
         let outcome = TrashBin.restore(entry, into: codes, at: Date())
         guard case .restored(let restored) = outcome else { return outcome }
 
@@ -366,12 +407,13 @@ final class OTPDataStore: ObservableObject {
     /// The tombstone is deliberately left alone: that is what keeps the deletion
     /// propagated, and the user has now confirmed they meant it.
     func deletePermanently(_ entry: TrashBin.Entry) {
+        guard isVaultLoaded else { return }
         trash.removeAll { $0.id == entry.id }
         persistTrash()
     }
 
     func emptyTrash() {
-        guard !trash.isEmpty else { return }
+        guard isVaultLoaded, !trash.isEmpty else { return }
         trash.removeAll()
         persistTrash()
     }
@@ -393,7 +435,7 @@ final class OTPDataStore: ObservableObject {
     }
 
     private func persistTrash() {
-        guard isVaultLoaded, let data = TrashBin.encode(trash) else { return }
+        guard isVaultLoaded, canPersistTrash, let data = TrashBin.encode(trash) else { return }
         if !KeychainStore.save(data, account: trashKey) {
             #if DEBUG
             print("Failed to save the trash to Keychain")
@@ -405,7 +447,7 @@ final class OTPDataStore: ObservableObject {
     /// it a name another code already has.
     @discardableResult
     func updateCode(_ code: OTPCode, at index: Int) -> Bool {
-        guard codes.indices.contains(index), !nameIsTaken(by: code) else { return false }
+        guard isVaultLoaded, codes.indices.contains(index), !nameIsTaken(by: code) else { return false }
         // Guarantee an edit is a *newer* write than what it replaces, even if a
         // caller handed back a copy that kept the old timestamp.
         codes[index] = code.modifiedAt > codes[index].modifiedAt ? code : code.edited()
@@ -423,7 +465,7 @@ final class OTPDataStore: ObservableObject {
     /// which is what keeps an unpinned code where the user left it instead of
     /// teleporting it to the bottom of the list.
     func setPinned(_ isPinned: Bool, for code: OTPCode) {
-        guard let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
+        guard isVaultLoaded, let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
         guard codes[index].isPinned != isPinned else { return }
 
         codes[index] = codes[index].edited(isPinned: isPinned)
@@ -445,7 +487,7 @@ final class OTPDataStore: ObservableObject {
     /// Syncs like any other edit: the counter is a property of the code, and a
     /// phone and a watch that disagree about it disagree about which code works.
     func advanceCounter(for code: OTPCode) {
-        guard let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
+        guard isVaultLoaded, let index = codes.firstIndex(where: { $0.id == code.id }) else { return }
         // A time-based code has no counter to spend, and advancing one would be a
         // no-op that still wrote a new `modifiedAt` — enough to make two devices
         // re-exchange a token for nothing.
@@ -463,10 +505,9 @@ final class OTPDataStore: ObservableObject {
     /// order is per-device, and syncing it would mean every drag rewrites many
     /// records. See `TokenOrdering`.
     func move(offsets: IndexSet, destination: Int) {
+        guard isVaultLoaded else { return }
         let reordered = TokenOrdering.moving(orderedCodes, offsets: offsets, destination: destination)
-        guard reordered != codes else { return }
-        codes = reordered
-        saveCodes()
+        applyReorder(reordered)
     }
 
     /// Applies a drag-to-reorder of one card from the iPad grid.
@@ -477,9 +518,22 @@ final class OTPDataStore: ObservableObject {
     /// `move(offsets:destination:)` is addressed in. Like that call, this
     /// deliberately does not sync: manual order is per-device.
     func moveCode(withID id: UUID, toDisplayedIndex destination: Int) {
+        guard isVaultLoaded else { return }
         let reordered = TokenOrdering.moving(orderedCodes, id: id, to: destination)
-        guard reordered != codes else { return }
-        codes = reordered
+        applyReorder(reordered)
+    }
+
+    /// Stores a new order for what the list shows.
+    ///
+    /// `reordered` is built from `orderedCodes`, which hides copies, so they are
+    /// carried over at the end. Dropping them would be a delete with no tombstone:
+    /// iCloud would hand them straight back, and the next drag would drop them
+    /// again.
+    private func applyReorder(_ reordered: [OTPCode]) {
+        let shownIDs = Set(reordered.map(\.id))
+        let result = reordered + codes.filter { !shownIDs.contains($0.id) }
+        guard result != codes else { return }
+        codes = result
         saveCodes()
     }
 
@@ -636,7 +690,8 @@ final class OTPDataStore: ObservableObject {
     }
 
     private func persistTombstones() {
-        guard isVaultLoaded, let data = SyncTombstoneStore.encode(tombstones) else { return }
+        guard isVaultLoaded, canPersistTombstones,
+              let data = SyncTombstoneStore.encode(tombstones) else { return }
 
         // The legacy `UserDefaults` copy is only dropped once the Keychain write
         // has succeeded, so a failure leaves the data recoverable instead of
@@ -654,6 +709,8 @@ final class OTPDataStore: ObservableObject {
 
     /// Creates a backup file with current codes
     func createBackup() -> URL? {
+        // An unloaded vault would back up as empty.
+        guard isVaultLoaded else { return nil }
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let timestamp = dateFormatter.string(from: Date())
@@ -679,6 +736,7 @@ final class OTPDataStore: ObservableObject {
     /// Async because deriving the key takes 600,000 rounds of PBKDF2, which run
     /// off the main actor; see `BackupCrypto`.
     func createEncryptedBackup(password: String) async -> URL? {
+        guard isVaultLoaded else { return nil }
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
         let timestamp = dateFormatter.string(from: Date())
@@ -778,6 +836,7 @@ final class OTPDataStore: ObservableObject {
     /// iCloud, and it goes to Recently Deleted like any other delete, so a restore
     /// from the wrong backup can still be undone here.
     func replaceAll(with backup: [OTPCode]) {
+        guard isVaultLoaded else { return }
         let now = Date()
         // Restored tokens are stamped as edited now. They keep the date they had
         // when the backup was made otherwise, and the tombstone a later delete
@@ -816,6 +875,7 @@ final class OTPDataStore: ObservableObject {
 
     /// Creates JSON data for QR code export
     func exportData() -> Data? {
+        guard isVaultLoaded else { return nil }
         do {
             let encoder = JSONEncoder()
             // Compact JSON — pretty printing inflates size and can exceed QR capacity (~3KB).

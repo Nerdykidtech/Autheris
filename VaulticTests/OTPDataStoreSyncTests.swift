@@ -345,6 +345,56 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(store.codes.map(\.id), [existing.id])
     }
 
+    // MARK: - A vault that can't be read
+
+    func testAVaultThatWontDecodeIsLeftAloneAndEditsAreRefused() {
+        // Present but unreadable — corruption, or a field from a newer build. The
+        // first edit used to save `[]` over it.
+        let stored = Data("not a list of codes".utf8)
+        XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
+
+        let unreadable = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+
+        XCTAssertFalse(unreadable.isVaultLoaded)
+        XCTAssertFalse(unreadable.addCode(token("GitHub")), "an edit must not look saved when it can't be")
+        XCTAssertTrue(unreadable.codes.isEmpty)
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored)
+    }
+
+    func testAnUnreadableTrashDoesNotHoldUpTheCodesAndIsNotWrittenOver() throws {
+        let existing = token("GitHub")
+        XCTAssertTrue(KeychainStore.save(try JSONEncoder().encode([existing]), account: "otpCodes"))
+        let storedTrash = Data("whatever the trash still holds".utf8)
+        XCTAssertTrue(KeychainStore.save(storedTrash, account: "otpTrash"))
+
+        let partial = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay()) { account in
+            account == "otpTrash" ? .unavailable(errSecDecode) : KeychainStore.read(account: account)
+        }
+
+        XCTAssertTrue(partial.isVaultLoaded, "a damaged trash must not keep anyone from their codes")
+        XCTAssertEqual(partial.codes.map(\.id), [existing.id])
+
+        partial.removeCode(existing)
+
+        XCTAssertTrue(partial.codes.isEmpty)
+        XCTAssertEqual(KeychainStore.load(account: "otpTrash"), storedTrash,
+                       "an item that couldn't be read must not be replaced")
+    }
+
+    func testDraggingKeepsTheCopiesTheListHides() {
+        let first = token("GitHub")
+        let copy = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let second = token("GitLab")
+        store.codes = [first, copy, second]
+        XCTAssertEqual(store.orderedCodes.map(\.id), [first.id, second.id])
+
+        store.move(offsets: IndexSet(integer: 1), destination: 0)
+
+        XCTAssertEqual(store.orderedCodes.map(\.id), [second.id, first.id])
+        XCTAssertTrue(store.codes.contains { $0.id == copy.id },
+                      "dropping a hidden copy is a delete with no tombstone")
+    }
+
     // MARK: - Launching while the device is locked
 
     func testALaunchThatCannotReadTheKeychainLeavesTheVaultAloneUntilItCan() async throws {

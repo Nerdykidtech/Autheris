@@ -64,6 +64,10 @@ struct AutherisApp: App {
                     } else {
                         ContentView()
                             .environmentObject(dataStore)
+                            .environment(\.reviewImport, ReviewImportAction { tokens in
+                                pendingImport = tokens
+                                showingImportSheet = true
+                            })
                             .blur(radius: shouldBlurContent ? 10 : 0)
                             .opacity(shouldBlurContent ? 0.7 : 1)
                     }

@@ -11,8 +11,8 @@ struct AddTokenView: View {
     @ObservedObject var dataStore: OTPDataStore
     @Binding var importResult: (title: String, body: String)?
     /// Where a scanned QR code that carries several codes goes to be reviewed.
-    /// Nothing from such a code is added here; see `handleExportData`.
-    @Binding var pendingImport: [OTPCode]?
+    /// Nothing from such a code is added here; see `IncomingLink.scannedBatch`.
+    @Environment(\.reviewImport) private var reviewImport
     
     @State private var selectedTab = 0
     @State private var label = ""
@@ -376,67 +376,21 @@ struct AddTokenView: View {
         print("Scanned QR payload: \(qrCode.count) chars")
         #endif
         
-        // First, check if it's our custom Autheris URL scheme
-        if let url = URL(string: qrCode), url.scheme == "autheris" {
-            #if DEBUG
-            print("Detected Autheris URL scheme")
-            #endif
-            if url.host == "import" {
-                #if DEBUG
-                print("Detected import URL")
-                #endif
-                // Extract the data from query parameters
-                if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-                   let queryItems = components.queryItems,
-                   let dataString = queryItems.first(where: { $0.name == "data" })?.value,
-                   let data = decodeAutherisImportData(dataString) {
-                    
-                    #if DEBUG
-                    print("Successfully extracted data from URL, size: \(data.count) bytes")
-                    #endif
-                    
-                    // Try to parse as export format
-                    if let exportData = parseExportFormatFromData(data) {
-                        #if DEBUG
-                        print("Parsed as export data with \(exportData.tokens.count) tokens")
-                        #endif
-                        handleExportData(exportData)
-                        return
-                    } else {
-                        #if DEBUG
-                        print("Failed to parse as export data")
-                        #endif
-                        alertMessage = String(localized: "Failed to parse import data. The QR code may be corrupted.")
-                        showingAlert = true
-                        return
-                    }
-                } else {
-                    #if DEBUG
-                    print("Failed to extract data from URL")
-                    #endif
-                    alertMessage = String(localized: "Invalid import URL. Could not extract data.")
-                    showingAlert = true
-                    return
-                }
-            }
-        }
-        
-        // Then, check if it's an export format (direct Base64 or JSON)
-        if let exportData = parseExportFormat(qrCode) {
-            #if DEBUG
-            print("Detected direct export format with \(exportData.tokens.count) tokens")
-            #endif
-            handleExportData(exportData)
+        // A QR code carrying several codes: a transfer, a Google Authenticator
+        // export, or an older bare export. Reviewed before anything is added.
+        switch IncomingLink.scannedBatch(qrCode) {
+        case .tokens(let tokens):
+            reviewImport(tokens)
+            dismiss()
             return
-        }
-        
-        // Google Authenticator export (otpauth-migration://offline?data=...)
-        if qrCode.hasPrefix("otpauth-migration://"),
-           let tokens = GoogleMigrationParser.parseMigrationURL(qrCode), !tokens.isEmpty {
-            handleExportData(ExportData(version: "1.0", timestamp: Date(), tokens: tokens))
+        case .failure(_, let message):
+            alertMessage = message
+            showingAlert = true
             return
+        case nil:
+            break
         }
-        
+
         // Otherwise, handle as single token...
         if let url = URL(string: qrCode), url.scheme == "otpauth" {
             parseOTPAuthURL(url)
@@ -490,92 +444,6 @@ struct AddTokenView: View {
         showingAlert = true
     }
 
-    private func decodeAutherisImportData(_ dataString: String) -> Data? {
-        // `autheris://import?data=...` uses URL-safe Base64 (like RFC 4648 "base64url"):
-        // - uses '-' and '_' instead of '+' and '/'
-        // - may omit '=' padding
-        let standardBase64String = dataString
-            .replacingOccurrences(of: "-", with: "+")
-            .replacingOccurrences(of: "_", with: "/")
-
-        let paddingLength = (4 - (standardBase64String.count % 4)) % 4
-        let padded = standardBase64String + String(repeating: "=", count: paddingLength)
-
-        return Data(base64Encoded: padded)
-    }
-    
-    private func parseExportFormat(_ qrCode: String) -> ExportData? {
-        #if DEBUG
-        print("Trying to parse as export format...")
-        #endif
-        
-        // Try to decode as Base64 first (QR codes often encode binary data as Base64)
-        if let data = Data(base64Encoded: qrCode) {
-            #if DEBUG
-            print("Successfully decoded as Base64, size: \(data.count) bytes")
-            #endif
-            return parseExportFormatFromData(data)
-        }
-        
-        // Try as direct JSON string
-        if let jsonData = qrCode.data(using: .utf8) {
-            #if DEBUG
-            print("Trying to parse as JSON string, length: \(qrCode.count) chars")
-            #endif
-            return parseExportFormatFromData(jsonData)
-        }
-        
-        #if DEBUG
-        print("Not an export format")
-        #endif
-        return nil
-    }
-    
-    private func parseExportFormatFromData(_ data: Data) -> ExportData? {
-        do {
-            let exportData = try JSONDecoder().decode(ExportData.self, from: data)
-            #if DEBUG
-            print("Successfully parsed ExportData with \(exportData.tokens.count) tokens")
-            #endif
-            return exportData
-        } catch {
-            #if DEBUG
-            print("Failed to parse as ExportData: \(error)")
-            #endif
-            
-            // Try to parse as plain array of OTPCode (old format)
-            do {
-                let tokens = try JSONDecoder().decode([OTPCode].self, from: data)
-                #if DEBUG
-                print("Parsed as plain array with \(tokens.count) tokens")
-                #endif
-                // Wrap in ExportData for consistency
-                return ExportData(version: "1.0", timestamp: Date(), tokens: tokens)
-            } catch {
-                #if DEBUG
-                print("Failed to parse as plain array: \(error)")
-                #endif
-                return nil
-            }
-        }
-    }
-    
-    /// A transfer or Google Authenticator export QR code, which can carry a whole
-    /// vault.
-    ///
-    /// Handed to `ImportConfirmationView` rather than added here, exactly as a link
-    /// carrying codes is: scanning is the user's choice, but what a QR code on
-    /// someone else's "set up 2FA" page contains is not, and it could add dozens of
-    /// entries with nothing to review.
-    private func handleExportData(_ exportData: ExportData) {
-        #if DEBUG
-        print("Handling export data with \(exportData.tokens.count) tokens")
-        #endif
-
-        pendingImport = exportData.tokens
-        dismiss()
-    }
-
     /// Adds one code and closes, or says it is already here rather than closing as
     /// if it had been added.
     private func addAndDismiss(_ code: OTPCode) {
@@ -589,7 +457,7 @@ struct AddTokenView: View {
     /// A scanned setup URL (`otpauth://totp/...` or `otpauth://hotp/...`).
     ///
     /// The parsing lives in `OTPAuthURLParser`, which the deep-link path
-    /// (`AutherisApp`) and the confirmation sheet (`OTPAuthURLView`) also use.
+    /// (`IncomingLink`) also uses.
     /// Three copies of it used to exist here and there, and they had already
     /// drifted: this one was the only one that even noticed a `counter`, it only
     /// printed it, and none of the three read the URL's host — so a counter-based
@@ -774,6 +642,6 @@ struct AddTokenView: View {
 
 struct AddTokenView_Previews: PreviewProvider {
     static var previews: some View {
-        AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil), pendingImport: .constant(nil))
+        AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil))
     }
 }

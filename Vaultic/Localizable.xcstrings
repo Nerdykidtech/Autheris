@@ -875,46 +875,6 @@
         }
       }
     },
-    "Add Authentication Token": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Authentifizierungs-Code hinzufügen"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir código de autenticación"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un code d'authentification"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "認証コードを追加"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adicionar código de autenticação"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加验证码"
-          }
-        }
-      }
-    },
     "Add Token": {
       "localizations": {
         "de-DE": {
@@ -1994,6 +1954,46 @@
     "Autheris": {
       "shouldTranslate": false
     },
+    "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris kann Ihre Codes gerade nicht aus dem Schlüsselbund lesen. Sie wurden nicht verändert, und es wird nichts gespeichert, bis sie wieder gelesen werden können."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris no puede leer tus códigos del llavero en este momento. No se han modificado y no se guardará nada hasta que se puedan leer."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris ne peut pas lire vos codes depuis le trousseau pour le moment. Ils n'ont pas été modifiés, et rien ne sera enregistré tant qu'ils ne pourront pas être lus."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris は現在キーチェーンからコードを読み取れません。コードは変更されておらず、読み取れるようになるまで何も保存されません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Autheris não consegue ler seus códigos das Chaves no momento. Eles não foram alterados, e nada será salvo até que possam ser lidos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 目前无法从钥匙串读取你的验证码。它们没有被更改，在能够读取之前不会保存任何内容。"
+          }
+        }
+      }
+    },
     "Automatic (service color)": {
       "localizations": {
         "de-DE": {
@@ -2910,6 +2910,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "验证码"
+          }
+        }
+      }
+    },
+    "Codes Unavailable": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes nicht verfügbar"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos no disponibles"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes indisponibles"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを利用できません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos indisponíveis"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验证码不可用"
           }
         }
       }
@@ -5352,46 +5392,6 @@
         }
       }
     },
-    "Failed to parse import data. The QR code may be corrupted.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Importdaten konnten nicht gelesen werden. Der QR-Code ist möglicherweise beschädigt."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron interpretar los datos de importación. Puede que el código QR esté dañado."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible de lire les données d'import. Le QR code est peut-être corrompu."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込みデータを解析できませんでした。QR コードが破損している可能性があります。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Não foi possível ler os dados da importação. O QR code pode estar corrompido."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法解析导入数据。二维码可能已损坏。"
-          }
-        }
-      }
-    },
     "Fetch service logos": {
       "localizations": {
         "de-DE": {
@@ -6390,86 +6390,6 @@
         }
       }
     },
-    "Invalid OTP URL": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige OTP-URL"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP no válida"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP non valide"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP URL が無効です"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP inválida"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP 链接无效"
-          }
-        }
-      }
-    },
-    "Invalid import URL. Could not extract data.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige Import-URL. Daten konnten nicht extrahiert werden."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL de importación no válida. No se pudieron extraer los datos."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL d'import non valide. Impossible d'extraire les données."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込み URL が無効です。データを取り出せませんでした。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL de importação inválida. Não foi possível extrair os dados."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入链接无效，无法提取数据。"
-          }
-        }
-      }
-    },
     "Invalid secret key in QR code. Please enter manually.": {
       "localizations": {
         "de-DE": {
@@ -6506,46 +6426,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "二维码中的密钥无效，请手动输入。"
-          }
-        }
-      }
-    },
-    "Invalid secret key in the URL.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültiger Schlüssel in der URL."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clave secreta no válida en la URL."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clé secrète non valide dans l'URL."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL 内のシークレットキーが無効です。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chave secreta inválida na URL."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "链接中的密钥无效。"
           }
         }
       }
@@ -11466,46 +11346,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你扫描的二维码中包含验证码，要导入吗？"
-          }
-        }
-      }
-    },
-    "You've scanned an OTP QR code. Would you like to add this authentication token to your vault?": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sie haben einen OTP-QR-Code gescannt. Möchten Sie diesen Authentifizierungs-Code hinzufügen?"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Has escaneado un código QR OTP. ¿Quieres añadir este código de autenticación a tu lista?"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous avez scanné un QR code OTP. Voulez-vous ajouter ce code d'authentification à votre liste ?"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP QR コードを読み取りました。この認証コードを追加しますか？"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Você escaneou um QR code OTP. Deseja adicionar este código de autenticação à sua lista?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你扫描了一个 OTP 二维码，要把这个验证码添加到账户列表吗？"
           }
         }
       }

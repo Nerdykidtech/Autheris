@@ -306,4 +306,31 @@ final class OTPCodeCodableTests: XCTestCase {
 
         XCTAssertEqual(decoded.counter, OTPCode.maximumCounter)
     }
+
+    func testAnAlgorithmThisBuildDoesNotKnowDecodesAsSHA1() throws {
+        // Decoded strictly, one such value — from a newer build — failed the decode
+        // of the whole vault, and an undecodable vault used to be saved over with
+        // an empty one.
+        let json = """
+        { "id": "3F2504E0-4F89-11D3-9A0C-0305E82C3301", "label": "GitHub",
+          "account": "octocat", "secret": "JBSWY3DPEHPK3PXP", "algorithm": "SHA3-256" }
+        """
+
+        let decoded = try JSONDecoder().decode(OTPCode.self, from: Data(json.utf8))
+
+        XCTAssertEqual(decoded.algorithm, .sha1)
+    }
+
+    func testCopiesShareACopyKeyAndNamesakesDoNot() {
+        let original = OTPCode(label: "GitHub", account: "alice", secret: "JBSWY3DPEHPK3PXP")
+        let copy = OTPCode(label: "github", account: "Alice", secret: "jbsw y3dp ehpk 3pxp")
+        let namesake = OTPCode(label: "GitHub", account: "alice", secret: "JBSWY3DPEHPK3PXQ")
+        // Moving the separator between label and account must not make a match.
+        let shifted = OTPCode(label: "GitHub|alice", account: "", secret: "JBSWY3DPEHPK3PXP")
+
+        XCTAssertEqual(original.copyKey, copy.copyKey)
+        XCTAssertTrue(original.isCopy(of: copy))
+        XCTAssertFalse(original.isCopy(of: namesake))
+        XCTAssertNotEqual(original.copyKey, shifted.copyKey)
+    }
 }

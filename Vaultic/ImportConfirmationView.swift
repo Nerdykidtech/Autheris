@@ -1,5 +1,26 @@
 import SwiftUI
 
+/// Sends codes to the app's one import review: `ImportConfirmationView`, which
+/// `AutherisApp` shows once the app is unlocked and which adds nothing until the
+/// user taps Import.
+///
+/// Links reach it directly. This is how the scanner reaches it, so a batch of
+/// codes from a QR code waits behind App Lock exactly as one from a link does,
+/// instead of being held by a screen that App Lock tears down.
+struct ReviewImportAction {
+    let review: @MainActor ([OTPCode]) -> Void
+
+    @MainActor func callAsFunction(_ tokens: [OTPCode]) {
+        review(tokens)
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var reviewImport = ReviewImportAction { _ in
+        assertionFailure("reviewImport is only set by AutherisApp")
+    }
+}
+
 struct ImportConfirmationView: View {
     /// Codes that arrived in a link, not yet in the vault. See `IncomingLink`.
     let tokens: [OTPCode]
@@ -53,7 +74,10 @@ struct ImportConfirmationView: View {
             .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: -5)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
-        .preferredColorScheme(.light)
+        // The card is drawn light. `preferredColorScheme` would say so for the
+        // whole window — flipping the app behind the card to light mode for as
+        // long as it was up — so the environment is set for the card alone.
+        .environment(\.colorScheme, .light)
     }
     
     // MARK: - Subviews

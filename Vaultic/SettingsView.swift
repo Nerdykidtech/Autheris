@@ -510,7 +510,7 @@ struct SettingsView: View {
             get: { enableAppLock },
             set: { newValue in
                 guard !newValue else {
-                    if AppLockManager.canLock {
+                    if AppLockManager.canLock() {
                         enableAppLock = true
                     } else {
                         showingAppLockUnavailable = true

@@ -18,6 +18,23 @@ struct CloudKitUnavailableError: LocalizedError {
     var errorDescription: String? { reason }
 }
 
+/// The one CloudKit call a push makes.
+///
+/// A protocol so tests can answer it the way the server does when another device
+/// wrote first — which is the path that never ran while uploads used
+/// `.changedKeys`, and nothing could show it.
+nonisolated protocol CloudRecordSaving {
+    func modifyRecords(
+        saving recordsToSave: [CKRecord],
+        deleting recordIDsToDelete: [CKRecord.ID],
+        savePolicy: CKModifyRecordsOperation.RecordSavePolicy,
+        atomically: Bool
+    ) async throws -> (saveResults: [CKRecord.ID: Result<CKRecord, any Error>],
+                       deleteResults: [CKRecord.ID: Result<Void, any Error>])
+}
+
+extension CKDatabase: CloudRecordSaving {}
+
 /// Syncs tokens through the user's **private** CloudKit database.
 ///
 /// ### Where the secrets live
@@ -298,7 +315,8 @@ final class CloudKitTokenSyncService: TokenSyncService {
             // device ends up with the same answer as everyone else.
             let serverRecords = Dictionary(fetched.map { ($0.recordID.recordName, $0) },
                                            uniquingKeysWith: { first, _ in first })
-            let adoptedDuringPush = try await push(outcome.uploads, onto: serverRecords)
+            let database = try cloudDatabase()
+            let adoptedDuringPush = try await Self.push(outcome.uploads, onto: serverRecords, using: database)
             if !adoptedDuringPush.isEmpty {
                 outcome = SyncMergeEngine.merge(
                     local: SyncLocalState(tokens: outcome.tokens, tombstones: outcome.tombstones),
@@ -309,7 +327,8 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
             // Best effort: a failure here leaves the next sync to try again, and
             // must not report the sync itself as failed.
-            try? await scrubTombstones(in: fetched, skipping: Set(outcome.uploads.map(\.id)))
+            try? await Self.scrubTombstones(in: fetched, skipping: Set(outcome.uploads.map(\.id)),
+                                            using: database)
 
             defaults.set(Date(), forKey: Self.lastSyncedAtKey)
             updateStatus(.synced(defaults.object(forKey: Self.lastSyncedAtKey) as? Date))
@@ -447,13 +466,15 @@ final class CloudKitTokenSyncService: TokenSyncService {
     /// this sync fetched — so it carries that copy's change tag. A record that is
     /// new to the server starts fresh, and if another device created it meanwhile
     /// that is a conflict like any other.
-    private func push(_ uploads: [SyncRecord], onto serverRecords: [String: CKRecord]) async throws -> [SyncRecord] {
+    static func push(_ uploads: [SyncRecord],
+                     onto serverRecords: [String: CKRecord],
+                     using database: CloudRecordSaving) async throws -> [SyncRecord] {
         var pending = uploads.map { (item: $0, record: Self.encode($0, into: serverRecords[$0.id])) }
         var adopted: [SyncRecord] = []
 
         for _ in 0..<Self.maxPushAttempts {
             guard !pending.isEmpty else { break }
-            let response = try await cloudDatabase().modifyRecords(
+            let response = try await database.modifyRecords(
                 saving: pending.map(\.record),
                 deleting: [],
                 // Refused when the server's copy has changed since it was fetched,
@@ -493,7 +514,9 @@ final class CloudKitTokenSyncService: TokenSyncService {
     /// under a record that says it was deleted. Tombstones written now start from
     /// the fetched record and clear properly; this catches the ones already there.
     /// `skipping` is the records this sync has just uploaded.
-    private func scrubTombstones(in fetched: [CKRecord], skipping uploaded: Set<String>) async throws {
+    static func scrubTombstones(in fetched: [CKRecord],
+                                skipping uploaded: Set<String>,
+                                using database: CloudRecordSaving) async throws {
         let leftovers = fetched.filter { record in
             (record[Field.deleted] as? NSNumber)?.boolValue == true
                 && !uploaded.contains(record.recordID.recordName)
@@ -505,9 +528,9 @@ final class CloudKitTokenSyncService: TokenSyncService {
         }
         // A conflict means another device wrote the record since, and it will be
         // looked at again on the next sync.
-        _ = try await cloudDatabase().modifyRecords(saving: leftovers, deleting: [],
-                                                    savePolicy: .ifServerRecordUnchanged,
-                                                    atomically: false)
+        _ = try await database.modifyRecords(saving: leftovers, deleting: [],
+                                             savePolicy: .ifServerRecordUnchanged,
+                                             atomically: false)
     }
 
     private static func serverRecord(from error: Error) -> CKRecord? {
@@ -527,7 +550,9 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
     // MARK: - Record <-> SyncRecord
 
-    private static func decode(_ record: CKRecord) -> SyncRecord? {
+    /// Internal rather than private so tests can build records the way the
+    /// server would hold them.
+    static func decode(_ record: CKRecord) -> SyncRecord? {
         guard let modifiedAt = record[Field.modifiedAt] as? Date,
               let fingerprint = record[Field.fingerprint] as? String else { return nil }
         let id = record.recordID.recordName
@@ -579,7 +604,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
                           token: token)
     }
 
-    private static func encode(_ item: SyncRecord, into existing: CKRecord? = nil) -> CKRecord {
+    static func encode(_ item: SyncRecord, into existing: CKRecord? = nil) -> CKRecord {
         let record = existing ?? CKRecord(recordType: recordType, recordID: CKRecord.ID(recordName: item.id))
         record[Field.modifiedAt] = item.modifiedAt as CKRecordValue
         record[Field.deleted] = NSNumber(value: item.deleted)

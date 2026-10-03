@@ -82,6 +82,31 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertEqual(try storedPreferences().schemaVersion, AppPreferences.currentSchemaVersion)
     }
 
+    func testPersistWritesNothingBeforeTheStoredCopyHasBeenRead() throws {
+        // A launch on a locked device can't read the Keychain copy. Saving over it
+        // then would skip what the read was for — the privacy repair, most of all.
+        let stored = Data("a blob only a successful read may replace".utf8)
+        XCTAssertTrue(KeychainStore.save(stored, account: account))
+        PreferencesStore.hasReadStoredPreferences = false
+        defer { PreferencesStore.hasReadStoredPreferences = true }
+
+        PreferencesStore.persist()
+
+        XCTAssertEqual(KeychainStore.load(account: account), stored)
+    }
+
+    func testTheDeferredReadRunsTheRepairOnUnlock() throws {
+        let legacy = #"{ "enablePrivacyBlur": false, "hideCodesInAppSwitcher": false, "hideCodesWhenScreenCaptured": false }"#
+        XCTAssertTrue(KeychainStore.save(Data(legacy.utf8), account: account))
+        PreferencesStore.hasReadStoredPreferences = false
+
+        PreferencesStore.restoreIfNotYetRead()
+
+        XCTAssertTrue(PreferencesStore.hasReadStoredPreferences)
+        XCTAssertEqual(try storedPreferences().schemaVersion, AppPreferences.currentSchemaVersion)
+        XCTAssertEqual(UserDefaults.standard.object(forKey: "hideCodesInAppSwitcher") as? Bool, true)
+    }
+
     // MARK: - Restoring
 
     func testRestoringABlobFromBeforeTheFixTurnsThePrivacySwitchesBackOnOnce() throws {

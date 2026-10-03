@@ -156,13 +156,17 @@ struct BackupView: View {
                 Text("Are you sure you want to delete this backup?")
             }
             .alert("Restore Backup", isPresented: $showingRestoreAlert) {
-                Button("Cancel", role: .cancel) { }
+                // Either way, drop the decrypted codes and the file's bytes: they
+                // hold every secret in the backup, and nothing needs them now.
+                Button("Cancel", role: .cancel) {
+                    clearPendingRestore()
+                }
                 Button("Restore", role: .destructive) {
                     if let restoredCodes {
                         dataStore.replaceAll(with: restoredCodes)
                         showingRestoredAlert = true
                     }
-                    restoredCodes = nil
+                    clearPendingRestore()
                 }
             } message: {
                 Text("Restoring will replace all current tokens with the backup. Tokens that aren't in the backup move to Recently Deleted.")
@@ -174,6 +178,7 @@ struct BackupView: View {
                 }
                 Button("Cancel", role: .cancel) {
                     backupPassword = ""
+                    clearPendingRestore()
                 }
             } message: {
                 Text("This backup is encrypted. Enter the password used when it was created.")
@@ -393,8 +398,14 @@ struct BackupView: View {
             } catch {
                 restoreErrorMessage = failure
                 showingRestoreError = true
+                clearPendingRestore()
             }
         }
+    }
+
+    private func clearPendingRestore() {
+        restoredCodes = nil
+        pendingRestore = nil
     }
 
     private func handleFileImport(_ result: Result<URL, Error>) {

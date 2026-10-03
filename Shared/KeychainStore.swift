@@ -91,7 +91,9 @@ enum KeychainStore {
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         switch status {
         case errSecSuccess:
-            return (result as? Data).map(ReadResult.found) ?? .notFound
+            // Found, but not as data. Not "nothing stored": a caller that heard
+            // that would feel free to write over it.
+            return (result as? Data).map(ReadResult.found) ?? .unavailable(errSecDecode)
         case errSecItemNotFound:
             return .notFound
         default:

@@ -20,10 +20,6 @@ struct HomeView: View {
     @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
-    /// Codes from a scanned transfer or Google Authenticator export QR code,
-    /// waiting in `ImportConfirmationView` for the user to accept them — the same
-    /// review a link that carries codes gets.
-    @State private var pendingImport: [OTPCode]?
     @State private var searchText = ""
     @State private var showingSettings = false
     
@@ -50,7 +46,24 @@ struct HomeView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            if searchText.isEmpty {
+            if !dataStore.isVaultLoaded {
+                // Not an empty vault: one that can't be read yet. Saying "No Tokens
+                // Yet" here would be wrong, and adding would be refused anyway.
+                Image(systemName: "exclamationmark.lock")
+                    .font(.system(size: 40))
+                    .foregroundColor(.secondary)
+                    .opacity(0.5)
+
+                Text("Codes Unavailable")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+
+                Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else if searchText.isEmpty {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 40))
                     .foregroundColor(.accentColor)
@@ -204,6 +217,9 @@ struct HomeView: View {
                     .font(.title3)
                     .foregroundColor(.accentColor)
             }
+            // Nothing can be added to a vault that hasn't loaded; see
+            // `OTPDataStore.isVaultLoaded`.
+            .disabled(!dataStore.isVaultLoaded)
         }
     }
 
@@ -236,8 +252,7 @@ struct HomeView: View {
             .navigationTitle("Autheris")
             .largeNavigationTitle()
             .sheet(isPresented: $showingAddToken) {
-                AddTokenView(dataStore: dataStore, importResult: $importResult,
-                             pendingImport: $pendingImport)
+                AddTokenView(dataStore: dataStore, importResult: $importResult)
                     .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
             }
@@ -253,27 +268,6 @@ struct HomeView: View {
             } message: { result in
                 Text(result.body)
             }
-            .overlay {
-                if let tokens = pendingImport {
-                    ZStack {
-                        Rectangle()
-                            .fill(.ultraThinMaterial)
-                            .ignoresSafeArea()
-                            .overlay(Color.black.opacity(0.25))
-                        ImportConfirmationView(
-                            tokens: tokens,
-                            dataStore: dataStore,
-                            isPresented: Binding(
-                                get: { pendingImport != nil },
-                                set: { if !$0 { pendingImport = nil } }
-                            )
-                        )
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .transition(.opacity)
-                }
-            }
-            .animation(.default, value: pendingImport != nil)
         }
     }
 
