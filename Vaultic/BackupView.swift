@@ -304,6 +304,13 @@ struct BackupView: View {
             showingRestoreError = true
             return
         }
+        guard newBackupPassword.count >= BackupCrypto.minimumPasswordLength else {
+            restoreErrorMessage = String(localized: "Use a password of at least \(BackupCrypto.minimumPasswordLength) characters.")
+            showingRestoreError = true
+            newBackupPassword = ""
+            newBackupConfirmPassword = ""
+            return
+        }
 
         if let url = dataStore.createEncryptedBackup(password: newBackupPassword) {
             refreshBackups()

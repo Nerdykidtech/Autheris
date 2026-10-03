@@ -124,4 +124,45 @@ final class BackupCryptoTests: XCTestCase {
     func testEmptyInputIsRejected() throws {
         XCTAssertThrowsError(try decrypt(Data()))
     }
+
+    // MARK: - Format versions
+
+    func testNewBackupsRecordTheirIterationCount() throws {
+        let envelope = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: try encrypt()) as? [String: Any]
+        )
+
+        XCTAssertEqual(envelope["version"] as? Int, 2)
+        XCTAssertEqual(envelope["iterations"] as? Int, BackupCrypto.currentIterations)
+    }
+
+    /// Written by the version 1 code (120,000 iterations, hand-rolled PBKDF2)
+    /// before this format change, so it proves old backups still open.
+    func testAVersionOneBackupStillDecrypts() throws {
+        let v1 = try XCTUnwrap(Data(base64Encoded: "eyJzYWx0IjoiTnBUdXo5dkFmell4Q1kzMVI5ZGtXQT09IiwiY29tYmluZWQiOiJNaHY5eVh2WjdNbldJdVwvSDNoeHFRUlk2MHlVT3h3TVpcL3hnOEFueHB5YlwvTkE0cDl3VnpScG5UQ3pIRFJESjJ4QVIxbDliTE92TFwvUlJGdjVVem1QWW9XazJPU0R1MkxRRVM1XC96K1M1YzZ0REJKTWxcL1NENURXV3hJcnMxK3BEcSIsInZlcnNpb24iOjF9"))
+
+        XCTAssertEqual(try decrypt(v1), plaintext)
+    }
+
+    func testAnIterationCountOutsideTheAcceptedRangeIsRejected() throws {
+        for count in [1, 50_000_000] {
+            let forged = try envelopeReplacing("iterations", with: count, in: try encrypt())
+
+            XCTAssertThrowsError(try decrypt(forged)) { error in
+                guard case .invalidEnvelope? = error as? BackupCrypto.BackupCryptoError else {
+                    return XCTFail("expected .invalidEnvelope for \(count), got \(error)")
+                }
+            }
+        }
+    }
+
+    func testAVersionTwoBackupWithoutAnIterationCountIsRejected() throws {
+        var envelope = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: try encrypt()) as? [String: Any]
+        )
+        envelope.removeValue(forKey: "iterations")
+        let data = try JSONSerialization.data(withJSONObject: envelope)
+
+        XCTAssertThrowsError(try decrypt(data))
+    }
 }

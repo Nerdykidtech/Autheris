@@ -22,9 +22,11 @@ A version number lives in four places, and a release is not finished until they 
 - On the Mac, the Settings window now shows the lock screen while Autheris is locked. It used to open with ⌘, without asking for Touch ID or your password, which gave access to QR transfer (every secret), unencrypted backups and the App Lock toggle itself. The Settings window is also now kept out of screen capture when "Hide codes while recording or mirroring" is on, like the main window.
 - On the Mac, App Lock now re-locks 30 seconds after you switch to another app, as the Privacy settings say. It used to start counting only when Autheris was hidden or minimised, so switching away and back left it unlocked however long you were gone.
 - Backups you create in Backup & Restore now stay on this device. They used to be copied into iCloud Backup and Finder backups along with the rest of the app's documents, so an unencrypted backup put every secret into those backups in plain text. Backups made by earlier versions get the same protection the next time Autheris opens.
+- Encrypted backups now take much longer to guess the password of. Their key is derived with 600,000 rounds of PBKDF2 instead of 120,000, and a new encrypted backup needs a password of at least 10 characters. Encrypted backups made by earlier versions still restore.
 
 ### Fixed
 
+- Restoring a backup you picked with "Import Backup from File" now works reliably. Picking one from Files or iCloud Drive could fail with "Incorrect password or corrupted backup" even when the password was right.
 - With iCloud sync on, deleting a code on one device now removes it from your other devices too. The other devices used to put it straight back. A code you deleted, re-added or restored from Recently Deleted while a sync was running could also be undone when that sync finished; it now stays the way you left it.
 
 ## [2.8] — October 2026

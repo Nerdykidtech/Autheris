@@ -10866,6 +10866,46 @@
         }
       }
     },
+    "Use a password of at least %lld characters.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwende ein Passwort mit mindestens %lld Zeichen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa una contraseña de al menos %lld caracteres."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez un mot de passe d'au moins %lld caractères."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld文字以上のパスワードを使用してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use uma senha com pelo menos %lld caracteres."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用至少 %lld 个字符的密码。"
+          }
+        }
+      }
+    },
     "Use service default": {
       "localizations": {
         "de-DE": {
