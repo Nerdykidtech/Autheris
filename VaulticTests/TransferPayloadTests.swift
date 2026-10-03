@@ -12,10 +12,16 @@ import CoreImage.CIFilterBuiltins
 @MainActor
 final class TransferPayloadTests: XCTestCase {
 
+    /// Codes shaped like real ones: a service name, an email address, and a
+    /// 20-byte secret of random bytes. Random, not patterned, because secrets are
+    /// random and don't compress — a patterned fixture would make the capacity
+    /// tests easier to pass than any real vault. Seeded, so every run is the same.
     private func codes(_ count: Int) -> [OTPCode] {
-        (0..<count).map { index in
-            OTPCode(label: "Service \(index)", account: "user\(index)@example.com",
-                    secret: OTPGenerator.encodeBase32(Data((0..<20).map { UInt8(($0 * 7 + index) % 256) })))
+        var generator = SeededGenerator(seed: 42)
+        return (0..<count).map { index in
+            let secret = Data((0..<20).map { _ in UInt8.random(in: .min ... .max, using: &generator) })
+            return OTPCode(label: "Service \(index)", account: "firstname.lastname\(index)@example.com",
+                           secret: OTPGenerator.encodeBase32(secret))
         }
     }
 
@@ -132,5 +138,20 @@ final class TransferPayloadTests: XCTestCase {
         guard case .failure = IncomingLink.parse(link) else {
             return XCTFail("a link that doesn't decode must say so")
         }
+    }
+}
+
+/// SplitMix64: a small, repeatable random number generator for fixtures.
+private struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+
+    init(seed: UInt64) { state = seed }
+
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
     }
 }

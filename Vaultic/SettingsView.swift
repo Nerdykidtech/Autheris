@@ -44,6 +44,10 @@ struct SettingsView: View {
 
     @State private var showingBackupView = false
     @State private var showingQRCodeView = false
+    /// The transfer link, built once as the sheet opens rather than on every
+    /// redraw of this screen — it encodes and compresses the whole vault — and
+    /// dropped when the sheet closes, since it holds every secret.
+    @State private var transferLink: String?
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
     @State private var showingChangelog = false
@@ -162,9 +166,9 @@ struct SettingsView: View {
         .sheet(isPresented: $showingBackupView) {
             BackupView(dataStore: dataStore)
         }
-        .sheet(isPresented: $showingQRCodeView) {
-            if let link = dataStore.transferLink() {
-                QRCodeView(link: link, title: "Export Tokens")
+        .sheet(isPresented: $showingQRCodeView, onDismiss: { transferLink = nil }) {
+            if let transferLink {
+                QRCodeView(link: transferLink, title: "Export Tokens")
             } else {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
@@ -674,6 +678,7 @@ struct SettingsView: View {
                     if await AppLockManager.reauthenticate(
                         reason: String(localized: "Authenticate to export your tokens.")
                     ) {
+                        transferLink = dataStore.transferLink()
                         showingQRCodeView = true
                     }
                 }
