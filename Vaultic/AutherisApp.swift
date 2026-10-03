@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 #if os(iOS)
 import UIKit
@@ -137,13 +138,56 @@ struct AutherisApp: App {
                     hasCompletedOnboarding = true
                 }
 
-                // Set up app state observers, then take an initial reading of the
-                // capture state in case the app launched into an active recording.
-                setupAppStateObservers()
+                // Keep the Keychain copy of the preferences current. Only the
+                // first window to appear installs the observer.
+                PreferencesStore.startMirroringChanges()
+
+                // Take an initial reading of the capture state in case the app
+                // launched into an active recording.
                 refreshScreenCaptureState()
 
                 // Apply the saved capture preference to the windows themselves.
                 captureExclusion.setExcluding(hideCodesWhenScreenCaptured)
+            }
+            // App state changes. `AppActivity` names the platform's own
+            // notification for each of these four moments, so the privacy rules
+            // read the same on both platforms. `onReceive` subscribes for as long
+            // as this window exists, so a closed window stops listening; every
+            // open window sets the same app-wide state, which is harmless.
+            .onReceive(NotificationCenter.default.publisher(for: AppActivity.willResignActive)) { _ in
+                #if DEBUG
+                print("App will resign active")
+                #endif
+                isAppActive = false
+                updatePrivacyOverlay()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppActivity.didBecomeActive)) { _ in
+                #if DEBUG
+                print("App did become active")
+                #endif
+                isAppActive = true
+                refreshScreenCaptureState()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppActivity.didLeaveForeground)) { _ in
+                #if DEBUG
+                print("App left the foreground")
+                #endif
+                isAppActive = false
+                updatePrivacyOverlay()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppActivity.willEnterForeground)) { _ in
+                #if DEBUG
+                print("App will enter foreground")
+                #endif
+                isAppActive = true
+                refreshScreenCaptureState()
+            }
+            // Recording or mirroring can begin while the app stays frontmost, which
+            // never resigns active and is therefore invisible to every notification
+            // above. This is the only signal iOS gives for it, and macOS gives none:
+            // there it is a publisher that never fires.
+            .onReceive(screenCaptureChanges) { _ in
+                refreshScreenCaptureState()
             }
             .onChange(of: isAppActive) { oldValue, newValue in
                 #if DEBUG
@@ -190,8 +234,21 @@ struct AutherisApp: App {
         // A real preferences window rather than a sheet: it gives Autheris the
         // standard "Settings…" menu item and ⌘, for free, and it is what a Mac user
         // reaches for. The iPad keeps the sheet.
+        //
+        // It is its own window, outside the `WindowGroup` above, so it needs its
+        // own App Lock gate: otherwise ⌘, on a locked Mac opens QR transfer,
+        // unencrypted backups and the App Lock toggle itself.
         Settings {
-            SettingsView(dataStore: dataStore, presentation: .preferences)
+            Group {
+                if appLock.isLocked {
+                    AppLockView(manager: appLock)
+                        // The preferences window's size, so it doesn't jump on unlock.
+                        .frame(width: 620, height: 520)
+                } else {
+                    SettingsView(dataStore: dataStore, presentation: .preferences)
+                }
+            }
+            .windowCaptureExclusion(captureExclusion)
         }
         #endif
     }
@@ -218,83 +275,15 @@ struct AutherisApp: App {
         }
     }
 
-    private func setupAppStateObservers() {
-        // Persist preferences to the Keychain whenever UserDefaults changes, so
-        // they survive an app reinstall.
-        NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            PreferencesStore.persist()
+    /// Posts whenever the screen starts or stops being recorded or mirrored, on
+    /// iOS. macOS has no such notification, so there it never posts.
+    private var screenCaptureChanges: AnyPublisher<Notification, Never> {
+        guard let name = AppActivity.screenCaptureChanged else {
+            return Empty(completeImmediately: false).eraseToAnyPublisher()
         }
-
-        // Observe app state changes. `AppActivity` names the platform's own
-        // notification for each of these four moments, so the privacy rules below
-        // read the same on both platforms.
-        NotificationCenter.default.addObserver(
-            forName: AppActivity.willResignActive,
-            object: nil,
-            queue: .main
-        ) { _ in
-            #if DEBUG
-            print("App will resign active")
-            #endif
-            isAppActive = false
-            updatePrivacyOverlay()
-        }
-        
-        NotificationCenter.default.addObserver(
-            forName: AppActivity.didBecomeActive,
-            object: nil,
-            queue: .main
-        ) { _ in
-            #if DEBUG
-            print("App did become active")
-            #endif
-            isAppActive = true
-            refreshScreenCaptureState()
-        }
-
-        // Recording or mirroring can begin while the app stays frontmost, which
-        // never resigns active and is therefore invisible to every notification
-        // above. This is the only signal iOS gives for it, and macOS gives none:
-        // the observer is simply not installed there.
-        if let captureChanged = AppActivity.screenCaptureChanged {
-            NotificationCenter.default.addObserver(
-                forName: captureChanged,
-                object: nil,
-                queue: .main
-            ) { _ in
-                refreshScreenCaptureState()
-            }
-        }
-        
-        NotificationCenter.default.addObserver(
-            forName: AppActivity.didLeaveForeground,
-            object: nil,
-            queue: .main
-        ) { _ in
-            #if DEBUG
-            print("App left the foreground")
-            #endif
-            isAppActive = false
-            updatePrivacyOverlay()
-        }
-        
-        NotificationCenter.default.addObserver(
-            forName: AppActivity.willEnterForeground,
-            object: nil,
-            queue: .main
-        ) { _ in
-            #if DEBUG
-            print("App will enter foreground")
-            #endif
-            isAppActive = true
-            refreshScreenCaptureState()
-        }
+        return NotificationCenter.default.publisher(for: name).eraseToAnyPublisher()
     }
-    
+
     private func updatePrivacyOverlay() {
         showPrivacyOverlay = PrivacyShield.shouldShowOverlay(privacyConditions, privacyPreferences)
         #if DEBUG

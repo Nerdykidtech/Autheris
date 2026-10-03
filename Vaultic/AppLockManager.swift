@@ -15,6 +15,11 @@ final class AppLockManager: ObservableObject {
     private let gracePeriod: TimeInterval = 30
     private var backgroundedAt: Date?
 
+    #if os(macOS)
+    /// Activation observers, held so they are removed with the manager.
+    private var activationObservers: [NSObjectProtocol] = []
+    #endif
+
     var isEnabled: Bool {
         UserDefaults.standard.bool(forKey: AppLockEnabledKey)
     }
@@ -25,7 +30,30 @@ final class AppLockManager: ObservableObject {
 
         // Cold launches always start locked when the feature is enabled.
         isLocked = UserDefaults.standard.bool(forKey: AppLockEnabledKey)
+
+        #if os(macOS)
+        // On iOS the scene phase drives the lock. A Mac window that loses focus
+        // to another app only reaches `.inactive`, though — `.background` takes
+        // minimising or hiding — so on the Mac, leaving the app is what starts
+        // the grace period. Observed here rather than in a view so that it works
+        // whichever windows are open, including none.
+        let center = NotificationCenter.default
+        activationObservers = [
+            center.addObserver(forName: AppActivity.willResignActive, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.appDidEnterBackground() }
+            },
+            center.addObserver(forName: AppActivity.didBecomeActive, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.appDidBecomeActive() }
+            }
+        ]
+        #endif
     }
+
+    #if os(macOS)
+    deinit {
+        activationObservers.forEach(NotificationCenter.default.removeObserver)
+    }
+    #endif
 
     func appDidEnterBackground() {
         guard isEnabled else { return }
