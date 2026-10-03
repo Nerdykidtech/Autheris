@@ -426,24 +426,36 @@ final class OTPDataStore: ObservableObject {
         // tombstones that path just cleared, so re-check before writing anything.
         guard isSyncEnabled else { return }
         isSyncAvailable = syncService.isAvailable
-        apply(outcome)
+        apply(outcome, snapshot: snapshot)
     }
 
     /// Folds a merge result back into local storage.
-    private func apply(_ outcome: SyncMergeOutcome) {
+    ///
+    /// `snapshot` is what was handed to the sync. Anything that changed locally
+    /// since then — a token added, or a token deleted — is not reflected in
+    /// `outcome` and has to be carried over rather than overwritten.
+    private func apply(_ outcome: SyncMergeOutcome, snapshot: SyncLocalState) {
+        // Tombstones written locally while the sync was in flight, and ones
+        // cleared locally (a re-add or a restore from the trash).
+        let newLocalTombstones = tombstones.filter { snapshot.tombstones[$0.key] == nil }
+        let clearedLocalTombstones = Set(snapshot.tombstones.keys).subtracting(tombstones.keys)
         if outcome.didAdoptRemoteChanges {
-            // The sync snapshot was taken before this apply ran; a token added or
-            // edited locally in the meantime is not in `outcome.tokens`. Preserve
-            // those local changes instead of clobbering them with the older
-            // snapshot (and giving SwiftUI an insert-then-delete diff).
-            var merged = outcome.tokens
-            let outcomeIDs = Set(outcome.tokens.map { $0.id })
-            for local in codes where !outcomeIDs.contains(local.id) {
+            // A token deleted locally mid-sync is still in `outcome.tokens`,
+            // because the snapshot had it; keep it deleted.
+            var merged = outcome.tokens.filter { newLocalTombstones[$0.id.uuidString] == nil }
+            // Only tokens added after the snapshot are missing from the outcome
+            // for a good reason. A snapshot token the outcome left out was removed
+            // by the merge (e.g. a remote tombstone won) and must stay gone.
+            let snapshotIDs = Set(snapshot.tokens.map(\.id))
+            let outcomeIDs = Set(merged.map(\.id))
+            for local in codes where !outcomeIDs.contains(local.id) && !snapshotIDs.contains(local.id) {
                 merged.append(local)
             }
             codes = merged
         }
         tombstones = outcome.tombstones
+            .merging(newLocalTombstones) { _, new in new }
+            .filter { !clearedLocalTombstones.contains($0.key) }
         persistTombstones()
         saveCodes()
     }
