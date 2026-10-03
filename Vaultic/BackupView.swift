@@ -62,6 +62,12 @@ private struct BackupRowView: View {
     }
 }
 
+/// A backup's bytes, held between picking it and confirming the restore.
+private struct PendingRestore {
+    let data: Data
+    let isEncrypted: Bool
+}
+
 struct BackupView: View {
     @ObservedObject var dataStore: OTPDataStore
     @Environment(\.dismiss) private var dismiss
@@ -73,7 +79,7 @@ struct BackupView: View {
     @State private var showingDeleteAlert = false
     @State private var backupToDelete: URL?
     @State private var showingRestoreAlert = false
-    @State private var backupToRestore: URL?
+    @State private var pendingRestore: PendingRestore?
     @State private var showingPasswordAlert = false
     @State private var backupPassword = ""
     @State private var showingRestoreError = false
@@ -145,10 +151,9 @@ struct BackupView: View {
             .alert("Restore Backup", isPresented: $showingRestoreAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Restore", role: .destructive) {
-                    if let backupURL = backupToRestore {
-                        if dataStore.restoreFromBackup(at: backupURL) {
-                            dismiss()
-                        }
+                    if let pendingRestore,
+                       dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: false) {
+                        dismiss()
                     }
                 }
             } message: {
@@ -313,9 +318,18 @@ struct BackupView: View {
         newBackupConfirmPassword = ""
     }
 
+    /// Reads the backup now rather than when the user confirms. A file picked from
+    /// Files is only readable while its security scope is open, and that closes as
+    /// soon as `handleFileImport` returns.
     private func prepareRestore(_ backupURL: URL) {
-        backupToRestore = backupURL
-        if backupURL.pathExtension.lowercased() == "autheris" {
+        guard let data = try? Data(contentsOf: backupURL) else {
+            restoreErrorMessage = String(localized: "This backup couldn't be read.")
+            showingRestoreError = true
+            return
+        }
+        let isEncrypted = backupURL.pathExtension.lowercased() == "autheris"
+        pendingRestore = PendingRestore(data: data, isEncrypted: isEncrypted)
+        if isEncrypted {
             backupPassword = ""
             showingPasswordAlert = true
         } else {
@@ -324,9 +338,9 @@ struct BackupView: View {
     }
 
     private func restoreEncryptedBackup() {
-        guard let backupURL = backupToRestore, !backupPassword.isEmpty else { return }
+        guard let pendingRestore, !backupPassword.isEmpty else { return }
 
-        if dataStore.restoreFromBackup(at: backupURL, password: backupPassword) {
+        if dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: true, password: backupPassword) {
             dismiss()
         } else {
             restoreErrorMessage = String(localized: "Incorrect password or corrupted backup.")

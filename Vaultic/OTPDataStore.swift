@@ -594,13 +594,15 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
-    /// Restores codes from a backup file. Pass the password for `.autheris`
+    /// Restores codes from a backup's contents. Pass the password for `.autheris`
     /// encrypted backups; plain `.json` backups ignore it.
-    func restoreFromBackup(at url: URL, password: String? = nil) -> Bool {
+    ///
+    /// Takes the bytes rather than a URL because a file picked from Files can only
+    /// be read while its security scope is open, which the caller controls.
+    func restoreFromBackup(_ fileData: Data, isEncrypted: Bool, password: String? = nil) -> Bool {
         do {
-            let fileData = try Data(contentsOf: url)
             let plaintext: Data
-            if url.pathExtension.lowercased() == "autheris" {
+            if isEncrypted {
                 guard let password else { return false }
                 plaintext = try BackupCrypto.decrypt(data: fileData, password: password)
             } else {

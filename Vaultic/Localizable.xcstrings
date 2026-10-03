@@ -9746,6 +9746,46 @@
         }
       }
     },
+    "This backup couldn't be read.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Sicherung konnte nicht gelesen werden."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer esta copia de seguridad."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire cette sauvegarde."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このバックアップを読み込めませんでした。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler este backup."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取此备份。"
+          }
+        }
+      }
+    },
     "This backup is encrypted. Enter the password used when it was created.": {
       "localizations": {
         "de-DE": {
