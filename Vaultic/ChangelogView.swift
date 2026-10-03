@@ -61,7 +61,13 @@ struct ChangelogRelease: Identifiable, Sendable {
             changes: [
                 "Links that add codes — from another app, a web page, or a Google Authenticator export — now always show you what they would add, and nothing is added until you tap Import. They used to add codes the moment they arrived, which could put entries in your list that you never asked for.",
                 "A link that arrives while Autheris is locked now waits until you unlock it, instead of going through behind the lock screen.",
-                "Thanks to NotAFlightRisk for finding and responsibly reporting this.",
+                "With App Lock on, Autheris asks for Face ID, Touch ID or your passcode again before turning App Lock off, opening Backup, transferring codes by QR code, or showing a setup key.",
+                "Backups now stay on this device instead of being copied into iCloud and computer backups, and encrypted backups are much harder to crack. A new encrypted backup needs a password of at least 10 characters.",
+                "Restoring a backup picked from Files now works reliably, brings back codes you had deleted since it was made, and tells you when it's done.",
+                "With iCloud sync on, deleting a code now removes it from your other devices too, and a change made while a sync is running is uploaded as soon as it finishes.",
+                "Imports now report how many codes were really added.",
+                "On the Mac, the Settings window is locked while Autheris is, and App Lock re-locks 30 seconds after you switch to another app.",
+                "Thanks to NotAFlightRisk for finding and responsibly reporting the link issue.",
                 "Your codes, iCloud sync and settings are exactly where you left them."
             ]
         ),

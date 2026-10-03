@@ -4,5 +4,5 @@
   "marketingUrl": "https://autheris.app",
   "promotionalText": "双重认证验证码留在你的设备上。无需账号、无需服务器、不追踪——支持 iPhone、iPad、Mac 和 Apple Watch。",
   "supportUrl": "https://autheris.app",
-  "whatsNew": "Autheris 2.8 是一次安全更新。\n\n• 通过其他 App、网页或 Google Authenticator 导出添加验证码的链接，现在总会先显示将要添加的内容，在你轻点“导入”之前不会添加任何内容。\n\n• Autheris 锁定时收到的链接，现在会等到你解锁后再处理。\n\n• 感谢 NotAFlightRisk 负责任地报告此问题。\n\n你的验证码、iCloud 同步和设置都保持原样。"
+  "whatsNew": "Autheris 2.8 是一次安全性与可靠性更新。\n\n• 添加验证码的链接现在总会先显示将要添加的内容，在你轻点“导入”之前不会添加任何内容。Autheris 锁定时收到的链接会等到你解锁后再处理。\n\n• 开启 App 锁定后，在关闭 App 锁定、打开备份、通过二维码转移验证码或显示设置密钥之前，Autheris 会再次要求面容 ID、触控 ID 或设备密码。\n\n• 备份现在只保存在此设备上，不再被复制到 iCloud 和电脑备份中。加密备份更难被破解，并且需要至少 10 个字符的密码。\n\n• 从“文件”中选择的备份现在可以可靠地恢复，会找回之后删除的验证码，并在完成时提示你。\n\n• 开启 iCloud 同步后，删除验证码也会从你的其他设备上移除，同步过程中所做的更改会在同步结束后立即上传。\n\n• 导入时会显示实际添加的验证码数量。\n\n• 在 Mac 上，Autheris 锁定时“设置”也会锁定，切换到其他 App 30 秒后 App 锁定会重新生效。\n\n• 感谢 NotAFlightRisk 负责任地报告链接问题。\n\n你的验证码、iCloud 同步和设置都保持原样。"
 }

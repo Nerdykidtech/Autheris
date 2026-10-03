@@ -15,10 +15,11 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
-## [Unreleased]
+## [2.8] — October 2026
 
 ### Security
 
+- Links that add codes — `autheris://import`, `otpauth://` and `otpauth-migration://` — now always show what they would add and wait for you to tap Import. They used to add codes the moment they arrived, and while App Lock was on, so another app or a web page could quietly plant entries in your list. A link that arrives while Autheris is locked now waits until you unlock it. ([GHSA-75h3-q43q-9338](https://github.com/Nerdykidtech/Autheris/security/advisories/GHSA-75h3-q43q-9338))
 - On the Mac, the Settings window now shows the lock screen while Autheris is locked. It used to open with ⌘, without asking for Touch ID or your password, which gave access to QR transfer (every secret), unencrypted backups and the App Lock toggle itself. The Settings window is also now kept out of screen capture when "Hide codes while recording or mirroring" is on, like the main window.
 - On the Mac, App Lock now re-locks 30 seconds after you switch to another app, as the Privacy settings say. It used to start counting only when Autheris was hidden or minimised, so switching away and back left it unlocked however long you were gone.
 - Backups you create in Backup & Restore now stay on this device. They used to be copied into iCloud Backup and Finder backups along with the rest of the app's documents, so an unencrypted backup put every secret into those backups in plain text. Backups made by earlier versions get the same protection the next time Autheris opens.
@@ -34,10 +35,7 @@ A version number lives in four places, and a release is not finished until they 
 - With iCloud sync on, restoring a backup now brings back codes you had deleted since it was made. They used to disappear again at the next sync, because the deletion looked newer than the copy in the backup.
 - With iCloud sync on, a change you make while a sync is already running is now uploaded as soon as that sync finishes. It used to wait until you next opened the app or another device made a change.
 
-## [2.8] — October 2026
-
-- Links that add codes — `autheris://import`, `otpauth://` and `otpauth-migration://` — now always show what they would add and wait for you to tap Import. They used to add codes the moment they arrived, and while App Lock was on, so another app or a web page could quietly plant entries in your list. A link that arrives while Autheris is locked now waits until you unlock it. ([GHSA-75h3-q43q-9338](https://github.com/Nerdykidtech/Autheris/security/advisories/GHSA-75h3-q43q-9338))
-- Thanks to [@NotAFlightRisk](https://github.com/NotAFlightRisk) for finding and responsibly reporting this.
+- Thanks to [@NotAFlightRisk](https://github.com/NotAFlightRisk) for finding and responsibly reporting the link issue.
 - Your codes, iCloud sync and settings are exactly where you left them.
 
 ## [2.7] — October 2026
