@@ -9750,46 +9750,6 @@
         }
       }
     },
-    "The export data could not be encoded for a QR code.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Exportdaten konnten nicht in einen QR-Code kodiert werden."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se han podido codificar los datos de exportación en un código QR."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les données d'export n'ont pas pu être encodées dans un QR code."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "書き出しデータを QR コードに変換できませんでした。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Os dados de exportação não puderam ser codificados em um QR code."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法把导出数据编码为二维码。"
-          }
-        }
-      }
-    },
     "The setup key in that link isn't a valid Base32 secret.": {
       "localizations": {
         "de-DE": {
@@ -9906,46 +9866,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法读取的验证码会保留在此设备上，与 Autheris 使用的验证码分开存放，Autheris 将从零开始。Apple Watch 上的验证码会保留到此处下次更改为止。"
-          }
-        }
-      }
-    },
-    "There was an error preparing your tokens for export.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beim Vorbereiten Ihrer Codes für den Export ist ein Fehler aufgetreten."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ha habido un error al preparar tus códigos para exportarlos."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une erreur est survenue lors de la préparation de vos codes pour l'export."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "コードの書き出し準備中にエラーが発生しました。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ocorreu um erro ao preparar seus códigos para exportação."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "准备导出账户时出错。"
           }
         }
       }

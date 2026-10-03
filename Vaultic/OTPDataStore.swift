@@ -967,27 +967,12 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
-    /// Creates JSON data for QR code export
-    func exportData() -> Data? {
+    /// The link the Transfer QR Code shows, or `nil` when the codes can't be read
+    /// or don't fit in one QR code even in the compact format. See
+    /// `TransferPayload`.
+    func transferLink() -> String? {
         guard isVaultLoaded else { return nil }
-        do {
-            let encoder = JSONEncoder()
-            // Compact JSON — pretty printing inflates size and can exceed QR capacity (~3KB).
-
-            // Create export structure with all tokens
-            let exportData = ExportData(
-                version: "1.0",
-                timestamp: Date(),
-                tokens: codes
-            )
-
-            return try encoder.encode(exportData)
-        } catch {
-            #if DEBUG
-            print("Failed to export data: \(error)")
-            #endif
-            return nil
-        }
+        return TransferPayload.link(for: codes)
     }
 }
 

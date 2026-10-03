@@ -88,10 +88,13 @@ nonisolated enum IncomingLink: Equatable {
     }
 
     private static func parseAutherisImport(_ url: URL) -> IncomingLink {
-        guard let dataString = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                .queryItems?.first(where: { $0.name == "data" })?.value,
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        // `v=2` is the compact transfer format; no `v` is the JSON every release
+        // has written. See `TransferPayload`.
+        let isCompact = items.first(where: { $0.name == "v" })?.value == "2"
+        guard let dataString = items.first(where: { $0.name == "data" })?.value,
               let data = decodeBase64URL(dataString),
-              let tokens = decodeTokens(data),
+              let tokens = isCompact ? TransferPayload.decodeCompact(data) : decodeTokens(data),
               !tokens.isEmpty
         else {
             return .failure(

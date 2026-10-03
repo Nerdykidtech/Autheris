@@ -163,8 +163,8 @@ struct SettingsView: View {
             BackupView(dataStore: dataStore)
         }
         .sheet(isPresented: $showingQRCodeView) {
-            if let exportData = dataStore.exportData() {
-                QRCodeView(data: exportData, title: "Export Tokens")
+            if let link = dataStore.transferLink() {
+                QRCodeView(link: link, title: "Export Tokens")
             } else {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
@@ -174,7 +174,7 @@ struct SettingsView: View {
                     Text("Unable to Generate QR Code")
                         .font(.headline)
                     
-                    Text("There was an error preparing your tokens for export.")
+                    Text(transferUnavailableReason)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -529,6 +529,14 @@ struct SettingsView: View {
                 }
             }
         )
+    }
+
+    /// Why there is no transfer QR code: the codes can't be read, or there are
+    /// more than one QR code holds even in the compact format.
+    private var transferUnavailableReason: String {
+        dataStore.isVaultLoaded
+            ? String(localized: "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead.")
+            : OTPDataStore.vaultUnavailableMessage
     }
 
     /// The App Lock switch's label.
