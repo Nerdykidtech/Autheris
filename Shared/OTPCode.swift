@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
@@ -108,10 +109,15 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     }
 
     /// Equal for two codes with the same name and secret: `isCopy(of:)` without
-    /// the id, as a value that can go in a set. Joined with a control character
-    /// that no label or account contains, so "a|b" + "c" can't equal "a" + "b|c".
+    /// the id, as a value that can go in a set.
+    ///
+    /// A hash rather than the joined text, because the text would hold the secret
+    /// under a name that doesn't say so — one log line away from a leak. Joined
+    /// with a control character no label or account contains first, so "a|b" +
+    /// "c" can't equal "a" + "b|c".
     var copyKey: String {
-        [label.lowercased(), account.lowercased(), normalizedSecret].joined(separator: "\u{1F}")
+        let joined = [label.lowercased(), account.lowercased(), normalizedSecret].joined(separator: "\u{1F}")
+        return SHA256.hash(data: Data(joined.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     /// The secret as Base32 means it: case and spacing are presentation.

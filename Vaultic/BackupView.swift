@@ -163,8 +163,12 @@ struct BackupView: View {
                 }
                 Button("Restore", role: .destructive) {
                     if let restoredCodes {
-                        dataStore.replaceAll(with: restoredCodes)
-                        showingRestoredAlert = true
+                        if dataStore.replaceAll(with: restoredCodes) {
+                            showingRestoredAlert = true
+                        } else {
+                            restoreErrorMessage = String(localized: "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                            showingRestoreError = true
+                        }
                     }
                     clearPendingRestore()
                 }

@@ -332,5 +332,7 @@ final class OTPCodeCodableTests: XCTestCase {
         XCTAssertTrue(original.isCopy(of: copy))
         XCTAssertFalse(original.isCopy(of: namesake))
         XCTAssertNotEqual(original.copyKey, shifted.copyKey)
+        XCTAssertFalse(original.copyKey.contains("JBSWY3DPEHPK3PXP"),
+                       "the key must not carry the secret it was made from")
     }
 }

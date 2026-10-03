@@ -21,8 +21,14 @@ enum PreferencesStore {
     /// Until it has, `persist()` writes nothing. A launch while the device is
     /// locked can't read it, and saving `UserDefaults` over it then would skip
     /// whatever the read was for: the one-time privacy repair, most of all.
-    /// Internal so tests can reset it.
-    static var hasReadStoredPreferences = false
+    private(set) static var hasReadStoredPreferences = false
+
+    #if DEBUG
+    /// Puts the flag back to "not read", as a launch on a locked device leaves it.
+    static func forgetStoredPreferencesWereRead() {
+        hasReadStoredPreferences = false
+    }
+    #endif
 
     /// Persists to the Keychain on every `UserDefaults` change, from now until the
     /// app quits.
@@ -33,6 +39,18 @@ enum PreferencesStore {
     /// It is called from the view rather than earlier so that
     /// `restoreIntoUserDefaults()` has already run: its writes would otherwise
     /// each be mirrored straight back, half-restored.
+    /// Whether `startMirroringChanges()` has installed its observer.
+    static var isMirroringChanges: Bool { mirrorObserver != nil }
+
+    /// Removes the observer `startMirroringChanges()` installed. For tests that
+    /// write the Keychain copy themselves and must not have it saved over
+    /// mid-test; the app never stops mirroring.
+    static func stopMirroringChanges() {
+        guard let mirrorObserver else { return }
+        NotificationCenter.default.removeObserver(mirrorObserver)
+        self.mirrorObserver = nil
+    }
+
     static func startMirroringChanges() {
         guard mirrorObserver == nil else { return }
         mirrorObserver = NotificationCenter.default.addObserver(

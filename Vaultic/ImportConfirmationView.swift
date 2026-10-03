@@ -31,6 +31,9 @@ struct ImportConfirmationView: View {
     enum ImportResult {
         case success(total: Int, new: Int, duplicates: Int)
         case allDuplicates(Int)
+        /// Nothing was added because the vault hasn't loaded. Not the same as
+        /// every code being here already, so it is not shown as that.
+        case vaultUnavailable
     }
     
     var body: some View {
@@ -171,6 +174,8 @@ struct ImportConfirmationView: View {
                     successView(total: total, new: new, duplicates: duplicates)
                 case .allDuplicates(let count):
                     duplicatesView(count: count)
+                case .vaultUnavailable:
+                    unavailableView
                 }
             }
         }
@@ -287,6 +292,43 @@ struct ImportConfirmationView: View {
         }
     }
     
+    private var unavailableView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.lock.fill")
+                .font(.system(size: 52))
+                .foregroundColor(.secondary)
+                .symbolRenderingMode(.hierarchical)
+
+            Text("Codes Unavailable")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+
+            Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isPresented = false
+                }
+            }) {
+                Text("Done")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(
+                        Capsule()
+                            .fill(Color.accentColor)
+                    )
+            }
+            .padding(.top, 8)
+        }
+    }
+
     private func statRow(label: LocalizedStringKey, value: LocalizedStringKey, color: Color, icon: String? = nil) -> some View {
         HStack(spacing: 8) {
             if let icon = icon {
@@ -312,7 +354,10 @@ struct ImportConfirmationView: View {
     /// The only place a link's codes reach the vault, and only from the Import
     /// button above.
     private func importTokens() {
-        let result = dataStore.addCodes(tokens)
+        guard let result = dataStore.addCodes(tokens) else {
+            importResult = .vaultUnavailable
+            return
+        }
 
         guard result.added > 0 else {
             importResult = .allDuplicates(tokens.count)

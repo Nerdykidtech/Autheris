@@ -3674,6 +3674,46 @@
         }
       }
     },
+    "Couldn't Start Over": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neubeginn nicht möglich"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo empezar de nuevo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de recommencer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やり直せませんでした"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível recomeçar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法重新开始"
+          }
+        }
+      }
+    },
     "Couldn’t create QR code": {
       "localizations": {
         "de-DE": {
@@ -8830,6 +8870,46 @@
         }
       }
     },
+    "Set Aside and Start Over": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiseitelegen und neu beginnen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apartar y empezar de nuevo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre de côté et recommencer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別に保管してやり直す"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixar de lado e recomeçar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "另行保存并重新开始"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "de-DE": {
@@ -9230,6 +9310,46 @@
         }
       }
     },
+    "Start Over?": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu beginnen?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Empezar de nuevo?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommencer ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やり直しますか？"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recomeçar?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要重新开始吗？"
+          }
+        }
+      }
+    },
     "Start securing your accounts. Your codes stay on your device.": {
       "localizations": {
         "de-DE": {
@@ -9590,6 +9710,46 @@
         }
       }
     },
+    "The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die auf diesem Gerät gespeicherten Codes können von dieser Version von Autheris nicht gelesen werden. Sie wurden nicht verändert. Sie können sie beiseitelegen und neu beginnen und dann eine Sicherung in den Einstellungen wiederherstellen – oder sie bei aktivierter iCloud-Synchronisierung von Ihren anderen Geräten zurückholen lassen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta versión de Autheris no puede leer los códigos guardados en este dispositivo. No se han modificado. Puedes apartarlos y empezar de nuevo, y después restaurar una copia desde Ajustes o, con la sincronización con iCloud activada, dejar que tus otros dispositivos los recuperen."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette version d'Autheris ne peut pas lire les codes enregistrés sur cet appareil. Ils n'ont pas été modifiés. Vous pouvez les mettre de côté et repartir de zéro, puis restaurer une sauvegarde depuis Réglages, ou, avec la synchronisation iCloud activée, laisser vos autres appareils les rapatrier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末に保存されているコードは、このバージョンの Autheris では読み取れません。コードは変更されていません。コードを別に保管してやり直し、設定からバックアップを復元できます。iCloud 同期がオンなら、ほかの端末からコードを戻すこともできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta versão do Autheris não consegue ler os códigos salvos neste dispositivo. Eles não foram alterados. Você pode deixá-los de lado e recomeçar, depois restaurar um backup em Ajustes — ou, com a sincronização com o iCloud ativada, deixar que seus outros dispositivos os tragam de volta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本的 Autheris 无法读取存储在此设备上的验证码。它们没有被更改。你可以将它们另行保存并重新开始，然后在“设置”中恢复备份；如果开启了 iCloud 同步，也可以让其他设备将验证码同步回来。"
+          }
+        }
+      }
+    },
     "The export data could not be encoded for a QR code.": {
       "localizations": {
         "de-DE": {
@@ -9666,6 +9826,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "链接中的设置密钥不是有效的 Base32 密钥。"
+          }
+        }
+      }
+    },
+    "The unreadable codes couldn't be set aside, so nothing was changed.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die nicht lesbaren Codes konnten nicht beiseitegelegt werden, daher wurde nichts verändert."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron apartar los códigos ilegibles, así que no se ha cambiado nada."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes illisibles n'ont pas pu être mis de côté ; rien n'a donc été modifié."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み取れないコードを別に保管できなかったため、何も変更されていません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível deixar de lado os códigos ilegíveis, então nada foi alterado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法另行保存无法读取的验证码，因此未做任何更改。"
+          }
+        }
+      }
+    },
+    "The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die nicht lesbaren Codes bleiben auf diesem Gerät, getrennt von den Codes, die Autheris verwendet, und Autheris beginnt ohne Codes."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos ilegibles se quedan en este dispositivo, separados de los que usa Autheris, y Autheris empieza sin ninguno."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes illisibles restent sur cet appareil, à l'écart des codes qu'utilise Autheris, et Autheris repart sans aucun code."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み取れないコードは、Autheris が使用するコードとは別にこの端末に残り、Autheris はコードがない状態から始まります。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os códigos ilegíveis ficam neste dispositivo, separados dos códigos que o Autheris usa, e o Autheris começa sem nenhum."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取的验证码会保留在此设备上，与 Autheris 使用的验证码分开存放，Autheris 将从零开始。"
           }
         }
       }

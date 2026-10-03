@@ -70,6 +70,11 @@ final class OTPDataStore: ObservableObject {
     /// writing would replace whatever it still holds.
     private var canPersistTombstones = false
     private var canPersistTrash = false
+    /// Set when the codes are stored but won't decode — as opposed to a locked
+    /// device, which sorts itself out. Nothing will make these readable short of
+    /// a build that understands them, so the token list offers a way forward:
+    /// `setAsideUnreadableCodes()`.
+    @Published private(set) var hasUnreadableCodes = false
     /// Retry observers for a load that found the Keychain locked.
     ///
     /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
@@ -202,19 +207,26 @@ final class OTPDataStore: ObservableObject {
                 #if DEBUG
                 print("The stored codes could not be decoded; leaving them untouched")
                 #endif
+                hasUnreadableCodes = true
                 return
             }
             decodedCodes = decoded
         case .notFound:
             decodedCodes = nil
         }
+        finishLoading(with: decodedCodes)
+    }
 
+    /// Applies the codes `loadVault` read — `nil` when there were none — and
+    /// reads the tombstones and trash alongside them.
+    private func finishLoading(with decodedCodes: [OTPCode]?) {
         let storedTombstones = readKeychain(tombstonesKey)
         let storedTrash = readKeychain(trashKey)
         canPersistTombstones = Self.isReadable(storedTombstones)
         canPersistTrash = Self.isReadable(storedTrash)
 
         isVaultLoaded = true
+        hasUnreadableCodes = false
         loadCodes(decodedCodes)
         loadSyncMetadata(from: storedTombstones.data)
         loadTrash(from: storedTrash.data)
@@ -229,6 +241,37 @@ final class OTPDataStore: ObservableObject {
         // a token. That is exactly the case for someone who installs the watch app
         // *after* filling the phone, so the missing push is not a rare one.
         pushCodesToWatch()
+    }
+
+    /// Moves codes that won't decode out of the way, to a Keychain item of their
+    /// own, and starts the vault empty — so a backup can be restored or codes
+    /// added again, instead of the app staying unusable.
+    ///
+    /// Only for `hasUnreadableCodes`, and only on the user's say-so. The bytes are
+    /// copied before anything replaces them, and if that copy can't be written
+    /// nothing changes. They stay on the device, under an account no other code
+    /// reads or writes, rather than being thrown away.
+    ///
+    /// - Returns: `false` when nothing was changed.
+    @discardableResult
+    func setAsideUnreadableCodes(now: Date = Date()) -> Bool {
+        guard !isVaultLoaded, hasUnreadableCodes,
+              case .found(let data) = readKeychain("otpCodes"),
+              (try? JSONDecoder().decode([OTPCode].self, from: data)) == nil else { return false }
+
+        // Timestamped, so setting codes aside twice can never overwrite the first.
+        let setAside = "otpCodes.unreadable.\(Int(now.timeIntervalSince1970))"
+        guard KeychainStore.save(data, account: setAside) else { return false }
+
+        hasUnreadableCodes = false
+        finishLoading(with: [])
+        // Replace the unreadable copy now, rather than at the next edit.
+        saveCodes()
+        // With iCloud on, this is how the codes come back.
+        if isSyncEnabled {
+            Task { [weak self] in await self?.syncNow() }
+        }
+        return true
     }
 
     private static func isReadable(_ result: KeychainStore.ReadResult) -> Bool {
@@ -294,9 +337,13 @@ final class OTPDataStore: ObservableObject {
     /// here, and a future `modifiedAt` would win every sync conflict from then on.
     /// A code whose label and account match one already here, or one earlier in
     /// the same payload, is skipped and counted as such.
+    ///
+    /// Returns `nil` when nothing could be added because the vault hasn't loaded
+    /// (see `isVaultLoaded`) — which is not the same as every code being a
+    /// duplicate, and the caller has to say so.
     @discardableResult
-    func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int) {
-        guard isVaultLoaded else { return (0, incoming.count) }
+    func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int)? {
+        guard isVaultLoaded else { return nil }
         let now = Date()
         var added: [OTPCode] = []
         for token in incoming {
@@ -608,7 +655,9 @@ final class OTPDataStore: ObservableObject {
     private func performSync() async {
         // Merging against a vault that hasn't loaded would upload its emptiness;
         // `retryVaultLoad()` syncs once it has.
-        guard isSyncEnabled, isVaultLoaded else { return }
+        // Nor against tombstones it couldn't read: a delete made here and not yet
+        // uploaded would look like a code iCloud has and this device lacks.
+        guard isSyncEnabled, isVaultLoaded, canPersistTombstones else { return }
         guard !isSyncInFlight else {
             needsResync = true
             return
@@ -671,6 +720,9 @@ final class OTPDataStore: ObservableObject {
     /// result to the system instead of claiming data it has not fetched yet.
     private func handleRemoteNotification(_ userInfo: [AnyHashable: Any]) async -> Bool {
         guard syncService.handleRemoteNotification(userInfo: userInfo) else { return false }
+        // A vault that hasn't loaded doesn't sync, so there is no new data to
+        // report. `retryVaultLoad()` syncs once it has.
+        guard isVaultLoaded else { return false }
         await syncNow()
         return true
     }
@@ -835,8 +887,11 @@ final class OTPDataStore: ObservableObject {
     /// concerned, been deleted: it gets a tombstone so it doesn't reappear from
     /// iCloud, and it goes to Recently Deleted like any other delete, so a restore
     /// from the wrong backup can still be undone here.
-    func replaceAll(with backup: [OTPCode]) {
-        guard isVaultLoaded else { return }
+    ///
+    /// Returns `false`, having changed nothing, when the vault hasn't loaded.
+    @discardableResult
+    func replaceAll(with backup: [OTPCode]) -> Bool {
+        guard isVaultLoaded else { return false }
         let now = Date()
         // Restored tokens are stamped as edited now. They keep the date they had
         // when the backup was made otherwise, and the tombstone a later delete
@@ -858,6 +913,7 @@ final class OTPDataStore: ObservableObject {
         persistTombstones()
         persistTrash()
         scheduleSync()
+        return true
     }
 
     /// Deletes a backup file

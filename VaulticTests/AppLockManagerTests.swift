@@ -11,6 +11,8 @@ import Security
 @MainActor
 final class AppLockManagerTests: XCTestCase {
 
+    private var wasMirroring = false
+
     private let preferencesAccount = "appPreferences"
     private var savedPreferences: Data?
     /// Every key `PreferencesStore.restoreIntoUserDefaults()` writes. The manager
@@ -23,6 +25,11 @@ final class AppLockManagerTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
+        // The host app mirrors every `UserDefaults` change into the same Keychain
+        // item these tests write, on the main queue — so a change from one test
+        // could be saved over the next test's item mid-test.
+        wasMirroring = PreferencesStore.isMirroringChanges
+        PreferencesStore.stopMirroringChanges()
         savedPreferences = KeychainStore.load(account: preferencesAccount)
         for key in restoredKeys {
             savedDefaults[key] = UserDefaults.standard.object(forKey: key)
@@ -51,6 +58,9 @@ final class AppLockManagerTests: XCTestCase {
         }
         for key in restoredKeys {
             UserDefaults.standard.set(savedDefaults[key], forKey: key)
+        }
+        if wasMirroring {
+            PreferencesStore.startMirroringChanges()
         }
         try await super.tearDown()
     }

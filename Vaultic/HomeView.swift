@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
+    /// The confirmation before codes that won't decode are set aside.
+    @State private var showingSetAsideConfirmation = false
     @State private var searchText = ""
     @State private var showingSettings = false
     
@@ -58,11 +60,27 @@ struct HomeView: View {
                     .font(.headline)
                     .foregroundColor(.secondary)
 
-                Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                if dataStore.hasUnreadableCodes {
+                    // Stored, but not in a form this version can read. That won't
+                    // fix itself, so there has to be a way forward.
+                    Text("The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+
+                    Button("Set Aside and Start Over") {
+                        showingSetAsideConfirmation = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 8)
+                } else {
+                    Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
             } else if searchText.isEmpty {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 40))
@@ -267,6 +285,17 @@ struct HomeView: View {
                 Button("OK") { importResult = nil }
             } message: { result in
                 Text(result.body)
+            }
+            .confirmationDialog("Start Over?", isPresented: $showingSetAsideConfirmation, titleVisibility: .visible) {
+                Button("Set Aside and Start Over", role: .destructive) {
+                    if !dataStore.setAsideUnreadableCodes() {
+                        importResult = (String(localized: "Couldn't Start Over"),
+                                        String(localized: "The unreadable codes couldn't be set aside, so nothing was changed."))
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none.")
             }
         }
     }

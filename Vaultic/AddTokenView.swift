@@ -643,5 +643,6 @@ struct AddTokenView: View {
 struct AddTokenView_Previews: PreviewProvider {
     static var previews: some View {
         AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil))
+            .environment(\.reviewImport, ReviewImportAction { _ in })
     }
 }

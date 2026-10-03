@@ -28,6 +28,10 @@ struct AutherisApp: App {
     @State private var showingImportSheet = false
     /// Codes from an incoming link, waiting for the user to accept or reject them.
     @State private var pendingImport: [OTPCode]?
+    /// The window a link or a scan arrived in, which is the one to show its review
+    /// or its error. The state above is shared by every window, and on an iPad or
+    /// a Mac with several open, all of them used to show the same card at once.
+    @State private var importWindow: UUID?
     @State private var otpSetupResult: (title: String, body: String)?
     @State private var isAppActive = true
     @State private var isScreenCaptured = false
@@ -56,180 +60,184 @@ struct AutherisApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                if hasCompletedOnboarding {
-                    if appLock.isLocked {
-                        AppLockView(manager: appLock)
-                            .transition(.opacity)
+            WindowIdentity { windowID in
+                ZStack {
+                    if hasCompletedOnboarding {
+                        if appLock.isLocked {
+                            AppLockView(manager: appLock)
+                                .transition(.opacity)
+                        } else {
+                            ContentView()
+                                .environmentObject(dataStore)
+                                .environment(\.reviewImport, ReviewImportAction { tokens in
+                                    pendingImport = tokens
+                                    importWindow = windowID
+                                    showingImportSheet = true
+                                })
+                                .blur(radius: shouldBlurContent ? 10 : 0)
+                                .opacity(shouldBlurContent ? 0.7 : 1)
+                        }
                     } else {
-                        ContentView()
-                            .environmentObject(dataStore)
-                            .environment(\.reviewImport, ReviewImportAction { tokens in
-                                pendingImport = tokens
-                                showingImportSheet = true
-                            })
+                        WelcomeView()
                             .blur(radius: shouldBlurContent ? 10 : 0)
                             .opacity(shouldBlurContent ? 0.7 : 1)
                     }
-                } else {
-                    WelcomeView()
-                        .blur(radius: shouldBlurContent ? 10 : 0)
-                        .opacity(shouldBlurContent ? 0.7 : 1)
-                }
                 
-                // Import sheet overlay - shows on top of everything, but only to
-                // someone who is past onboarding and App Lock. A link that
-                // arrives while the app is locked waits here until it is
-                // unlocked, rather than being offered on top of the lock screen.
-                if showingImportSheet && hasCompletedOnboarding && !appLock.isLocked {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .ignoresSafeArea()
-                        .overlay(Color.black.opacity(0.25))
-                        .transition(.opacity)
+                    // Import sheet overlay - shows on top of everything, but only to
+                    // someone who is past onboarding and App Lock. A link that
+                    // arrives while the app is locked waits here until it is
+                    // unlocked, rather than being offered on top of the lock screen.
+                    if showingImportSheet && importWindow == windowID
+                        && hasCompletedOnboarding && !appLock.isLocked {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                            .overlay(Color.black.opacity(0.25))
+                            .transition(.opacity)
                     
-                    if let tokens = pendingImport {
-                        ImportConfirmationView(tokens: tokens, dataStore: dataStore, isPresented: $showingImportSheet)
-                            .transition(.scale.combined(with: .opacity))
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        if let tokens = pendingImport {
+                            ImportConfirmationView(tokens: tokens, dataStore: dataStore, isPresented: $showingImportSheet)
+                                .transition(.scale.combined(with: .opacity))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                    }
+                
+                    // Privacy screen: covers the app switcher and the home screen,
+                    // and a screen that is being recorded or mirrored.
+                    // `showPrivacyOverlay` already folds in the relevant settings.
+                    if showPrivacyOverlay {
+                        PrivacyOverlay()
+                            .transition(.opacity)
+                            .zIndex(1) // Ensure it's on top
                     }
                 }
-                
-                // Privacy screen: covers the app switcher and the home screen,
-                // and a screen that is being recorded or mirrored.
-                // `showPrivacyOverlay` already folds in the relevant settings.
-                if showPrivacyOverlay {
-                    PrivacyOverlay()
-                        .transition(.opacity)
-                        .zIndex(1) // Ensure it's on top
+                .onOpenURL { url in
+                    #if DEBUG
+                    // Only scheme and host: an `autheris://import` URL carries the
+                    // exported tokens (including their secrets) in its `data` item.
+                    print("App received URL: \(url.scheme ?? "?")://\(url.host ?? "")")
+                    #endif
+                    handleIncomingURL(url, in: windowID)
                 }
-            }
-            .onOpenURL { url in
-                #if DEBUG
-                // Only scheme and host: an `autheris://import` URL carries the
-                // exported tokens (including their secrets) in its `data` item.
-                print("App received URL: \(url.scheme ?? "?")://\(url.host ?? "")")
-                #endif
-                handleIncomingURL(url)
-            }
-            .alert(
-                Text(otpSetupResult?.title ?? "Autheris"),
-                isPresented: Binding(
-                    get: { otpSetupResult != nil },
-                    set: { if !$0 { otpSetupResult = nil } }
-                ),
-                presenting: otpSetupResult
-            ) { _ in
-                Button("OK") { otpSetupResult = nil }
-            } message: { result in
-                Text(result.body)
-            }
-            .animation(.easeInOut(duration: 0.3), value: showingImportSheet)
-            .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
-            .animation(.easeInOut(duration: 0.3), value: isAppActive)
-            .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
-            .tint(selectedAccent?.color ?? .accentColor)
-            .windowCaptureExclusion(captureExclusion)
-            .onAppear {
-                #if DEBUG
-                print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
-                #endif
-
-                // Reinstall wipes UserDefaults but not the Keychain, so a user can
-                // end up with existing tokens and a reset onboarding flag. In that
-                // case skip onboarding and keep their tokens visible.
-                if !hasCompletedOnboarding && !dataStore.codes.isEmpty {
-                    hasCompletedOnboarding = true
+                .alert(
+                    Text(otpSetupResult?.title ?? "Autheris"),
+                    isPresented: Binding(
+                        get: { otpSetupResult != nil && importWindow == windowID },
+                        set: { if !$0 { otpSetupResult = nil } }
+                    ),
+                    presenting: otpSetupResult
+                ) { _ in
+                    Button("OK") { otpSetupResult = nil }
+                } message: { result in
+                    Text(result.body)
                 }
+                .animation(.easeInOut(duration: 0.3), value: showingImportSheet)
+                .animation(.easeInOut(duration: 0.3), value: hasCompletedOnboarding)
+                .animation(.easeInOut(duration: 0.3), value: isAppActive)
+                .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
+                .tint(selectedAccent?.color ?? .accentColor)
+                .windowCaptureExclusion(captureExclusion)
+                .onAppear {
+                    #if DEBUG
+                    print("App appeared, hasCompletedOnboarding: \(hasCompletedOnboarding)")
+                    #endif
 
-                // Keep the Keychain copy of the preferences current. Only the
-                // first window to appear installs the observer.
-                PreferencesStore.startMirroringChanges()
+                    // Reinstall wipes UserDefaults but not the Keychain, so a user can
+                    // end up with existing tokens and a reset onboarding flag. In that
+                    // case skip onboarding and keep their tokens visible.
+                    if !hasCompletedOnboarding && !dataStore.codes.isEmpty {
+                        hasCompletedOnboarding = true
+                    }
 
-                // Take an initial reading of the capture state in case the app
-                // launched into an active recording.
-                refreshScreenCaptureState()
+                    // Keep the Keychain copy of the preferences current. Only the
+                    // first window to appear installs the observer.
+                    PreferencesStore.startMirroringChanges()
 
-                // Apply the saved capture preference to the windows themselves.
-                captureExclusion.setExcluding(hideCodesWhenScreenCaptured)
-            }
-            // App state changes. `AppActivity` names the platform's own
-            // notification for each of these four moments, so the privacy rules
-            // read the same on both platforms. `onReceive` subscribes for as long
-            // as this window exists, so a closed window stops listening; every
-            // open window sets the same app-wide state, which is harmless.
-            .onReceive(NotificationCenter.default.publisher(for: AppActivity.willResignActive)) { _ in
-                #if DEBUG
-                print("App will resign active")
-                #endif
-                isAppActive = false
-                updatePrivacyOverlay()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: AppActivity.didBecomeActive)) { _ in
-                #if DEBUG
-                print("App did become active")
-                #endif
-                isAppActive = true
-                refreshScreenCaptureState()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: AppActivity.didLeaveForeground)) { _ in
-                #if DEBUG
-                print("App left the foreground")
-                #endif
-                isAppActive = false
-                updatePrivacyOverlay()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: AppActivity.willEnterForeground)) { _ in
-                #if DEBUG
-                print("App will enter foreground")
-                #endif
-                isAppActive = true
-                refreshScreenCaptureState()
-            }
-            // Recording or mirroring can begin while the app stays frontmost, which
-            // never resigns active and is therefore invisible to every notification
-            // above. This is the only signal iOS gives for it, and macOS gives none:
-            // there it is a publisher that never fires.
-            .onReceive(screenCaptureChanges) { _ in
-                refreshScreenCaptureState()
-            }
-            .onChange(of: isAppActive) { oldValue, newValue in
-                #if DEBUG
-                print("App active state changed: \(newValue)")
-                #endif
-                // Update privacy overlay based on app state and settings
-                updatePrivacyOverlay()
-            }
-            .onChange(of: hideCodesInAppSwitcher) { oldValue, newValue in
-                // Update privacy overlay when setting changes
-                updatePrivacyOverlay()
-            }
-            .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
-                // Update privacy overlay when setting changes, and on the Mac
-                // apply the setting to the windows themselves — there is no
-                // capture to notice, so the exclusion *is* the protection.
-                captureExclusion.setExcluding(newValue)
-                updatePrivacyOverlay()
-            }
-            .onChange(of: scenePhase) { _, newPhase in
-                switch newPhase {
-                case .background:
-                    appLock.appDidEnterBackground()
-                case .active:
-                    appLock.appDidBecomeActive()
-                default:
-                    break
+                    // Take an initial reading of the capture state in case the app
+                    // launched into an active recording.
+                    refreshScreenCaptureState()
+
+                    // Apply the saved capture preference to the windows themselves.
+                    captureExclusion.setExcluding(hideCodesWhenScreenCaptured)
                 }
+                // App state changes. `AppActivity` names the platform's own
+                // notification for each of these four moments, so the privacy rules
+                // read the same on both platforms. `onReceive` subscribes for as long
+                // as this window exists, so a closed window stops listening; every
+                // open window sets the same app-wide state, which is harmless.
+                .onReceive(NotificationCenter.default.publisher(for: AppActivity.willResignActive)) { _ in
+                    #if DEBUG
+                    print("App will resign active")
+                    #endif
+                    isAppActive = false
+                    updatePrivacyOverlay()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: AppActivity.didBecomeActive)) { _ in
+                    #if DEBUG
+                    print("App did become active")
+                    #endif
+                    isAppActive = true
+                    refreshScreenCaptureState()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: AppActivity.didLeaveForeground)) { _ in
+                    #if DEBUG
+                    print("App left the foreground")
+                    #endif
+                    isAppActive = false
+                    updatePrivacyOverlay()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: AppActivity.willEnterForeground)) { _ in
+                    #if DEBUG
+                    print("App will enter foreground")
+                    #endif
+                    isAppActive = true
+                    refreshScreenCaptureState()
+                }
+                // Recording or mirroring can begin while the app stays frontmost, which
+                // never resigns active and is therefore invisible to every notification
+                // above. This is the only signal iOS gives for it, and macOS gives none:
+                // there it is a publisher that never fires.
+                .onReceive(screenCaptureChanges) { _ in
+                    refreshScreenCaptureState()
+                }
+                .onChange(of: isAppActive) { oldValue, newValue in
+                    #if DEBUG
+                    print("App active state changed: \(newValue)")
+                    #endif
+                    // Update privacy overlay based on app state and settings
+                    updatePrivacyOverlay()
+                }
+                .onChange(of: hideCodesInAppSwitcher) { oldValue, newValue in
+                    // Update privacy overlay when setting changes
+                    updatePrivacyOverlay()
+                }
+                .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
+                    // Update privacy overlay when setting changes, and on the Mac
+                    // apply the setting to the windows themselves — there is no
+                    // capture to notice, so the exclusion *is* the protection.
+                    captureExclusion.setExcluding(newValue)
+                    updatePrivacyOverlay()
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    switch newPhase {
+                    case .background:
+                        appLock.appDidEnterBackground()
+                    case .active:
+                        appLock.appDidBecomeActive()
+                    default:
+                        break
+                    }
 
-                // Foregrounding is the cheapest reliable moment to pick up anything
-                // a silent push may have missed, and to re-check the iCloud account.
-                guard newPhase == .active, hasCompletedOnboarding else { return }
-                // Foregrounding is also the cheapest reliable moment to retire any
-                // trashed codes that have passed their retention window.
-                dataStore.purgeExpiredTrash()
-                Task {
-                    await dataStore.refreshSyncAvailability()
-                    await dataStore.syncNow()
+                    // Foregrounding is the cheapest reliable moment to pick up anything
+                    // a silent push may have missed, and to re-check the iCloud account.
+                    guard newPhase == .active, hasCompletedOnboarding else { return }
+                    // Foregrounding is also the cheapest reliable moment to retire any
+                    // trashed codes that have passed their retention window.
+                    dataStore.purgeExpiredTrash()
+                    Task {
+                        await dataStore.refreshSyncAvailability()
+                        await dataStore.syncNow()
+                    }
                 }
             }
         }
@@ -260,13 +268,17 @@ struct AutherisApp: App {
     /// Every link Autheris is opened with lands here. Nothing is added to the
     /// vault from this function: codes go to `ImportConfirmationView`, which
     /// shows them only once the app is unlocked and adds them only on Import.
-    private func handleIncomingURL(_ url: URL) {
+    private func handleIncomingURL(_ url: URL, in window: UUID) {
         #if DEBUG
         // Redacted for the same reason as above: the payload is in the query.
         print("Handling incoming URL: \(url.scheme ?? "?")://\(url.host ?? "")")
         #endif
 
-        switch IncomingLink.parse(url) {
+        let link = IncomingLink.parse(url)
+        if link != nil {
+            importWindow = window
+        }
+        switch link {
         case .tokens(let tokens):
             pendingImport = tokens
             showingImportSheet = true
@@ -337,3 +349,16 @@ struct PrivacyOverlay: View {
     }
 }
 
+/// Gives each window of a `WindowGroup` an identity of its own.
+///
+/// The app's state lives on `AutherisApp` and is shared by every window, so a
+/// window that needs to tell itself apart — to be the one that shows an import —
+/// reads its id from here. `@State`, so it lasts as long as the window does.
+private struct WindowIdentity<Content: View>: View {
+    @State private var id = UUID()
+    @ViewBuilder let content: (UUID) -> Content
+
+    var body: some View {
+        content(id)
+    }
+}

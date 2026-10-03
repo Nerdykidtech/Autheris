@@ -11,6 +11,8 @@ import Security
 @MainActor
 final class PreferencesStoreTests: XCTestCase {
 
+    private var wasMirroring = false
+
     private let account = "appPreferences"
     private let privacyKeys = ["enablePrivacyBlur", "hideCodesInAppSwitcher", "hideCodesWhenScreenCaptured"]
     /// Every key `restoreIntoUserDefaults()` writes, so the host app's own
@@ -26,6 +28,11 @@ final class PreferencesStoreTests: XCTestCase {
 
     override func setUp() async throws {
         try await super.setUp()
+        // The host app mirrors every `UserDefaults` change into the same Keychain
+        // item these tests write, on the main queue — so a change from one test
+        // could be saved over the next test's item mid-test.
+        wasMirroring = PreferencesStore.isMirroringChanges
+        PreferencesStore.stopMirroringChanges()
         savedKeychain = KeychainStore.load(account: account)
         for key in restoredKeys {
             savedDefaults[key] = UserDefaults.standard.object(forKey: key)
@@ -52,6 +59,9 @@ final class PreferencesStoreTests: XCTestCase {
             UserDefaults.standard.set(savedDefaults[key], forKey: key)
         }
         emptyDefaults.removePersistentDomain(forName: suiteName)
+        if wasMirroring {
+            PreferencesStore.startMirroringChanges()
+        }
         try await super.tearDown()
     }
 
@@ -87,8 +97,8 @@ final class PreferencesStoreTests: XCTestCase {
         // then would skip what the read was for — the privacy repair, most of all.
         let stored = Data("a blob only a successful read may replace".utf8)
         XCTAssertTrue(KeychainStore.save(stored, account: account))
-        PreferencesStore.hasReadStoredPreferences = false
-        defer { PreferencesStore.hasReadStoredPreferences = true }
+        PreferencesStore.forgetStoredPreferencesWereRead()
+        defer { PreferencesStore.restoreIfNotYetRead() }
 
         PreferencesStore.persist()
 
@@ -98,7 +108,7 @@ final class PreferencesStoreTests: XCTestCase {
     func testTheDeferredReadRunsTheRepairOnUnlock() throws {
         let legacy = #"{ "enablePrivacyBlur": false, "hideCodesInAppSwitcher": false, "hideCodesWhenScreenCaptured": false }"#
         XCTAssertTrue(KeychainStore.save(Data(legacy.utf8), account: account))
-        PreferencesStore.hasReadStoredPreferences = false
+        PreferencesStore.forgetStoredPreferencesWereRead()
 
         PreferencesStore.restoreIfNotYetRead()
 

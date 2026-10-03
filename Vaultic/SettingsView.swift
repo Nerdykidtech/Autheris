@@ -295,7 +295,13 @@ struct SettingsView: View {
             do {
                 let data = try Data(contentsOf: url)
                 let tokens = try ExternalImportParser.parse(data: data)
-                let added = dataStore.addCodes(tokens).added
+                guard let added = dataStore.addCodes(tokens)?.added else {
+                    importMessage = (
+                        String(localized: "Codes Unavailable"),
+                        String(localized: "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                    )
+                    return
+                }
 
                 guard added > 0 else {
                     importMessage = (
