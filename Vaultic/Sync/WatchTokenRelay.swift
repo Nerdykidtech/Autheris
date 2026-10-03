@@ -47,6 +47,46 @@ enum WatchTokenRelay {
     }
 }
 
+/// The files an oversized token list is staged in for `transferFile`.
+///
+/// Separate from the relay so it can be tested without a paired watch: these
+/// two steps are what decide how long a plaintext copy of every secret sits on
+/// disk, and how well it is protected while it does.
+enum WatchRelayStaging {
+    /// Writes one staged payload and returns its URL.
+    ///
+    /// The file holds every secret in plain JSON, so it is protected rather than
+    /// left at the default class, which can be read whenever the phone has been
+    /// unlocked once since it started. "Unless open" rather than "complete":
+    /// `transferFile` keeps reading in the background, and a transfer that has
+    /// already opened the file must be able to finish if the phone locks
+    /// part-way through.
+    static func write(_ payload: Data, in directory: URL) throws -> URL {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appendingPathComponent("tokens-\(UUID().uuidString).json")
+        try payload.write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+        return url
+    }
+
+    /// Deletes staged files no transfer is still reading.
+    ///
+    /// `inFlight` is `nil` when the transfers in progress can't be known (the
+    /// session isn't activated yet). Nothing is deleted then, because every
+    /// staged file would otherwise look finished.
+    static func prune(_ directory: URL, keeping inFlight: Set<URL>?) {
+        guard let inFlight else { return }
+        let keep = Set(inFlight.map(\.standardizedFileURL))
+        let staged = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        for url in staged where !keep.contains(url.standardizedFileURL) {
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+}
+
 #if os(iOS)
 
 import WatchConnectivity
@@ -173,18 +213,9 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// deleting one out from under a transfer in progress would fail it.
     private func sendAsFile(_ tokens: [OTPCode], sentAt: Date, over session: WCSession) {
         do {
-            try FileManager.default.createDirectory(at: stagingDirectory, withIntermediateDirectories: true)
             pruneFinishedTransfers()
-
-            // The file holds every secret in plain JSON, so it is protected
-            // rather than left at the default class, which can be read whenever the
-            // phone has been unlocked once since it started. "Unless open" rather
-            // than "complete": `transferFile` keeps reading in the background, and
-            // a transfer that has already opened the file must be able to finish if
-            // the phone locks part-way through.
-            let url = stagingDirectory.appendingPathComponent("tokens-\(UUID().uuidString).json")
-            try WatchTokenPayload.encode(tokens, sentAt: sentAt)
-                .write(to: url, options: [.atomic, .completeFileProtectionUnlessOpen])
+            let url = try WatchRelayStaging.write(WatchTokenPayload.encode(tokens, sentAt: sentAt),
+                                                  in: stagingDirectory)
 
             // The transfer object is deliberately not kept: it reports progress
             // and failure, and there is nothing useful to do with either. The list
@@ -208,18 +239,13 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// Runs on every foreground as well as before each send, so a finished
     /// transfer's plaintext copy doesn't sit around until the next large send.
     private func pruneFinishedTransfers() {
-        // Without an activated session `outstandingFileTransfers` can't be read,
-        // and every staged file would look finished.
-        guard let session, session.activationState == .activated else { return }
-        let inFlight = Set(session.outstandingFileTransfers.map { $0.file.fileURL.standardizedFileURL })
-        let staged = (try? FileManager.default.contentsOfDirectory(
-            at: stagingDirectory,
-            includingPropertiesForKeys: nil
-        )) ?? []
-
-        for url in staged where !inFlight.contains(url.standardizedFileURL) {
-            try? FileManager.default.removeItem(at: url)
+        // Without an activated session `outstandingFileTransfers` can't be read.
+        let inFlight = session.flatMap { session in
+            session.activationState == .activated
+                ? Set(session.outstandingFileTransfers.map(\.file.fileURL))
+                : nil
         }
+        WatchRelayStaging.prune(stagingDirectory, keeping: inFlight)
     }
 }
 
