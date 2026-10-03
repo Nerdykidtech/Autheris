@@ -35,7 +35,7 @@ It is one native SwiftUI codebase for every Apple platform: no Catalyst and no s
 **Codes**
 - TOTP ([RFC 6238](https://www.rfc-editor.org/rfc/rfc6238)) and HOTP ([RFC 4226](https://www.rfc-editor.org/rfc/rfc4226)), with SHA-1, SHA-256 or SHA-512 and 6–10 digits
 - Add accounts by scanning a QR code or picking a screenshot
-- Import from Google Authenticator, Aegis, andOTP and 2FAS, counter-based accounts included
+- Import from Google Authenticator, Aegis, andOTP and 2FAS (counter-based accounts included, except from 2FAS)
 - Tap to copy, pin favourites to the top, drag to reorder, search instantly
 - Recently Deleted keeps a removed code recoverable on the device for 7 days
 

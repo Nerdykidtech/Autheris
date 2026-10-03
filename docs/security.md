@@ -1,15 +1,8 @@
 # Security
 
-How each of the promises on the [front page](../README.md#security) is enforced — and the two things it deliberately does not cover.
+How each of the promises on the [front page](../README.md#security-at-a-glance) is enforced — and the two things it deliberately does not cover.
 
-# Security
-
-Autheris is designed with security in mind:
-
-- No account required — fully offline by default
-- No analytics or tracking
-- No cloud storage unless explicitly enabled in Settings
-- Open source for transparency
+Autheris has no account, no analytics and no server of its own, stores nothing in the cloud unless iCloud Sync is turned on, and is open source so all of this can be checked.
 
 ## Issuer icons
 
@@ -24,11 +17,42 @@ The honest summary: the *codes* never leave the device, and the *list of service
 
 ## Where tokens actually live
 
-Tokens (including their TOTP secrets) are persisted locally as JSON in the iOS **Keychain** with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`. The Keychain protects the data from other apps, keeps it device-only (it does not migrate with iCloud Keychain or an encrypted backup), and only exposes it while the device is unlocked. A full compromise of the device — including a forensic extraction — should still be treated as a compromise of the tokens. Backups written by the in-app Backup screen go to the app's Documents directory; unlike the Keychain, those files are plain JSON and inherit only the app-sandbox/device-passcode protection.
+Tokens (including their TOTP secrets) are persisted locally as JSON in the iOS **Keychain** with `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`. The Keychain protects the data from other apps, keeps it device-only (it does not migrate with iCloud Keychain or an encrypted backup), and only exposes it while the device is unlocked. A full compromise of the device — including a forensic extraction — should still be treated as a compromise of the tokens. Backup files are covered in [Backups](#backups).
 
 A first launch after upgrading migrates any legacy `UserDefaults` copy into the Keychain and deletes the plaintext copy.
 
 Deletion tombstones are stored in the Keychain too, under their own account. They used to live in `UserDefaults`, which was the wrong home for them: `UserDefaults` is wiped when the app is deleted while the Keychain is not, so a reinstall lost the tombstones that suppress deleted tokens *while the tokens themselves came back* — and the next sync would re-import from iCloud everything the user had deleted. That is exactly the guarantee tombstones exist to provide, so losing them is not a cosmetic bug. The legacy tombstone copy is migrated on the same first launch, and only removed once the Keychain write has succeeded.
+
+## App Lock
+
+App Lock (**Settings → Privacy → Require Face ID / Touch ID**) uses `LAPolicy.deviceOwnerAuthentication`, so Face ID or Touch ID with the passcode as the fallback, or Touch ID and the login password on a Mac. The logic is in `Vaultic/AppLockManager.swift`.
+
+- **When it locks.** Every cold launch, and on returning after more than **30 seconds** away. On iOS "away" is the scene reaching the background. A Mac window that loses focus never gets there, so on the Mac the grace period starts when the app resigns active.
+- **The Mac Settings window** is a separate window outside the main window group, and shows the same lock screen while the app is locked.
+- **Asking again before sensitive actions.** The grace period means a phone unlocked moments ago opens straight into the code list. So with App Lock on, `AppLockManager.reauthenticate(reason:)` asks again before **turning App Lock off**, opening **Backup**, opening **Transfer via QR Code**, and **View Secret**. Each of those either hands over every secret or removes the lock. Cancelling leaves things as they were.
+
+With App Lock off, none of this applies: the user has chosen not to be asked. On a device with no passcode there is nothing to authenticate with, so re-authentication lets the action through.
+
+## Copied codes
+
+`Vaultic/ClipboardHelper.swift` copies a code with `.localOnly`, so Universal Clipboard doesn't carry it to the user's other devices, and with an expiration date **60 seconds** out, so it clears itself. On the Mac it is marked `org.nspasteboard.ConcealedType`, which keeps it out of Universal Clipboard and out of clipboard-history tools that honour the convention. The app clears it after 60 seconds, unless something else has been copied since.
+
+## Backups
+
+**Settings → Data → Backup** writes files to `Documents/OTPBackups`.
+
+- **Encrypted backups** (`.autheris`) use AES-256-GCM with a key from PBKDF2-HMAC-SHA256 (CommonCrypto). The envelope is versioned: version 2 records its iteration count, written as **600,000**. Version 1 files used a fixed 120,000 and still open. The stored count is bounds-checked, so a forged file can't skip the work or hang the app deriving a key. New encrypted backups need a password of at least **10 characters**. See `Vaultic/BackupCrypto.swift`.
+- **Unencrypted backups** (`.json`) are plain JSON, which is every secret in readable form. The choice is explicit in the UI, which offers the encrypted backup first.
+- **Both kinds stay on the device.** Files are written with `.completeFileProtection` and excluded from iCloud Backup and Finder/iTunes backups (`isExcludedFromBackup`, on the folder and on each file). Backups written by earlier versions get the same treatment at launch. Sharing a backup out of the app is the user's own decision.
+- **Restoring replaces everything.** Every restored code is stamped with a fresh `modifiedAt`, so the restore counts as a newer write than any tombstone a later delete left in iCloud and isn't deleted again at the next sync. A file picked from Files is read while its security scope is open and held until the restore is confirmed.
+
+## Imports
+
+Codes from another app's export, an `autheris://` link or a transfer QR code all go through `OTPDataStore.addCodes(_:)`. A link's codes are only added after the user taps **Import**, and never while the app is locked ([GHSA-75h3-q43q-9338](https://github.com/Nerdykidtech/Autheris/security/advisories/GHSA-75h3-q43q-9338)). Each imported code gets a **new UUID and a fresh `modifiedAt`**, because a payload's own values can't be trusted: a reused id would collide with a code already on the device, and a future timestamp would win every sync conflict from then on. A code whose label and account match one already present is skipped, and the count shown is of codes actually added.
+
+## Apple Watch
+
+The watch app is read-only and generates codes itself from a copy of the list the iPhone sends over WatchConnectivity. It stores that copy in its own Keychain, with the same protection class as the phone. A list too large for an application context is sent as a file. The phone stages that file with `.completeFileProtectionUnlessOpen`, so it is unreadable while the phone is locked but a transfer already in progress can finish, and deletes it once the transfer is done (`WatchRelayStaging` in `Vaultic/Sync/WatchTokenRelay.swift`).
 
 ## What the privacy screen covers
 
@@ -49,7 +73,7 @@ The trash is deliberately **local to the device and never synced**. A delete sti
 
 It is stored in the Keychain under its own account, with the same protection as live codes. The trade-off is explicit: a deleted code's secret stays on the device for those 7 days instead of being gone the moment you tap delete. Use **Delete Now** (swipe a row) or **Delete All** to remove it immediately.
 
-Known gap: `restoreFromBackup` replaces the token list wholesale and does **not** route the replaced codes through the trash, so restoring a backup is still irreversible.
+Known gap: restoring a backup replaces the token list wholesale and does **not** route the replaced codes through the trash, so a restore is still irreversible.
 
 ## Counter-based codes
 
