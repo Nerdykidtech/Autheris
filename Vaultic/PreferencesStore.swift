@@ -13,6 +13,29 @@ import Foundation
 enum PreferencesStore {
     private static let account = "appPreferences"
 
+    /// The `UserDefaults` observer installed by `startMirroringChanges()`.
+    private static var mirrorObserver: NSObjectProtocol?
+
+    /// Persists to the Keychain on every `UserDefaults` change, from now until the
+    /// app quits.
+    ///
+    /// Safe to call more than once — every window's root view calls it as it
+    /// appears — because only the first call installs the observer. One observer
+    /// per window would write the Keychain once per open window for every change.
+    /// It is called from the view rather than earlier so that
+    /// `restoreIntoUserDefaults()` has already run: its writes would otherwise
+    /// each be mirrored straight back, half-restored.
+    static func startMirroringChanges() {
+        guard mirrorObserver == nil else { return }
+        mirrorObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            persist()
+        }
+    }
+
     static func persist() {
         let defaults = UserDefaults.standard
         let prefs = AppPreferences(
