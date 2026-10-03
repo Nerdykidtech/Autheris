@@ -43,11 +43,16 @@ struct SettingsView: View {
     @State private var syncErrorMessage: String?
 
     @State private var showingBackupView = false
-    @State private var showingQRCodeView = false
-    /// The transfer link, built once as the sheet opens rather than on every
-    /// redraw of this screen — it encodes and compresses the whole vault — and
-    /// dropped when the sheet closes, since it holds every secret.
-    @State private var transferLink: String?
+    /// The open transfer sheet and the link it shows.
+    ///
+    /// The link is built once as the sheet opens rather than on every redraw of
+    /// this screen — it encodes and compresses the whole vault. The sheet is
+    /// presented *from* this value (`sheet(item:)`), so its first frame always has
+    /// the link: presenting from a flag set alongside it let SwiftUI draw the
+    /// sheet before the link arrived, and "too large" flashed up first. SwiftUI
+    /// sets it back to `nil` when the sheet closes, which drops the link — it
+    /// holds every secret.
+    @State private var transferSheet: TransferSheet?
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
     @State private var showingChangelog = false
@@ -166,9 +171,9 @@ struct SettingsView: View {
         .sheet(isPresented: $showingBackupView) {
             BackupView(dataStore: dataStore)
         }
-        .sheet(isPresented: $showingQRCodeView, onDismiss: { transferLink = nil }) {
-            if let transferLink {
-                QRCodeView(link: transferLink, title: "Export Tokens")
+        .sheet(item: $transferSheet) { sheet in
+            if let link = sheet.link {
+                QRCodeView(link: link, title: "Export Tokens")
             } else {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
@@ -184,7 +189,7 @@ struct SettingsView: View {
                         .multilineTextAlignment(.center)
                     
                     Button("Dismiss") {
-                        showingQRCodeView = false
+                        transferSheet = nil
                     }
                     .padding(.top, 20)
                 }
@@ -678,8 +683,7 @@ struct SettingsView: View {
                     if await AppLockManager.reauthenticate(
                         reason: String(localized: "Authenticate to export your tokens.")
                     ) {
-                        transferLink = dataStore.transferLink()
-                        showingQRCodeView = true
+                        transferSheet = TransferSheet(link: dataStore.transferLink())
                     }
                 }
             } label: {
@@ -936,4 +940,12 @@ private struct MailComposerRepresentable: UIViewControllerRepresentable {
 
 #Preview {
     SettingsView(dataStore: OTPDataStore())
+}
+
+/// What the transfer sheet shows: the link, or `nil` when there is none to show
+/// (see `OTPDataStore.transferLink()`). A fresh id each time, so each opening
+/// is its own presentation.
+private struct TransferSheet: Identifiable {
+    let id = UUID()
+    let link: String?
 }
