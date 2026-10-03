@@ -156,9 +156,16 @@ final class OTPDataStore: ObservableObject {
         vaultRetryObservers.forEach(NotificationCenter.default.removeObserver)
     }
 
-    /// - Parameter offerToWatch: `false` only for a start-over; see
-    ///   `setAsideUnreadableCodes()`.
-    func saveCodes(offerToWatch: Bool = true) {
+    func saveCodes() {
+        persistCodes(offerToWatch: true)
+    }
+
+    /// `saveCodes()`, with the watch update optional.
+    ///
+    /// Private, because skipping the update leaves the watch out of step with
+    /// the phone, and only a start-over has a reason to: see
+    /// `setAsideUnreadableCodes()`.
+    private func persistCodes(offerToWatch: Bool) {
         // Saving before the vault has loaded would replace it with whatever
         // happens to be in memory; see `isVaultLoaded`.
         guard isVaultLoaded else { return }
@@ -297,7 +304,7 @@ final class OTPDataStore: ObservableObject {
         hasUnreadableCodes = false
         finishLoading(with: [], offerToWatch: false)
         // Replace the unreadable copy now, rather than at the next edit.
-        saveCodes(offerToWatch: false)
+        persistCodes(offerToWatch: false)
         // With iCloud on, this is how the codes come back.
         if isSyncEnabled {
             Task { [weak self] in await self?.syncNow() }

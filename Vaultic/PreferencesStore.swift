@@ -28,6 +28,18 @@ enum PreferencesStore {
     static func forgetStoredPreferencesWereRead() {
         hasReadStoredPreferences = false
     }
+
+    /// Whether `startMirroringChanges()` has installed its observer.
+    static var isMirroringChanges: Bool { mirrorObserver != nil }
+
+    /// Removes the observer `startMirroringChanges()` installed. For tests that
+    /// write the Keychain copy themselves and must not have it saved over
+    /// mid-test; the app never stops mirroring, which is why this is debug-only.
+    static func stopMirroringChanges() {
+        guard let mirrorObserver else { return }
+        NotificationCenter.default.removeObserver(mirrorObserver)
+        self.mirrorObserver = nil
+    }
     #endif
 
     /// Persists to the Keychain on every `UserDefaults` change, from now until the
@@ -39,18 +51,6 @@ enum PreferencesStore {
     /// It is called from the view rather than earlier so that
     /// `restoreIntoUserDefaults()` has already run: its writes would otherwise
     /// each be mirrored straight back, half-restored.
-    /// Whether `startMirroringChanges()` has installed its observer.
-    static var isMirroringChanges: Bool { mirrorObserver != nil }
-
-    /// Removes the observer `startMirroringChanges()` installed. For tests that
-    /// write the Keychain copy themselves and must not have it saved over
-    /// mid-test; the app never stops mirroring.
-    static func stopMirroringChanges() {
-        guard let mirrorObserver else { return }
-        NotificationCenter.default.removeObserver(mirrorObserver)
-        self.mirrorObserver = nil
-    }
-
     static func startMirroringChanges() {
         guard mirrorObserver == nil else { return }
         mirrorObserver = NotificationCenter.default.addObserver(
