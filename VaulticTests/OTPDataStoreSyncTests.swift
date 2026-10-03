@@ -169,6 +169,29 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertNil(next?.tombstones[restored.id.uuidString],
                      "A stale tombstone would delete the restored token on the next sync")
     }
+
+    // MARK: - Restoring a backup
+
+    func testATokenRestoredFromABackupSurvivesTheTombstoneItsDeleteLeftInICloud() async throws {
+        // Made an hour ago, backed up, then deleted — so iCloud holds a tombstone
+        // newer than the copy in the backup.
+        let restored = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                               modifiedAt: Date(timeIntervalSinceNow: -3600))
+        store.addCode(restored)
+        let backup = try BackupCrypto.encrypt(plaintext: try JSONEncoder().encode([restored]),
+                                              password: "correct horse battery staple")
+        store.removeCode(restored)
+        let remoteTombstone = SyncRecord.tombstone(id: restored.id.uuidString, deletedAt: Date())
+
+        XCTAssertTrue(store.restoreFromBackup(backup, isEncrypted: true,
+                                              password: "correct horse battery staple"))
+        await runSync { local in
+            SyncMergeEngine.merge(local: local, remote: [remoteTombstone], now: Date(),
+                                  tombstoneRetention: SyncMergeEngine.defaultTombstoneRetention)
+        }
+
+        XCTAssertEqual(store.codes.map(\.id), [restored.id])
+    }
 }
 
 /// A `TokenSyncService` whose `sync(local:)` result each test supplies.

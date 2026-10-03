@@ -608,7 +608,13 @@ final class OTPDataStore: ObservableObject {
             } else {
                 plaintext = fileData
             }
+            let now = Date()
+            // Restored tokens are stamped as edited now. They keep the date they had
+            // when the backup was made otherwise, and the tombstone a later delete
+            // left in iCloud is newer than that — so the next sync would delete
+            // them again. Restoring from the trash does the same for the same reason.
             let restoredCodes = try JSONDecoder().decode([OTPCode].self, from: plaintext)
+                .map { $0.edited(modifiedAt: now) }
             // A restore replaces local state wholesale, so a token the backup does
             // not contain has effectively been deleted and must propagate as a
             // deletion rather than silently reappearing from iCloud later.
@@ -616,7 +622,7 @@ final class OTPDataStore: ObservableObject {
             let restoredIDs = Set(restoredCodes.map { $0.id.uuidString })
             codes = restoredCodes
             for id in previousIDs.subtracting(restoredIDs) {
-                tombstones[id] = Date()
+                tombstones[id] = now
             }
             for id in restoredIDs {
                 tombstones.removeValue(forKey: id)
