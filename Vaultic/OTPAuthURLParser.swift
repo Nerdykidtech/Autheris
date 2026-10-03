@@ -17,7 +17,7 @@ struct ParsedOTPAuth: Equatable {
 
 /// Parses the standard `otpauth://totp/...` setup URLs that iOS hands to the
 /// app when the user picks "Set Up Codes In → Autheris".
-enum OTPAuthURLParser {
+nonisolated enum OTPAuthURLParser {
 
     /// The token in a string somebody pasted or typed, when it is a setup link.
     ///

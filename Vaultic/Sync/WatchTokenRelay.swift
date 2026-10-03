@@ -52,7 +52,7 @@ enum WatchTokenRelay {
 /// Separate from the relay so it can be tested without a paired watch: these
 /// two steps are what decide how long a plaintext copy of every secret sits on
 /// disk, and how well it is protected while it does.
-enum WatchRelayStaging {
+nonisolated enum WatchRelayStaging {
     /// Writes one staged payload and returns its URL.
     ///
     /// The file holds every secret in plain JSON, so it is protected rather than
@@ -288,7 +288,7 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
         // "already sent" record is dropped for the same reason as above.
         Task { @MainActor in
             self.lastSentTokens = nil
-            session.activate()
+            self.session?.activate()
         }
     }
 }

@@ -32,7 +32,7 @@ enum PreferencesStore {
             object: nil,
             queue: .main
         ) { _ in
-            persist()
+            MainActor.assumeIsolated { persist() }
         }
     }
 

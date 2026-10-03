@@ -3,7 +3,7 @@ import Foundation
 /// Parses Google Authenticator export format (otpauth-migration).
 /// Format: otpauth-migration://offline?data=<url-encoded-base64-protobuf>
 /// See: https://github.com/qistoph/otp_export
-enum GoogleMigrationParser {
+nonisolated enum GoogleMigrationParser {
     
     /// Parses an otpauth-migration URL string and returns OTPCode entries, or nil if not valid migration / parse failed.
     static func parseMigrationURL(_ urlString: String) -> [OTPCode]? {

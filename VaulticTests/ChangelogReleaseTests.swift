@@ -9,6 +9,9 @@ import XCTest
 /// its entry is a silent drift that ships: the app reports 2.2 while its own
 /// changelog stops at 2.1, and the store listing still advertises the previous
 /// release. These tests only cover the in-app half — the half a build can see.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class ChangelogReleaseTests: XCTestCase {
 
     private var marketingVersion: String {

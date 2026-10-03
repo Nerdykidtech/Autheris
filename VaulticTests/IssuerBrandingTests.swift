@@ -6,6 +6,9 @@ import SwiftUI
 /// cached under. Both used to come from `hashValue`, which Swift seeds randomly
 /// per launch; these pin them to values that cannot drift between launches, and
 /// to the ones Android computes for the same label.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class IssuerBrandingTests: XCTestCase {
 
     // MARK: - Fallback colour

@@ -10,6 +10,9 @@ import XCTest
 /// counter-based QR therefore became a time-based token whose codes the service
 /// rejected, silently, with nothing on screen to suggest why. The host cases below
 /// are the ones that were wrong.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class OTPAuthURLParserTests: XCTestCase {
 
     private func parse(_ string: String) throws -> ParsedOTPAuth {

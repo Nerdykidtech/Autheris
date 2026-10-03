@@ -8,6 +8,9 @@ import XCTest
 /// prompt, which belongs to the view that reports it. What can be asserted is the
 /// part this type decides: never ask before the vault is worth commenting on, and
 /// never ask twice in the same version.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class ReviewPromptPolicyTests: XCTestCase {
 
     private func canAsk(codeCount: Int = 5,

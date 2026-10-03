@@ -17,7 +17,11 @@ final class AppLockManager: ObservableObject {
 
     #if os(macOS)
     /// Activation observers, held so they are removed with the manager.
-    private var activationObservers: [NSObjectProtocol] = []
+    ///
+    /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
+    /// can read it. It is written once in `init` and read once in `deinit`, when
+    /// nothing else can still be holding the manager.
+    nonisolated(unsafe) private var activationObservers: [NSObjectProtocol] = []
     #endif
 
     var isEnabled: Bool {

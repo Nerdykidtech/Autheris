@@ -6,7 +6,6 @@ import XCTest
 /// It holds every secret in plain JSON, so what matters is how it is protected
 /// and that it doesn't outlive its transfer. Both are file operations, so none of
 /// this needs a paired watch.
-@MainActor
 final class WatchRelayStagingTests: XCTestCase {
 
     private var directory: URL!

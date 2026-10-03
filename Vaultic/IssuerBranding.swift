@@ -134,7 +134,8 @@ class LogoCacheManager {
         }
     }
     
-    func fetchAndCacheLogo(for branding: IssuerBranding, completion: @escaping (PlatformImage?) -> Void) {
+    /// `completion` runs on the main actor.
+    func fetchAndCacheLogo(for branding: IssuerBranding, completion: @escaping @MainActor (PlatformImage?) -> Void) {
         // Nothing leaves the device unless the user has left this on. The lookup sends
         // the *issuer's name* to logo.dev — not a secret, but a statement about which
         // services this person has accounts with, which is the kind of thing a
@@ -160,20 +161,15 @@ class LogoCacheManager {
         }
     }
     
-    private func fetchLogo(url: URL, branding: IssuerBranding, completion: @escaping (PlatformImage?) -> Void) {
+    private func fetchLogo(url: URL, branding: IssuerBranding, completion: @escaping @MainActor (PlatformImage?) -> Void) {
         URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data, error == nil,
-                  let image = PlatformImage(data: data) else {
-                DispatchQueue.main.async {
-                    completion(nil)
+            let image = data.flatMap { error == nil ? PlatformImage(data: $0) : nil }
+            // The cache is main-actor state, read by `hasCachedLogo` and the views,
+            // so it is written there too rather than from URLSession's queue.
+            Task { @MainActor in
+                if let image {
+                    self.cacheLogo(image, for: branding)
                 }
-                return
-            }
-            
-            // Cache the image
-            self.cacheLogo(image, for: branding)
-            
-            DispatchQueue.main.async {
                 completion(image)
             }
         }.resume()

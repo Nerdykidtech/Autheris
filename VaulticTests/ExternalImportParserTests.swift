@@ -13,6 +13,9 @@ import XCTest
 /// The secrets are Base32 and at least 16 characters because `OTPGenerator.isValidSecret`
 /// is the parser's guard, so a shorter fixture would be skipped for the wrong reason and
 /// the test would pass without testing anything.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class ExternalImportParserTests: XCTestCase {
 
     private let secret = "JBSWY3DPEHPK3PXP"

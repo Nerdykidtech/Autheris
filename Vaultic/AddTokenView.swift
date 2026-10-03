@@ -2,7 +2,9 @@ import SwiftUI
 import Foundation
 import AVFoundation
 import PhotosUI
-import Vision
+// Vision's request types predate Sendable. The request and its handler are
+// built here and only ever used on the one background queue that performs them.
+@preconcurrency import Vision
 
 struct AddTokenView: View {
     @Environment(\.dismiss) private var dismiss

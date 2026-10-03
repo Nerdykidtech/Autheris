@@ -4,6 +4,9 @@ import XCTest
 /// `AppPreferences` is what carries settings across a reinstall, and its decode
 /// path is the fragile part: `PreferencesStore.restoreIntoUserDefaults` uses
 /// `try?`, so a single unrecognised key would discard every preference at once.
+// The app target defaults to main-actor isolation, which makes the types under
+// test main-actor isolated too.
+@MainActor
 final class AppPreferencesTests: XCTestCase {
 
     /// A blob exactly as an earlier release wrote it — no

@@ -129,18 +129,23 @@ extension WatchSessionModel: WCSessionDelegate {
                              activationDidCompleteWith activationState: WCSessionActivationState,
                              error: Error?) {
         // The context the system was holding is delivered here, which is the
-        // normal path on a cold launch. `receivedApplicationContext` is read
-        // *inside* the main-actor task rather than captured outside it, because it
-        // is only meaningful once activation has actually completed.
+        // normal path on a cold launch. Activation has completed by the time this
+        // runs, so `receivedApplicationContext` is meaningful already; it is
+        // decoded here so that only the decoded, Sendable value crosses to the
+        // main actor.
+        let decoded = WatchTokenPayload.decode(applicationContext: session.receivedApplicationContext)
         Task { @MainActor in
-            self.apply(session.receivedApplicationContext)
+            guard let decoded else { return }
+            self.apply(decoded)
         }
     }
 
     nonisolated func session(_ session: WCSession,
                              didReceiveApplicationContext applicationContext: [String: Any]) {
+        let decoded = WatchTokenPayload.decode(applicationContext: applicationContext)
         Task { @MainActor in
-            self.apply(applicationContext)
+            guard let decoded else { return }
+            self.apply(decoded)
         }
     }
 

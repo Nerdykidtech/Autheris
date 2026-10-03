@@ -16,7 +16,7 @@ typealias PlatformColor = NSColor
 
 extension NSImage {
     /// Matches `UIImage(cgImage:)`, which is not failable.
-    static func from(cgImage: CGImage) -> NSImage {
+    nonisolated static func from(cgImage: CGImage) -> NSImage {
         NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
     }
 
@@ -41,7 +41,7 @@ typealias PlatformImage = UIImage
 typealias PlatformColor = UIColor
 
 extension UIImage {
-    static func from(cgImage: CGImage) -> UIImage {
+    nonisolated static func from(cgImage: CGImage) -> UIImage {
         UIImage(cgImage: cgImage)
     }
 

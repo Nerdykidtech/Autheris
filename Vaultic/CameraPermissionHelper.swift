@@ -1,7 +1,8 @@
 import AVFoundation
 
 class CameraPermissionHelper {
-    static func checkCameraPermission(completion: @escaping (Bool) -> Void) {
+    /// `completion` always runs on the main actor, whichever branch answers.
+    static func checkCameraPermission(completion: @escaping @MainActor (Bool) -> Void) {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         
         switch status {
@@ -9,7 +10,7 @@ class CameraPermissionHelper {
             completion(true)
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     completion(granted)
                 }
             }
