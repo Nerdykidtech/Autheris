@@ -166,7 +166,7 @@ struct BackupView: View {
                         if dataStore.replaceAll(with: restoredCodes) {
                             showingRestoredAlert = true
                         } else {
-                            restoreErrorMessage = String(localized: "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                            restoreErrorMessage = OTPDataStore.vaultUnavailableMessage
                             showingRestoreError = true
                         }
                     }

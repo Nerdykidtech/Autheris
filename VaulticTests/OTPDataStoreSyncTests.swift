@@ -195,7 +195,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
     // MARK: - Importing
 
-    func testImportedCodesGetANewIDAndAFreshTimestamp() throws {
+    func testImportedCodesGetANewIDAndAFreshTimestamp() {
         let existing = token("GitHub")
         store.addCode(existing)
         // Reuses an id already in the vault and claims to be from next year.
@@ -203,10 +203,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
                               secret: "JBSWY3DPEHPK3PXP",
                               modifiedAt: Date(timeIntervalSinceNow: 365 * 24 * 3600))
 
-        let result = try XCTUnwrap(store.addCodes([hostile]))
-
-        XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.skipped, 0)
+        XCTAssertEqual(store.addCodes([hostile]), .imported(added: 1, skipped: 0))
         let imported = store.codes.first { $0.label == "GitLab" }
         XCTAssertNotNil(imported)
         XCTAssertNotEqual(imported?.id, existing.id)
@@ -215,18 +212,17 @@ final class OTPDataStoreSyncTests: XCTestCase {
                        "the code already in the vault must be left alone")
     }
 
-    func testImportCountsOnlyTheCodesThatWereActuallyAdded() throws {
+    func testImportCountsOnlyTheCodesThatWereActuallyAdded() {
         store.addCode(token("GitHub"))
 
-        let result = try XCTUnwrap(store.addCodes([
+        let result = store.addCodes([
             token("GitHub"),    // already in the vault
             token("GitLab"),
             token("GitLab"),    // repeated within the payload
             OTPCode(label: "GitHub ", account: "user", secret: "JBSWY3DPEHPK3PXP"),
-        ]))
+        ])
 
-        XCTAssertEqual(result.added, 2)
-        XCTAssertEqual(result.skipped, 2)
+        XCTAssertEqual(result, .imported(added: 2, skipped: 2))
         XCTAssertEqual(store.codes.map(\.label).sorted(), ["GitHub", "GitHub ", "GitLab"])
     }
 
@@ -358,8 +354,8 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertFalse(unreadable.isVaultLoaded)
         XCTAssertTrue(unreadable.hasUnreadableCodes)
         XCTAssertFalse(unreadable.addCode(token("GitHub")), "an edit must not look saved when it can't be")
-        XCTAssertNil(unreadable.addCodes([token("GitLab")]),
-                     "a refused import must not read as \"all duplicates\"")
+        XCTAssertEqual(unreadable.addCodes([token("GitLab")]), .vaultUnavailable,
+                       "a refused import must not read as \"all duplicates\"")
         XCTAssertFalse(unreadable.replaceAll(with: [token("GitLab")]),
                        "a refused restore must not read as restored")
         XCTAssertTrue(unreadable.codes.isEmpty)
@@ -367,23 +363,40 @@ final class OTPDataStoreSyncTests: XCTestCase {
     }
 
     func testUnreadableCodesCanBeSetAsideToStartOver() throws {
+        let setAsideAccount = OTPDataStore.setAsideAccount
+        let previouslySetAside = KeychainStore.load(account: setAsideAccount)
+        defer {
+            if let previouslySetAside {
+                _ = KeychainStore.save(previouslySetAside, account: setAsideAccount)
+            } else {
+                deleteKeychainItem(account: setAsideAccount)
+            }
+        }
         let stored = Data("not a list of codes".utf8)
         XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
-        let unreadable = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
-        let now = Date(timeIntervalSince1970: 1_800_000_000)
-        let setAsideAccount = "otpCodes.unreadable.1800000000"
-        defer { deleteKeychainItem(account: setAsideAccount) }
+        let relay = RecordingWatchTokenRelay()
+        let unreadable = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: relay)
 
-        XCTAssertTrue(unreadable.setAsideUnreadableCodes(now: now))
+        XCTAssertTrue(unreadable.setAsideUnreadableCodes())
 
         XCTAssertEqual(KeychainStore.load(account: setAsideAccount), stored,
                        "the unreadable codes are kept, not thrown away")
         XCTAssertTrue(unreadable.isVaultLoaded)
         XCTAssertFalse(unreadable.hasUnreadableCodes)
+        XCTAssertTrue(relay.pushes.isEmpty,
+                      "the watch's copy may be the only readable one; starting over must not clear it")
         XCTAssertTrue(unreadable.addCode(token("GitHub")), "the vault works again")
+        XCTAssertEqual(relay.pushes.last?.map(\.label), ["GitHub"], "and the next real change updates the watch")
         let saved = try JSONDecoder().decode([OTPCode].self,
                                              from: try XCTUnwrap(KeychainStore.load(account: "otpCodes")))
         XCTAssertEqual(saved.map(\.label), ["GitHub"])
+
+        // Setting aside again replaces the one copy rather than adding another.
+        let newer = Data("different unreadable bytes".utf8)
+        XCTAssertTrue(KeychainStore.save(newer, account: "otpCodes"))
+        let again = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+        XCTAssertTrue(again.setAsideUnreadableCodes())
+        XCTAssertEqual(KeychainStore.load(account: setAsideAccount), newer)
     }
 
     func testALockedVaultIsNeverSetAside() {

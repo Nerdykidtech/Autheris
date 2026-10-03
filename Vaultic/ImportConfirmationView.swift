@@ -183,27 +183,14 @@ struct ImportConfirmationView: View {
     }
     
     private func successView(total: Int, new: Int, duplicates: Int) -> some View {
-        VStack(spacing: 20) {
-            // Success icon
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 52))
-                .foregroundColor(.green)
-                .symbolRenderingMode(.hierarchical)
-            
-            // Title
-            Text("Import Successful")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            // Stats
+        resultCard(icon: "checkmark.circle.fill", tint: .green, title: "Import Successful") {
             VStack(spacing: 12) {
                 statRow(
                     label: "Total scanned:",
                     value: "\(total) tokens",
                     color: .primary
                 )
-                
+
                 if new > 0 {
                     statRow(
                         label: "Added:",
@@ -212,7 +199,7 @@ struct ImportConfirmationView: View {
                         icon: "plus.circle.fill"
                     )
                 }
-                
+
                 if duplicates > 0 {
                     statRow(
                         label: "Skipped:",
@@ -223,56 +210,45 @@ struct ImportConfirmationView: View {
                 }
             }
             .font(.callout)
-            
-            // Note
+
             Text("Check your home screen for the new tokens!")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
-            
-            // Done button
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isPresented = false
-                }
-            }) {
-                Text("Done")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        Capsule()
-                            .fill(Color.accentColor)
-                    )
-            }
-            .padding(.top, 8)
         }
     }
-    
+
     private func duplicatesView(count: Int) -> some View {
+        resultCard(icon: "info.circle.fill", tint: .orange, title: "Tokens Already Exist") {
+            message(Text("All \(count) tokens in this import already exist on your device."))
+        }
+    }
+
+    private var unavailableView: some View {
+        resultCard(icon: "exclamationmark.lock.fill", tint: .secondary, title: "Codes Unavailable") {
+            message(Text(OTPDataStore.vaultUnavailableMessage))
+        }
+    }
+
+    /// The layout every result shares: an icon, a title, what happened, and Done.
+    private func resultCard<Content: View>(icon: String,
+                                           tint: Color,
+                                           title: LocalizedStringKey,
+                                           @ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 20) {
-            // Info icon
-            Image(systemName: "info.circle.fill")
+            Image(systemName: icon)
                 .font(.system(size: 52))
-                .foregroundColor(.orange)
+                .foregroundColor(tint)
                 .symbolRenderingMode(.hierarchical)
-            
-            // Title
-            Text("Tokens Already Exist")
+
+            Text(title)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-            
-            // Message
-            Text("All \(count) tokens in this import already exist on your device.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            
-            // Done button
+
+            content()
+
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     isPresented = false
@@ -291,42 +267,13 @@ struct ImportConfirmationView: View {
             .padding(.top, 8)
         }
     }
-    
-    private var unavailableView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.lock.fill")
-                .font(.system(size: 52))
-                .foregroundColor(.secondary)
-                .symbolRenderingMode(.hierarchical)
 
-            Text("Codes Unavailable")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-
-            Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    isPresented = false
-                }
-            }) {
-                Text("Done")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(
-                        Capsule()
-                            .fill(Color.accentColor)
-                    )
-            }
-            .padding(.top, 8)
-        }
+    private func message(_ text: Text) -> some View {
+        text
+            .font(.body)
+            .foregroundColor(.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private func statRow(label: LocalizedStringKey, value: LocalizedStringKey, color: Color, icon: String? = nil) -> some View {
@@ -354,20 +301,13 @@ struct ImportConfirmationView: View {
     /// The only place a link's codes reach the vault, and only from the Import
     /// button above.
     private func importTokens() {
-        guard let result = dataStore.addCodes(tokens) else {
+        switch dataStore.addCodes(tokens) {
+        case .vaultUnavailable:
             importResult = .vaultUnavailable
-            return
-        }
-
-        guard result.added > 0 else {
+        case .imported(added: 0, skipped: _):
             importResult = .allDuplicates(tokens.count)
-            return
+        case .imported(let added, let skipped):
+            importResult = .success(total: tokens.count, new: added, duplicates: skipped)
         }
-
-        importResult = .success(
-            total: tokens.count,
-            new: result.added,
-            duplicates: result.skipped
-        )
     }
 }

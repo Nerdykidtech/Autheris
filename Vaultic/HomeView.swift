@@ -75,7 +75,7 @@ struct HomeView: View {
                     .buttonStyle(.borderedProminent)
                     .padding(.top, 8)
                 } else {
-                    Text("Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+                    Text(OTPDataStore.vaultUnavailableMessage)
                         .font(.subheadline)
                         .foregroundColor(.secondary.opacity(0.8))
                         .multilineTextAlignment(.center)
@@ -295,7 +295,7 @@ struct HomeView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none.")
+                Text("The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none. Apple Watch keeps its codes until the next change here.")
             }
         }
     }

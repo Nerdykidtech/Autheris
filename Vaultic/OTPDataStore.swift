@@ -1,8 +1,22 @@
 import Foundation
 import Combine
 
+/// What became of a batch of codes handed to `OTPDataStore.addCodes`.
+enum ImportOutcome: Equatable {
+    /// How many were added, and how many were skipped as already here.
+    case imported(added: Int, skipped: Int)
+    /// Nothing was added because the vault hasn't loaded.
+    case vaultUnavailable
+}
+
 @MainActor
 final class OTPDataStore: ObservableObject {
+    /// What every screen says when the vault can't be read, so they all say the
+    /// same thing.
+    static var vaultUnavailableMessage: String {
+        String(localized: "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.")
+    }
+
     @Published var codes: [OTPCode] = []
     /// Drives the sync row in Settings. Mirrors the sync service.
     @Published private(set) var syncStatus: CloudSyncStatus = .disabled
@@ -142,7 +156,9 @@ final class OTPDataStore: ObservableObject {
         vaultRetryObservers.forEach(NotificationCenter.default.removeObserver)
     }
 
-    func saveCodes() {
+    /// - Parameter offerToWatch: `false` only for a start-over; see
+    ///   `setAsideUnreadableCodes()`.
+    func saveCodes(offerToWatch: Bool = true) {
         // Saving before the vault has loaded would replace it with whatever
         // happens to be in memory; see `isVaultLoaded`.
         guard isVaultLoaded else { return }
@@ -170,7 +186,9 @@ final class OTPDataStore: ObservableObject {
         // then the user's own arrangement — because the watch has no reordering UI
         // and should show the codes in the order the phone shows them, rather than
         // in the order this array happens to be stored in.
-        pushCodesToWatch()
+        if offerToWatch {
+            pushCodesToWatch()
+        }
     }
 
     /// Hands the current codes to the paired watch.
@@ -219,7 +237,10 @@ final class OTPDataStore: ObservableObject {
 
     /// Applies the codes `loadVault` read — `nil` when there were none — and
     /// reads the tombstones and trash alongside them.
-    private func finishLoading(with decodedCodes: [OTPCode]?) {
+    ///
+    /// - Parameter offerToWatch: `false` for a start-over, which loads an empty
+    ///   vault that is not news worth sending: see `setAsideUnreadableCodes()`.
+    private func finishLoading(with decodedCodes: [OTPCode]?, offerToWatch: Bool = true) {
         let storedTombstones = readKeychain(tombstonesKey)
         let storedTrash = readKeychain(trashKey)
         canPersistTombstones = Self.isReadable(storedTombstones)
@@ -240,8 +261,15 @@ final class OTPDataStore: ObservableObject {
         // anything, and the watch would sit empty until the user happened to edit
         // a token. That is exactly the case for someone who installs the watch app
         // *after* filling the phone, so the missing push is not a rare one.
-        pushCodesToWatch()
+        if offerToWatch {
+            pushCodesToWatch()
+        }
     }
+
+    /// The Keychain account unreadable codes are set aside under. One account,
+    /// so setting aside again replaces the last copy rather than piling copies of
+    /// secrets up where nothing lists or removes them.
+    static let setAsideAccount = "otpCodes.unreadable"
 
     /// Moves codes that won't decode out of the way, to a Keychain item of their
     /// own, and starts the vault empty — so a backup can be restored or codes
@@ -249,24 +277,27 @@ final class OTPDataStore: ObservableObject {
     ///
     /// Only for `hasUnreadableCodes`, and only on the user's say-so. The bytes are
     /// copied before anything replaces them, and if that copy can't be written
-    /// nothing changes. They stay on the device, under an account no other code
-    /// reads or writes, rather than being thrown away.
+    /// nothing changes. They stay on the device, under `setAsideAccount`, rather
+    /// than being thrown away.
+    ///
+    /// Apple Watch is left as it is. While the phone's codes can't be read, the
+    /// watch's copy is the only one the user can still read, and sending it an
+    /// empty list now would clear that before anything has replaced it. The next
+    /// real change — a restore, a sync, an add — updates it as usual.
     ///
     /// - Returns: `false` when nothing was changed.
     @discardableResult
-    func setAsideUnreadableCodes(now: Date = Date()) -> Bool {
+    func setAsideUnreadableCodes() -> Bool {
         guard !isVaultLoaded, hasUnreadableCodes,
               case .found(let data) = readKeychain("otpCodes"),
               (try? JSONDecoder().decode([OTPCode].self, from: data)) == nil else { return false }
 
-        // Timestamped, so setting codes aside twice can never overwrite the first.
-        let setAside = "otpCodes.unreadable.\(Int(now.timeIntervalSince1970))"
-        guard KeychainStore.save(data, account: setAside) else { return false }
+        guard KeychainStore.save(data, account: Self.setAsideAccount) else { return false }
 
         hasUnreadableCodes = false
-        finishLoading(with: [])
+        finishLoading(with: [], offerToWatch: false)
         // Replace the unreadable copy now, rather than at the next edit.
-        saveCodes()
+        saveCodes(offerToWatch: false)
         // With iCloud on, this is how the codes come back.
         if isSyncEnabled {
             Task { [weak self] in await self?.syncNow() }
@@ -338,12 +369,12 @@ final class OTPDataStore: ObservableObject {
     /// A code whose label and account match one already here, or one earlier in
     /// the same payload, is skipped and counted as such.
     ///
-    /// Returns `nil` when nothing could be added because the vault hasn't loaded
-    /// (see `isVaultLoaded`) — which is not the same as every code being a
+    /// `.vaultUnavailable` when nothing could be added because the vault hasn't
+    /// loaded (see `isVaultLoaded`) — which is not the same as every code being a
     /// duplicate, and the caller has to say so.
     @discardableResult
-    func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int)? {
-        guard isVaultLoaded else { return nil }
+    func addCodes(_ incoming: [OTPCode]) -> ImportOutcome {
+        guard isVaultLoaded else { return .vaultUnavailable }
         let now = Date()
         var added: [OTPCode] = []
         for token in incoming {
@@ -362,7 +393,7 @@ final class OTPDataStore: ObservableObject {
             saveCodes()
             scheduleSync()
         }
-        return (added.count, incoming.count - added.count)
+        return .imported(added: added.count, skipped: incoming.count - added.count)
     }
 
     /// Keeps the first token per id: what storage needs, and all it may drop.

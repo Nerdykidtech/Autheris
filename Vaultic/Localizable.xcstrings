@@ -9870,42 +9870,42 @@
         }
       }
     },
-    "The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none.": {
+    "The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none. Apple Watch keeps its codes until the next change here.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die nicht lesbaren Codes bleiben auf diesem Gerät, getrennt von den Codes, die Autheris verwendet, und Autheris beginnt ohne Codes."
+            "value": "Die nicht lesbaren Codes bleiben auf diesem Gerät, getrennt von den Codes, die Autheris verwendet, und Autheris beginnt ohne Codes. Die Apple Watch behält ihre Codes bis zur nächsten Änderung hier."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los códigos ilegibles se quedan en este dispositivo, separados de los que usa Autheris, y Autheris empieza sin ninguno."
+            "value": "Los códigos ilegibles se quedan en este dispositivo, separados de los que usa Autheris, y Autheris empieza sin ninguno. El Apple Watch conserva sus códigos hasta el próximo cambio aquí."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les codes illisibles restent sur cet appareil, à l'écart des codes qu'utilise Autheris, et Autheris repart sans aucun code."
+            "value": "Les codes illisibles restent sur cet appareil, à l'écart des codes qu'utilise Autheris, et Autheris repart sans aucun code. L'Apple Watch conserve ses codes jusqu'à la prochaine modification ici."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "読み取れないコードは、Autheris が使用するコードとは別にこの端末に残り、Autheris はコードがない状態から始まります。"
+            "value": "読み取れないコードは、Autheris が使用するコードとは別にこの端末に残り、Autheris はコードがない状態から始まります。Apple Watch のコードは、ここで次に変更があるまでそのまま残ります。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os códigos ilegíveis ficam neste dispositivo, separados dos códigos que o Autheris usa, e o Autheris começa sem nenhum."
+            "value": "Os códigos ilegíveis ficam neste dispositivo, separados dos códigos que o Autheris usa, e o Autheris começa sem nenhum. O Apple Watch mantém seus códigos até a próxima alteração aqui."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法读取的验证码会保留在此设备上，与 Autheris 使用的验证码分开存放，Autheris 将从零开始。"
+            "value": "无法读取的验证码会保留在此设备上，与 Autheris 使用的验证码分开存放，Autheris 将从零开始。Apple Watch 上的验证码会保留到此处下次更改为止。"
           }
         }
       }

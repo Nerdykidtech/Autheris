@@ -23,6 +23,8 @@ A first launch after upgrading migrates any legacy `UserDefaults` copy into the 
 
 Deletion tombstones are stored in the Keychain too, under their own account. They used to live in `UserDefaults`, which was the wrong home for them: `UserDefaults` is wiped when the app is deleted while the Keychain is not, so a reinstall lost the tombstones that suppress deleted tokens *while the tokens themselves came back* — and the next sync would re-import from iCloud everything the user had deleted. That is exactly the guarantee tombstones exist to provide, so losing them is not a cosmetic bug. The legacy tombstone copy is migrated on the same first launch, and only removed once the Keychain write has succeeded.
 
+If the stored codes are present but can't be decoded — damaged, or written by a newer build — Autheris never saves over them: it shows that the codes can't be read and refuses every change. The user can then choose **Set Aside and Start Over**, which first copies the unreadable data to a Keychain item of its own (`otpCodes.unreadable`, same protection class) and only then starts the vault empty. Nothing reads that item back; it exists so the data isn't destroyed. There is only ever one: setting aside again replaces it. Like the other Keychain items it survives deleting the app.
+
 ## App Lock
 
 App Lock (**Settings → Privacy → Require Face ID / Touch ID**) uses `LAPolicy.deviceOwnerAuthentication`, so Face ID or Touch ID with the passcode as the fallback, or Touch ID and the login password on a Mac. The logic is in `Vaultic/AppLockManager.swift`.

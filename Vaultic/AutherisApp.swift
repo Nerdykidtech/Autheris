@@ -28,10 +28,14 @@ struct AutherisApp: App {
     @State private var showingImportSheet = false
     /// Codes from an incoming link, waiting for the user to accept or reject them.
     @State private var pendingImport: [OTPCode]?
-    /// The window a link or a scan arrived in, which is the one to show its review
-    /// or its error. The state above is shared by every window, and on an iPad or
+    /// The window a link or a scan with codes arrived in, which is the one to show
+    /// their review. The state above is shared by every window, and on an iPad or
     /// a Mac with several open, all of them used to show the same card at once.
     @State private var importWindow: UUID?
+    /// The window a link that couldn't be read arrived in, for its error. Kept
+    /// apart from `importWindow` so a broken link opened in one window doesn't
+    /// pull a review that is waiting in another over to it.
+    @State private var linkErrorWindow: UUID?
     @State private var otpSetupResult: (title: String, body: String)?
     @State private var isAppActive = true
     @State private var isScreenCaptured = false
@@ -122,7 +126,7 @@ struct AutherisApp: App {
                 .alert(
                     Text(otpSetupResult?.title ?? "Autheris"),
                     isPresented: Binding(
-                        get: { otpSetupResult != nil && importWindow == windowID },
+                        get: { otpSetupResult != nil && linkErrorWindow == windowID },
                         set: { if !$0 { otpSetupResult = nil } }
                     ),
                     presenting: otpSetupResult
@@ -274,16 +278,16 @@ struct AutherisApp: App {
         print("Handling incoming URL: \(url.scheme ?? "?")://\(url.host ?? "")")
         #endif
 
-        let link = IncomingLink.parse(url)
-        if link != nil {
-            importWindow = window
-        }
-        switch link {
+        switch IncomingLink.parse(url) {
         case .tokens(let tokens):
+            // A new import replaces one still waiting, and is shown where it
+            // arrived — where the user is.
             pendingImport = tokens
+            importWindow = window
             showingImportSheet = true
         case .failure(let title, let message):
             otpSetupResult = (title, message)
+            linkErrorWindow = window
         case nil:
             #if DEBUG
             print("Not a URL Autheris handles")
