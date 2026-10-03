@@ -15,6 +15,30 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [2.9] — October 2026
+
+### Security
+
+- "Blur when backgrounded", "Hide codes in app switcher" and "Hide codes while recording or mirroring" are on again. Since 2.0, all three could switch themselves off on the second launch for anyone who had never changed them, which left codes visible in the app switcher and in screen recordings. That can't be told apart from turning them off yourself, so 2.9 turns all three back on once. If you had turned one off on purpose, turn it off again in Settings › Privacy and it will stay off.
+- Codes can no longer be lost when iCloud sync wakes Autheris in the background while your iPhone is locked. Autheris can't read its Keychain then, but it took that to mean you had no codes: it could send an empty list to Apple Watch, and your next change after unlocking saved that list over the real one. It now waits until the iPhone is unlocked before it loads, saves, syncs or updates the watch.
+- Restoring an encrypted backup now asks before it replaces your codes, as restoring an unencrypted one always did. It used to go straight from the password to replacing everything. Codes that aren't in the backup now go to Recently Deleted instead of disappearing, so restoring the wrong backup can be undone.
+- Scanning a transfer QR code or a Google Authenticator export now shows the codes it would add and waits for you to tap Import, the same as a link does since 2.8. It used to add them all as soon as it was scanned, so a QR code on someone else's page could fill your list.
+- Turning on App Lock now needs a passcode or password on the device. Without one, App Lock could be turned on and then never unlocked, leaving Autheris on the lock screen at every launch. If that already happened to you, Autheris now opens, and App Lock turns itself off rather than staying on with nothing to ask for.
+- If Autheris can't read your codes from the Keychain, it now says so and leaves them untouched until it can. Codes it couldn't read could be replaced with an empty list by your next change. If they're stored in a form this version can't read, you can set them aside — they stay on the device — and start over, then restore a backup or let iCloud sync bring your codes back.
+- With iCloud sync on, a device that was behind now notices when another device has changed a code since it last looked, instead of overwriting the newer change. A deleted code's iCloud record is also now cleared of its encrypted details, including records deleted by earlier versions.
+
+### Fixed
+
+- Two codes with the same service name and account no longer lose one of them. Renaming a code to a name another code already has is now refused; it used to save, and one of the two was dropped. Names are now compared the same way everywhere, ignoring capitals, so "GitHub / alice" can't be added next to "github / Alice" and then lost on the next launch.
+- Setup links and QR codes that put only the account in the path, such as `otpauth://totp/alice@example.com?issuer=GitHub`, now keep the account. It used to be dropped, so a second account at the same service couldn't be added.
+- Importing from 2FAS now keeps each code's account, so a second account at the same service is imported instead of dropped.
+- Adding a code that's already on your device now says so. The scanner and the form used to close as if it had been added.
+- The Transfer QR Code now holds far more codes: typically 50 to 130, depending on how long their names and setup keys are, instead of 8. From the 9th code on it used to say the export was too large for a QR code. A transfer small enough for the old format still uses it, so an older version of Autheris can import it; a bigger one needs Autheris 2.9 on the other device.
+- Creating or opening an encrypted backup no longer freezes the app while the password is checked.
+- The import review no longer switches the whole app to light mode while it's open, and codes from a scanned QR code now wait behind App Lock like codes from a link. On iPad and Mac, an import now shows in the window it arrived in, rather than in every open window.
+
+- Your codes, iCloud sync and settings are exactly where you left them, apart from the three privacy switches above.
+
 ## [2.8] — October 2026
 
 ### Security

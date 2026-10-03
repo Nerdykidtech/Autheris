@@ -55,6 +55,26 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "2.9",
+            version: "2.9",
+            date: "October 2026",
+            changes: [
+                "Blur when backgrounded, Hide codes in app switcher, and Hide codes while recording or mirroring are on again. They could switch themselves off on the second launch if you had never changed them, so 2.9 turns them back on once. If you had turned one off on purpose, turn it off again in Settings and it will stay off.",
+                "Your codes can no longer be lost when iCloud sync wakes Autheris while your iPhone is locked. It now waits until you unlock before it loads, saves, syncs or updates Apple Watch.",
+                "Restoring an encrypted backup now asks before it replaces your codes, and codes it replaces go to Recently Deleted instead of disappearing.",
+                "Scanning a transfer or Google Authenticator export QR code now shows what it would add, and nothing is added until you tap Import.",
+                "App Lock can no longer be turned on without a device passcode, which could leave Autheris stuck on the lock screen.",
+                "If Autheris can't read your codes from the Keychain, it now says so and leaves them untouched instead of risking an empty list replacing them. If this version can't read them at all, you can set them aside and start over.",
+                "With iCloud sync on, a device that was behind no longer overwrites a newer change from another device.",
+                "Two codes with the same name can no longer lose one of them, and renaming a code to a name another code has is refused.",
+                "Setup links that name only the account, and imports from 2FAS, now keep the account, so a second account at the same service can be added.",
+                "Adding a code that's already on your device now says so instead of closing as if it worked.",
+                "The Transfer QR Code now holds typically 50 to 130 codes instead of 8. A bigger transfer needs Autheris 2.9 on the other device.",
+                "Encrypted backups no longer freeze the app while they're created or opened.",
+                "Your codes, iCloud sync and settings are exactly where you left them, apart from the three privacy switches above."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.8",
             version: "2.8",
             date: "October 2026",
