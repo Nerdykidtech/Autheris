@@ -36,6 +36,8 @@ jobs:
           echo "Using simulator $UDID"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
+      # Ad-hoc signing keeps the entitlements without needing certificates;
+      # CKContainer traps at launch if the iCloud entitlement is missing.
       - name: Build and test
         run: |
           set -o pipefail
@@ -43,5 +45,8 @@ jobs:
             -project Vaultic.xcodeproj \
             -scheme Vaultic \
             -destination "id=${{ steps.sim.outputs.udid }}" \
-            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            PROVISIONING_PROFILE_SPECIFIER= \
             | tee xcodebuild.log | grep -E "error:|warning: .*deprecated|Test Suite|Executed|\*\* (BUILD|TEST)"
