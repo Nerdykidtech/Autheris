@@ -56,6 +56,7 @@ final class OTPDataStore: ObservableObject {
         backupDirectory = documentsDirectory.appendingPathComponent("OTPBackups")
 
         try? FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+        Self.protectBackups(in: backupDirectory)
 
         let enabled = UserDefaults.standard.bool(forKey: Self.syncEnabledKey)
         isSyncEnabled = enabled
@@ -511,7 +512,7 @@ final class OTPDataStore: ObservableObject {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(codes)
-            try data.write(to: backupURL)
+            try Self.writeBackup(data, to: backupURL)
             return backupURL
         } catch {
             #if DEBUG
@@ -532,7 +533,7 @@ final class OTPDataStore: ObservableObject {
         do {
             let plaintext = try JSONEncoder().encode(codes)
             let encrypted = try BackupCrypto.encrypt(plaintext: plaintext, password: password)
-            try encrypted.write(to: backupURL)
+            try Self.writeBackup(encrypted, to: backupURL)
             return backupURL
         } catch {
             #if DEBUG
@@ -540,6 +541,37 @@ final class OTPDataStore: ObservableObject {
             #endif
             return nil
         }
+    }
+
+    /// Writes a backup that stays on this device.
+    ///
+    /// Backups live in Documents, which iCloud Backup and Finder backups copy by
+    /// default. An unencrypted backup holds every secret in plain JSON, so
+    /// letting it ride along would undo the `ThisDeviceOnly` Keychain protection
+    /// the codes themselves have. Sharing a backup is still the user's call.
+    private static func writeBackup(_ data: Data, to url: URL) throws {
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        excludeFromBackup(url)
+    }
+
+    /// Applies the same protection to the backup folder and to backups written by
+    /// earlier versions, which had none.
+    private static func protectBackups(in directory: URL) {
+        excludeFromBackup(directory)
+        let existing = (try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? []
+        for url in existing {
+            try? FileManager.default.setAttributes([.protectionKey: FileProtectionType.complete],
+                                                   ofItemAtPath: url.path)
+            excludeFromBackup(url)
+        }
+    }
+
+    private static func excludeFromBackup(_ url: URL) {
+        var url = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 
     /// Lists all available backup files
