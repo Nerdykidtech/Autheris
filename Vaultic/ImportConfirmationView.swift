@@ -302,12 +302,6 @@ struct ImportConfirmationView: View {
         // Force save to ensure changes are persisted
         dataStore.saveCodes()
 
-        // Post notification to refresh UI
-        NotificationCenter.default.post(
-            name: Notification.Name("TokensImported"),
-            object: newTokens.count
-        )
-
         importResult = .success(
             total: tokens.count,
             new: newTokens.count,

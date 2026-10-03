@@ -667,35 +667,6 @@ final class OTPDataStore: ObservableObject {
             return nil
         }
     }
-
-    /// Imports data from JSON
-    func importData(from data: Data) -> Bool {
-        do {
-            // First try to decode as ExportData (new format)
-            if let exportData = try? JSONDecoder().decode(ExportData.self, from: data) {
-                codes.append(contentsOf: exportData.tokens)
-                saveCodes()
-                scheduleSync()
-                // Explicitly trigger UI update
-                objectWillChange.send()
-                return true
-            }
-
-            // Fall back to old format (array of OTPCode)
-            let importedCodes = try JSONDecoder().decode([OTPCode].self, from: data)
-            codes.append(contentsOf: importedCodes)
-            saveCodes()
-            scheduleSync()
-            // Explicitly trigger UI update
-            objectWillChange.send()
-            return true
-        } catch {
-            #if DEBUG
-            print("Failed to import data: \(error)")
-            #endif
-            return false
-        }
-    }
 }
 
 // MARK: - Export Data Structure
