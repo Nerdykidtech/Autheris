@@ -90,7 +90,11 @@ struct OTPAuthURLView: View {
             kind: parsed.kind,
             counter: parsed.counter
         )
-        dataStore.addCode(newCode)
+        guard dataStore.addCode(newCode) else {
+            alertMessage = String(localized: "A token with this service name and account is already on this device.")
+            showingAlert = true
+            return
+        }
         isPresented = false
     }
 }

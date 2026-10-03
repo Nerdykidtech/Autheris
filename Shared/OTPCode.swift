@@ -86,6 +86,32 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
 
     var currentCode: String { code(at: Date()) }
 
+    /// Whether `other` goes by the same name: label and account, ignoring case.
+    ///
+    /// Two codes with one name look like one token to a person, so this is what
+    /// every path that *introduces* a name — adding, importing, restoring from the
+    /// trash, renaming — checks before it does. It is never a filter on what is
+    /// stored: two codes can still arrive under one name from another device, and
+    /// dropping either would throw away a secret nobody else has.
+    func hasSameName(as other: OTPCode) -> Bool {
+        label.lowercased() == other.label.lowercased()
+            && account.lowercased() == other.account.lowercased()
+    }
+
+    /// Whether `other` is this token again — the same id, or the same name *and*
+    /// the same secret — rather than a different token that shares a name.
+    ///
+    /// Copies come from two devices adding the same setup code before they sync,
+    /// and they are the only duplicates it is safe to hide or delete together.
+    func isCopy(of other: OTPCode) -> Bool {
+        id == other.id || (hasSameName(as: other) && normalizedSecret == other.normalizedSecret)
+    }
+
+    /// The secret as Base32 means it: case and spacing are presentation.
+    private var normalizedSecret: String {
+        secret.uppercased().filter { !$0.isWhitespace }
+    }
+
     /// The code shown at `now`. A counter-based code ignores the time.
     func code(at now: Date) -> String {
         switch kind {

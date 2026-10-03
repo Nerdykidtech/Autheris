@@ -10,6 +10,9 @@ struct AddTokenView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var dataStore: OTPDataStore
     @Binding var importResult: (title: String, body: String)?
+    /// Where a scanned QR code that carries several codes goes to be reviewed.
+    /// Nothing from such a code is added here; see `handleExportData`.
+    @Binding var pendingImport: [OTPCode]?
     
     @State private var selectedTab = 0
     @State private var label = ""
@@ -456,8 +459,7 @@ struct AddTokenView: View {
                     digits: otpData.digits,
                     period: otpData.period
                 )
-                dataStore.addCode(newCode)
-                dismiss()
+                addAndDismiss(newCode)
             } else {
                 // Switch to manual entry tab with pre-filled data
                 selectedTab = 1
@@ -558,26 +560,29 @@ struct AddTokenView: View {
         }
     }
     
+    /// A transfer or Google Authenticator export QR code, which can carry a whole
+    /// vault.
+    ///
+    /// Handed to `ImportConfirmationView` rather than added here, exactly as a link
+    /// carrying codes is: scanning is the user's choice, but what a QR code on
+    /// someone else's "set up 2FA" page contains is not, and it could add dozens of
+    /// entries with nothing to review.
     private func handleExportData(_ exportData: ExportData) {
         #if DEBUG
         print("Handling export data with \(exportData.tokens.count) tokens")
         #endif
-        
-        let added = dataStore.addCodes(exportData.tokens).added
-        
-        if added == 0 {
-            let count = exportData.tokens.count
-            // Plural selection comes from the catalog's variations for this key,
-            // not from an `== 1 ? "" : "s"` suffix — that only works in English.
-            let body = String(localized: "All \(count) tokens in this export already exist on your device.")
-            importResult = (String(localized: "Already on this device"), body)
-            dismiss()
-            return
+
+        pendingImport = exportData.tokens
+        dismiss()
+    }
+
+    /// Adds one code and closes, or says it is already here rather than closing as
+    /// if it had been added.
+    private func addAndDismiss(_ code: OTPCode) {
+        if !dataStore.addCode(code) {
+            importResult = (String(localized: "Already on this device"),
+                            String(localized: "A token with this service name and account is already on this device."))
         }
-        
-        let count = added
-        let body = String(localized: "Successfully imported \(count) tokens.")
-        importResult = (String(localized: "Import Successful"), body)
         dismiss()
     }
     
@@ -611,7 +616,7 @@ struct AddTokenView: View {
         }
 
         // Auto-save if we have enough info
-        dataStore.addCode(OTPCode(
+        addAndDismiss(OTPCode(
             label: parsed.label,
             account: parsed.account,
             secret: parsed.secret,
@@ -621,7 +626,6 @@ struct AddTokenView: View {
             kind: parsed.kind,
             counter: parsed.counter
         ))
-        dismiss()
     }
 
     /// Fills the manual form from a parsed URL, so a setup code that cannot be saved
@@ -732,7 +736,7 @@ struct AddTokenView: View {
         // before this release.
         if let parsed = OTPAuthURLParser.parseLink(secret),
            OTPGenerator.isValidSecret(parsed.secret) {
-            dataStore.addCode(OTPCode(
+            addAndDismiss(OTPCode(
                 label: parsed.label,
                 account: parsed.account,
                 secret: parsed.secret,
@@ -742,7 +746,6 @@ struct AddTokenView: View {
                 kind: parsed.kind,
                 counter: parsed.counter
             ))
-            dismiss()
             return
         }
 
@@ -765,13 +768,12 @@ struct AddTokenView: View {
             counter: UInt64(max(0, counter))
         )
         
-        dataStore.addCode(newCode)
-        dismiss()
+        addAndDismiss(newCode)
     }
 }
 
 struct AddTokenView_Previews: PreviewProvider {
     static var previews: some View {
-        AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil))
+        AddTokenView(dataStore: OTPDataStore(), importResult: .constant(nil), pendingImport: .constant(nil))
     }
 }

@@ -10,7 +10,11 @@ import Foundation
 ///
 /// Version 1 files have no `iterations` field and always used 120,000. They are
 /// still read, but new backups are always written as version 2.
-enum BackupCrypto {
+///
+/// `nonisolated` so it can run off the main actor: deriving a key takes hundreds
+/// of milliseconds by design, and much longer for a file that asks for more
+/// rounds. `OTPDataStore` calls it from a detached task.
+nonisolated enum BackupCrypto {
     /// The shortest password a new backup accepts. `.autheris` files are made to
     /// be shared, so anyone holding one can guess offline for as long as they like.
     static let minimumPasswordLength = 10

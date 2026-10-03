@@ -53,6 +53,7 @@ struct SettingsView: View {
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false
+    @State private var showingAppLockUnavailable = false
     @State private var supportErrorMessage = ""
 
     private var appMarketingVersion: String {
@@ -128,6 +129,11 @@ struct SettingsView: View {
             Button("OK", role: .cancel) { showingSupportError = false }
         } message: {
             Text(supportErrorMessage)
+        }
+        .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
         }
         .task {
             // Re-check the iCloud account each time Settings opens, so a user who
@@ -496,12 +502,19 @@ struct SettingsView: View {
 
     /// Turning App Lock on takes effect straight away; turning it off asks for
     /// authentication first, so a phone unlocked moments ago can't be stripped of it.
+    ///
+    /// It only turns on when the device can authenticate its owner. Without a
+    /// passcode the lock screen would have nothing to ask for.
     private var appLockToggleBinding: Binding<Bool> {
         Binding(
             get: { enableAppLock },
             set: { newValue in
                 guard !newValue else {
-                    enableAppLock = true
+                    if AppLockManager.canLock {
+                        enableAppLock = true
+                    } else {
+                        showingAppLockUnavailable = true
+                    }
                     return
                 }
                 Task {

@@ -184,16 +184,24 @@ final class TrashBinTests: XCTestCase {
                                         with: [existing]))
     }
 
+    func testCollidesRegardlessOfCase() {
+        // The same rule the store used to drop duplicates with on save. When this
+        // check was case-sensitive and that one was not, "GitHub / alice" could be
+        // added next to "github / Alice" and was then lost.
+        let existing = token(label: "github", account: "Alice")
+
+        XCTAssertTrue(TrashBin.collides(token(label: "GitHub", account: "alice"), with: [existing]))
+    }
+
     func testDoesNotCollideAgainstAnEmptyVault() {
         XCTAssertFalse(TrashBin.collides(token(), with: []))
     }
 
     func testWithNoAccountTheLabelAloneDecidesIdentity() {
         // The consequence of letting Account be left blank: a token with no account
-        // is identified by its label alone, so two different services that happen to
-        // share a name are treated as one token — which is also what lets a single
-        // delete remove them together. Worth knowing when the account is omitted, so
-        // it is pinned rather than discovered.
+        // is identified by its label alone, so a second service that happens to
+        // share a name can't be added under it. Worth knowing when the account is
+        // omitted, so it is pinned rather than discovered.
         let existing = token(label: "GitHub", account: "")
         let sameName = token(label: "GitHub", account: "")
 

@@ -87,14 +87,12 @@ nonisolated enum TrashBin {
     }
 
     /// True when `code` duplicates something already stored — the same id, or the
-    /// same label+account pair.
+    /// same name (see `OTPCode.hasSameName(as:)`).
     ///
-    /// Shared with `OTPDataStore.addCode` so the two cannot disagree about what
-    /// "already there" means.
+    /// Shared with `OTPDataStore.addCode`, the importers and the edit screen so
+    /// none of them can disagree about what "already there" means.
     static func collides(_ code: OTPCode, with existing: [OTPCode]) -> Bool {
-        existing.contains {
-            $0.id == code.id || ($0.label == code.label && $0.account == code.account)
-        }
+        existing.contains { $0.id == code.id || $0.hasSameName(as: code) }
     }
 
     /// Most recently deleted first, which is the order a user expects to scan.

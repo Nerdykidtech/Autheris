@@ -80,6 +80,12 @@ struct BackupView: View {
     @State private var backupToDelete: URL?
     @State private var showingRestoreAlert = false
     @State private var pendingRestore: PendingRestore?
+    /// The codes read out of `pendingRestore`, waiting for the user to confirm
+    /// that they should replace the vault.
+    @State private var restoredCodes: [OTPCode]?
+    /// Set while a backup is being encrypted or decrypted, which takes long enough
+    /// by design to need something on screen.
+    @State private var isWorking = false
     @State private var showingPasswordAlert = false
     @State private var backupPassword = ""
     @State private var showingRestoreError = false
@@ -152,13 +158,14 @@ struct BackupView: View {
             .alert("Restore Backup", isPresented: $showingRestoreAlert) {
                 Button("Cancel", role: .cancel) { }
                 Button("Restore", role: .destructive) {
-                    if let pendingRestore,
-                       dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: false) {
+                    if let restoredCodes {
+                        dataStore.replaceAll(with: restoredCodes)
                         showingRestoredAlert = true
                     }
+                    restoredCodes = nil
                 }
             } message: {
-                Text("Restoring will replace all current tokens with the backup. This cannot be undone.")
+                Text("Restoring will replace all current tokens with the backup. Tokens that aren't in the backup move to Recently Deleted.")
             }
             .alert("Enter Backup Password", isPresented: $showingPasswordAlert) {
                 SecureField("Password", text: $backupPassword)
@@ -194,6 +201,13 @@ struct BackupView: View {
                     Text("Nothing to share.")
                         .platformSheetDetents([.medium])
                         .platformSheetSize(minHeight: 200)
+                }
+            }
+            .disabled(isWorking)
+            .overlay {
+                if isWorking {
+                    ProgressView()
+                        .controlSize(.large)
                 }
             }
         }
@@ -318,17 +332,22 @@ struct BackupView: View {
             return
         }
 
-        if let url = dataStore.createEncryptedBackup(password: newBackupPassword) {
-            refreshBackups()
-            shareURL = url
-            showingCreateBackupAlert = true
-        } else {
-            restoreErrorMessage = String(localized: "Could not create the encrypted backup.")
-            showingRestoreError = true
-        }
-
+        let password = newBackupPassword
         newBackupPassword = ""
         newBackupConfirmPassword = ""
+        isWorking = true
+        Task {
+            let url = await dataStore.createEncryptedBackup(password: password)
+            isWorking = false
+            if let url {
+                refreshBackups()
+                shareURL = url
+                showingCreateBackupAlert = true
+            } else {
+                restoreErrorMessage = String(localized: "Could not create the encrypted backup.")
+                showingRestoreError = true
+            }
+        }
     }
 
     /// Reads the backup now rather than when the user confirms. A file picked from
@@ -346,20 +365,36 @@ struct BackupView: View {
             backupPassword = ""
             showingPasswordAlert = true
         } else {
-            showingRestoreAlert = true
+            readPendingRestore(password: nil,
+                               failure: String(localized: "This backup couldn't be read."))
         }
     }
 
     private func restoreEncryptedBackup() {
-        guard let pendingRestore, !backupPassword.isEmpty else { return }
-
-        if dataStore.restoreFromBackup(pendingRestore.data, isEncrypted: true, password: backupPassword) {
-            showingRestoredAlert = true
-        } else {
-            restoreErrorMessage = String(localized: "Incorrect password or corrupted backup.")
-            showingRestoreError = true
-        }
+        guard !backupPassword.isEmpty else { return }
+        let password = backupPassword
         backupPassword = ""
+        readPendingRestore(password: password,
+                           failure: String(localized: "Incorrect password or corrupted backup."))
+    }
+
+    /// Reads the picked backup, then asks before it replaces anything — the same
+    /// question whether or not the backup was encrypted.
+    private func readPendingRestore(password: String?, failure: String) {
+        guard let pendingRestore else { return }
+        isWorking = true
+        Task {
+            defer { isWorking = false }
+            do {
+                restoredCodes = try await OTPDataStore.readBackup(pendingRestore.data,
+                                                                  isEncrypted: pendingRestore.isEncrypted,
+                                                                  password: password)
+                showingRestoreAlert = true
+            } catch {
+                restoreErrorMessage = failure
+                showingRestoreError = true
+            }
+        }
     }
 
     private func handleFileImport(_ result: Result<URL, Error>) {

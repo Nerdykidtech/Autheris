@@ -118,6 +118,12 @@ final class AppLockManager: ObservableObject {
         }
     }
 
+    /// Whether this device can authenticate its owner at all, which App Lock
+    /// needs before it can be turned on. `false` when it has no passcode.
+    static var canLock: Bool {
+        LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: nil)
+    }
+
     /// Evaluate device owner authentication (Face ID, Touch ID, or passcode fallback).
     func authenticate() {
         let context = LAContext()
@@ -125,6 +131,13 @@ final class AppLockManager: ObservableObject {
         let reason = String(localized: "Unlock Autheris to view your tokens.")
 
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+            // With no passcode there is nothing to authenticate with — the answer
+            // `reauthenticate` already gives. Holding the lock here would leave the
+            // user on this screen for good, on every launch, with no way past it.
+            if (error as? LAError)?.code == .passcodeNotSet {
+                unlock()
+                return
+            }
             errorMessage = error?.localizedDescription
                 ?? String(localized: "Biometric authentication is unavailable.")
             return

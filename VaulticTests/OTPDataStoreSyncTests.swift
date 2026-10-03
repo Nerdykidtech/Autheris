@@ -183,8 +183,8 @@ final class OTPDataStoreSyncTests: XCTestCase {
         store.removeCode(restored)
         let remoteTombstone = SyncRecord.tombstone(id: restored.id.uuidString, deletedAt: Date())
 
-        XCTAssertTrue(store.restoreFromBackup(backup, isEncrypted: true,
-                                              password: "correct horse battery staple"))
+        store.replaceAll(with: try await OTPDataStore.readBackup(backup, isEncrypted: true,
+                                                                 password: "correct horse battery staple"))
         await runSync { local in
             SyncMergeEngine.merge(local: local, remote: [remoteTombstone], now: Date(),
                                   tombstoneRetention: SyncMergeEngine.defaultTombstoneRetention)
@@ -253,6 +253,96 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
         XCTAssertEqual(snapshots.count, 2, "the sync requested mid-sync must run, once")
         XCTAssertEqual(Set(snapshots.last?.tokens.map(\.id) ?? []), [existing.id, added.id])
+    }
+
+    // MARK: - Codes that share a name
+
+    func testTwoCodesThatOnlyShareANameAreBothSavedAndShown() throws {
+        // Two different secrets under one name — what arrives when two devices
+        // each added a different account under the same label. Saving used to keep
+        // only the first, which lost the other secret for good.
+        let first = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let second = OTPCode(label: "github", account: "User", secret: "JBSWY3DPEHPK3PXQ")
+        store.codes = [first, second]
+        store.saveCodes()
+
+        let saved = try JSONDecoder().decode([OTPCode].self,
+                                             from: try XCTUnwrap(KeychainStore.load(account: "otpCodes")))
+        XCTAssertEqual(saved.map(\.id), [first.id, second.id])
+        XCTAssertEqual(Set(store.orderedCodes.map(\.id)), [first.id, second.id])
+
+        let reloaded = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+        XCTAssertEqual(reloaded.codes.map(\.id), [first.id, second.id])
+    }
+
+    func testCopiesAreShownOnceAndDeletedTogetherButANameSakeIsLeftAlone() {
+        let original = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let copy = OTPCode(label: "GitHub", account: "user", secret: "jbsw y3dp ehpk 3pxp")
+        let namesake = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXQ")
+        store.codes = [original, copy, namesake]
+
+        XCTAssertEqual(Set(store.orderedCodes.map(\.id)), [original.id, namesake.id])
+
+        store.removeCode(original)
+
+        XCTAssertEqual(store.codes.map(\.id), [namesake.id])
+        XCTAssertEqual(Set(store.trash.map(\.code.id)), [original.id, copy.id])
+    }
+
+    func testARenameOntoAnotherCodesNameIsRefused() throws {
+        let work = OTPCode(label: "GitHub", account: "work", secret: "JBSWY3DPEHPK3PXP")
+        let personal = OTPCode(label: "GitHub", account: "personal", secret: "JBSWY3DPEHPK3PXQ")
+        store.addCode(work)
+        store.addCode(personal)
+        let index = try XCTUnwrap(store.codes.firstIndex { $0.id == work.id })
+        let renamed = work.edited(account: "Personal")
+
+        XCTAssertTrue(store.nameIsTaken(by: renamed))
+        XCTAssertFalse(store.updateCode(renamed, at: index))
+        XCTAssertEqual(store.codes.first { $0.id == work.id }?.account, "work")
+
+        // Renaming a code to its own name, in another case, is not a clash.
+        XCTAssertTrue(store.updateCode(work.edited(account: "Work"), at: index))
+    }
+
+    func testAddingACodeThatIsAlreadyHereReportsIt() {
+        XCTAssertTrue(store.addCode(OTPCode(label: "GitHub", account: "alice", secret: "JBSWY3DPEHPK3PXP")))
+        XCTAssertFalse(store.addCode(OTPCode(label: "github", account: "Alice", secret: "JBSWY3DPEHPK3PXQ")),
+                       "a name that differs only in case is the same name")
+        XCTAssertEqual(store.codes.count, 1)
+    }
+
+    // MARK: - Restoring a backup, continued
+
+    func testRestoringABackupSendsTheCodesItReplacesToRecentlyDeleted() async throws {
+        let kept = token("GitHub")
+        let replaced = token("GitLab")
+        store.addCode(kept)
+        store.addCode(replaced)
+        let backup = try BackupCrypto.encrypt(plaintext: try JSONEncoder().encode([kept]),
+                                              password: "correct horse battery staple")
+
+        store.replaceAll(with: try await OTPDataStore.readBackup(backup, isEncrypted: true,
+                                                                 password: "correct horse battery staple"))
+
+        XCTAssertEqual(store.codes.map(\.id), [kept.id])
+        XCTAssertEqual(store.trash.map(\.code.id), [replaced.id])
+        let next = await runSync { _ in nil }
+        XCTAssertNotNil(next?.tombstones[replaced.id.uuidString],
+                        "the replaced code still has to be deleted on the other devices")
+    }
+
+    func testReadingAnEncryptedBackupWithTheWrongPasswordChangesNothing() async throws {
+        let existing = token("GitHub")
+        store.addCode(existing)
+        let backup = try BackupCrypto.encrypt(plaintext: try JSONEncoder().encode([token("GitLab")]),
+                                              password: "correct horse battery staple")
+
+        do {
+            _ = try await OTPDataStore.readBackup(backup, isEncrypted: true, password: "wrong password!")
+            XCTFail("a wrong password must not read the backup")
+        } catch {}
+        XCTAssertEqual(store.codes.map(\.id), [existing.id])
     }
 
     // MARK: - Launching while the device is locked

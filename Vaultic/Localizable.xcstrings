@@ -715,6 +715,46 @@
         }
       }
     },
+    "A token with this service name and account is already on this device.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Code mit diesem Dienstnamen und Konto ist bereits auf diesem Gerät."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya hay un código con este nombre de servicio y esta cuenta en este dispositivo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un code avec ce nom de service et ce compte existe déjà sur cet appareil."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このサービス名とアカウントのコードはすでにこの端末にあります。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Já existe um código com este nome de serviço e esta conta neste dispositivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上已有使用该服务名称和账户的验证码。"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "de-DE": {
@@ -1233,124 +1273,6 @@
         }
       }
     },
-    "All %lld tokens in this export already exist on your device.": {
-      "localizations": {
-        "de-DE": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Code aus diesem Export ist bereits auf Ihrem Gerät vorhanden."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Alle %lld Codes aus diesem Export sind bereits auf Ihrem Gerät vorhanden."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "All %lld token in this export already exist on your device."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "All %lld tokens in this export already exist on your device."
-                }
-              }
-            }
-          }
-        },
-        "es-ES": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código de esta exportación ya existe en tu dispositivo."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Los %lld códigos de esta exportación ya existen en tu dispositivo."
-                }
-              }
-            }
-          }
-        },
-        "fr-FR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld code de cet export existe déjà sur votre appareil."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Les %lld codes de cet export existent déjà sur votre appareil."
-                }
-              }
-            }
-          }
-        },
-        "ja": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "このエクスポートの %lld 件のコードはすでに端末にあります。"
-                }
-              }
-            }
-          }
-        },
-        "pt-BR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código desta exportação já existe no seu dispositivo."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Todos os %lld códigos desta exportação já existem no seu dispositivo."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "这个导出文件中的 %lld 个账户都已在你的设备上。"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "All %lld tokens in this import already exist on your device.": {
       "localizations": {
         "de-DE": {
@@ -1665,6 +1587,126 @@
           "stringUnit": {
             "state": "translated",
             "value": "琥珀"
+          }
+        }
+      }
+    },
+    "Another token already uses this service name and account. Choose a different name.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein anderer Code verwendet bereits diesen Dienstnamen und dieses Konto. Wählen Sie einen anderen Namen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otro código ya usa este nombre de servicio y esta cuenta. Elige otro nombre."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre code utilise déjà ce nom de service et ce compte. Choisissez un autre nom."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このサービス名とアカウントはすでに別のコードで使われています。別の名前を選んでください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outro código já usa este nome de serviço e esta conta. Escolha outro nome."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "另一个验证码已在使用该服务名称和账户。请换一个名称。"
+          }
+        }
+      }
+    },
+    "App Lock Unavailable": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Sperre nicht verfügbar"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueo de la app no disponible"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillage de l'app indisponible"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックを使用できません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueio do app indisponível"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 锁定不可用"
+          }
+        }
+      }
+    },
+    "App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die App-Sperre braucht einen Code oder ein Passwort auf diesem Gerät, um Autheris zu entsperren. Richten Sie eines ein und schalten Sie die App-Sperre dann erneut ein."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El bloqueo de la app necesita un código o una contraseña en este dispositivo para desbloquear Autheris. Configura uno y vuelve a activar el bloqueo de la app."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le verrouillage de l'app nécessite un code ou un mot de passe sur cet appareil pour déverrouiller Autheris. Configurez-en un, puis réactivez le verrouillage de l'app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックで Autheris のロックを解除するには、この端末にパスコードまたはパスワードが必要です。設定してから、もう一度アプリロックをオンにしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O bloqueio do app precisa de um código ou uma senha neste dispositivo para desbloquear o Autheris. Configure um e ative o bloqueio do app novamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 锁定需要此设备设置了密码才能解锁 Autheris。请先设置密码，然后再次开启 App 锁定。"
           }
         }
       }
@@ -8268,42 +8310,42 @@
         }
       }
     },
-    "Restoring will replace all current tokens with the backup. This cannot be undone.": {
+    "Restoring will replace all current tokens with the backup. Tokens that aren't in the backup move to Recently Deleted.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beim Wiederherstellen werden alle aktuellen Codes durch die Sicherung ersetzt. Das kann nicht rückgängig gemacht werden."
+            "value": "Beim Wiederherstellen werden alle aktuellen Codes durch die Sicherung ersetzt. Codes, die nicht in der Sicherung sind, werden nach „Zuletzt gelöscht“ verschoben."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Al restaurar se reemplazarán todos los códigos actuales por los de la copia. Esta acción no se puede deshacer."
+            "value": "Al restaurar se reemplazarán todos los códigos actuales por los de la copia. Los códigos que no estén en la copia pasarán a Eliminados recientemente."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "La restauration remplacera tous les codes actuels par ceux de la sauvegarde. Cette action est irréversible."
+            "value": "La restauration remplacera tous les codes actuels par ceux de la sauvegarde. Les codes absents de la sauvegarde seront déplacés dans Supprimés récemment."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "復元すると現在のコードはすべてバックアップの内容に置き換わります。この操作は取り消せません。"
+            "value": "復元すると現在のコードはすべてバックアップの内容に置き換わります。バックアップにないコードは「最近削除した項目」に移動します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A restauração substituirá todos os códigos atuais pelos do backup. Isso não pode ser desfeito."
+            "value": "A restauração substituirá todos os códigos atuais pelos do backup. Os códigos que não estiverem no backup irão para Excluídos recentemente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "恢复会用备份中的账户替换当前全部账户，此操作无法撤销。"
+            "value": "恢复会用备份中的账户替换当前全部账户。备份中没有的账户会移到“最近删除”。"
           }
         }
       }
@@ -9384,124 +9426,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "保存在钥匙串中"
-          }
-        }
-      }
-    },
-    "Successfully imported %lld tokens.": {
-      "localizations": {
-        "de-DE": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Code erfolgreich importiert."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Codes erfolgreich importiert."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Successfully imported %lld token."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Successfully imported %lld tokens."
-                }
-              }
-            }
-          }
-        },
-        "es-ES": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Se ha importado %lld código correctamente."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Se han importado %lld códigos correctamente."
-                }
-              }
-            }
-          }
-        },
-        "fr-FR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld code importé avec succès."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld codes importés avec succès."
-                }
-              }
-            }
-          }
-        },
-        "ja": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld 件のコードを読み込みました。"
-                }
-              }
-            }
-          }
-        },
-        "pt-BR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código importado com sucesso."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld códigos importados com sucesso."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "已成功导入 %lld 个账户。"
-                }
-              }
-            }
           }
         }
       }

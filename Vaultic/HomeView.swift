@@ -20,6 +20,10 @@ struct HomeView: View {
     @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
+    /// Codes from a scanned transfer or Google Authenticator export QR code,
+    /// waiting in `ImportConfirmationView` for the user to accept them — the same
+    /// review a link that carries codes gets.
+    @State private var pendingImport: [OTPCode]?
     @State private var searchText = ""
     @State private var showingSettings = false
     
@@ -232,7 +236,8 @@ struct HomeView: View {
             .navigationTitle("Autheris")
             .largeNavigationTitle()
             .sheet(isPresented: $showingAddToken) {
-                AddTokenView(dataStore: dataStore, importResult: $importResult)
+                AddTokenView(dataStore: dataStore, importResult: $importResult,
+                             pendingImport: $pendingImport)
                     .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
             }
@@ -248,6 +253,27 @@ struct HomeView: View {
             } message: { result in
                 Text(result.body)
             }
+            .overlay {
+                if let tokens = pendingImport {
+                    ZStack {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .ignoresSafeArea()
+                            .overlay(Color.black.opacity(0.25))
+                        ImportConfirmationView(
+                            tokens: tokens,
+                            dataStore: dataStore,
+                            isPresented: Binding(
+                                get: { pendingImport != nil },
+                                set: { if !$0 { pendingImport = nil } }
+                            )
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .animation(.default, value: pendingImport != nil)
         }
     }
 
@@ -1006,8 +1032,16 @@ struct EditTokenView: View {
             timerRingHex: .some(ringHexForSave())
         )
         
-        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
-            dataStore.updateCode(updatedCode, at: index)
+        // A rename onto a name another code already has would leave two tokens
+        // the user can't tell apart, so it is refused here rather than saved.
+        if dataStore.nameIsTaken(by: updatedCode) {
+            alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
+            showingAlert = true
+            return
+        }
+
+        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }),
+           dataStore.updateCode(updatedCode, at: index) {
             // Success haptic feedback
             Haptics.notify(.success)
         }
