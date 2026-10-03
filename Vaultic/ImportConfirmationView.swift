@@ -288,24 +288,17 @@ struct ImportConfirmationView: View {
     /// The only place a link's codes reach the vault, and only from the Import
     /// button above.
     private func importTokens() {
-        let newTokens = IncomingLink.newTokens(tokens, existing: dataStore.codes)
+        let result = dataStore.addCodes(tokens)
 
-        guard !newTokens.isEmpty else {
+        guard result.added > 0 else {
             importResult = .allDuplicates(tokens.count)
             return
         }
 
-        for token in newTokens {
-            dataStore.addCode(token)
-        }
-
-        // Force save to ensure changes are persisted
-        dataStore.saveCodes()
-
         importResult = .success(
             total: tokens.count,
-            new: newTokens.count,
-            duplicates: tokens.count - newTokens.count
+            new: result.added,
+            duplicates: result.skipped
         )
     }
 }

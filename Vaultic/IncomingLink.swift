@@ -29,14 +29,6 @@ nonisolated enum IncomingLink: Equatable {
         }
     }
 
-    /// The codes in `incoming` that are not already in `existing`, matched the
-    /// way the rest of the app matches them: by label and account together.
-    static func newTokens(_ incoming: [OTPCode], existing: [OTPCode]) -> [OTPCode] {
-        incoming.filter { candidate in
-            !existing.contains { $0.label == candidate.label && $0.account == candidate.account }
-        }
-    }
-
     // MARK: - Schemes
 
     private static func parseOTPAuth(_ url: URL) -> IncomingLink {

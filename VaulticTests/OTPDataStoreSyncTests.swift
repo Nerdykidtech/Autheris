@@ -192,6 +192,43 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
         XCTAssertEqual(store.codes.map(\.id), [restored.id])
     }
+
+    // MARK: - Importing
+
+    func testImportedCodesGetANewIDAndAFreshTimestamp() {
+        let existing = token("GitHub")
+        store.addCode(existing)
+        // Reuses an id already in the vault and claims to be from next year.
+        let hostile = OTPCode(id: existing.id, label: "GitLab", account: "user",
+                              secret: "JBSWY3DPEHPK3PXP",
+                              modifiedAt: Date(timeIntervalSinceNow: 365 * 24 * 3600))
+
+        let result = store.addCodes([hostile])
+
+        XCTAssertEqual(result.added, 1)
+        XCTAssertEqual(result.skipped, 0)
+        let imported = store.codes.first { $0.label == "GitLab" }
+        XCTAssertNotNil(imported)
+        XCTAssertNotEqual(imported?.id, existing.id)
+        XCTAssertLessThanOrEqual(imported?.modifiedAt ?? .distantFuture, Date())
+        XCTAssertEqual(store.codes.first { $0.label == "GitHub" }?.id, existing.id,
+                       "the code already in the vault must be left alone")
+    }
+
+    func testImportCountsOnlyTheCodesThatWereActuallyAdded() {
+        store.addCode(token("GitHub"))
+
+        let result = store.addCodes([
+            token("GitHub"),    // already in the vault
+            token("GitLab"),
+            token("GitLab"),    // repeated within the payload
+            OTPCode(label: "GitHub ", account: "user", secret: "JBSWY3DPEHPK3PXP"),
+        ])
+
+        XCTAssertEqual(result.added, 2)
+        XCTAssertEqual(result.skipped, 2)
+        XCTAssertEqual(store.codes.map(\.label).sorted(), ["GitHub", "GitHub ", "GitLab"])
+    }
 }
 
 /// A `TokenSyncService` whose `sync(local:)` result each test supplies.

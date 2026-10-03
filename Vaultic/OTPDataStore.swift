@@ -163,6 +163,37 @@ final class OTPDataStore: ObservableObject {
         scheduleSync()
     }
 
+    /// Adds codes brought in from outside — a file from another app, an Autheris
+    /// link, or a scanned transfer QR code — and reports how many made it in.
+    ///
+    /// Each code gets a new id and is stamped as edited now. The payload's own
+    /// values can't be trusted: a reused id would collide with a code already
+    /// here, and a future `modifiedAt` would win every sync conflict from then on.
+    /// A code whose label and account match one already here, or one earlier in
+    /// the same payload, is skipped and counted as such.
+    @discardableResult
+    func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int) {
+        let now = Date()
+        var added: [OTPCode] = []
+        for token in incoming {
+            let imported = OTPCode(id: UUID(), label: token.label, account: token.account,
+                                   secret: token.secret, algorithm: token.algorithm,
+                                   digits: token.digits, period: token.period,
+                                   kind: token.kind, counter: token.counter,
+                                   timerRingHex: token.timerRingHex, isPinned: token.isPinned,
+                                   modifiedAt: now)
+            guard !TrashBin.collides(imported, with: codes + added) else { continue }
+            added.append(imported)
+        }
+
+        if !added.isEmpty {
+            codes.append(contentsOf: added)
+            saveCodes()
+            scheduleSync()
+        }
+        return (added.count, incoming.count - added.count)
+    }
+
     /// Keeps the first token per id and per label+account pair.
     private static func deduplicated(_ tokens: [OTPCode]) -> [OTPCode] {
         var seenIDs = Set<UUID>()

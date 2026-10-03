@@ -561,19 +561,9 @@ struct AddTokenView: View {
         print("Handling export data with \(exportData.tokens.count) tokens")
         #endif
         
-        // Filter out duplicates (tokens with same label and account)
-        let existingTokens = dataStore.codes
-        let newTokens = exportData.tokens.filter { newToken in
-            !existingTokens.contains { existingToken in
-                existingToken.label == newToken.label && existingToken.account == newToken.account
-            }
-        }
+        let added = dataStore.addCodes(exportData.tokens).added
         
-        #if DEBUG
-        print("Found \(newTokens.count) new tokens (filtered out \(exportData.tokens.count - newTokens.count) duplicates)")
-        #endif
-        
-        if newTokens.isEmpty {
+        if added == 0 {
             let count = exportData.tokens.count
             // Plural selection comes from the catalog's variations for this key,
             // not from an `== 1 ? "" : "s"` suffix — that only works in English.
@@ -583,15 +573,7 @@ struct AddTokenView: View {
             return
         }
         
-        // Add new tokens
-        for token in newTokens {
-            #if DEBUG
-            print("Adding token: \(token.label) - \(token.account)")
-            #endif
-            dataStore.addCode(token)
-        }
-        
-        let count = newTokens.count
+        let count = added
         let body = String(localized: "Successfully imported \(count) tokens.")
         importResult = (String(localized: "Import Successful"), body)
         dismiss()

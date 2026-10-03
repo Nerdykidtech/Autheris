@@ -82,15 +82,4 @@ final class IncomingLinkTests: XCTestCase {
         XCTAssertNil(try parse("https://example.com/import?data=W10"))
         XCTAssertNil(try parse("autheris://settings"))
     }
-
-    // MARK: - Duplicates
-
-    func testOnlyCodesNotAlreadyInTheVaultAreNew() {
-        let existing = [OTPCode(label: "GitHub", account: "you@example.com", secret: "JBSWY3DPEHPK3PXP")]
-        let incoming = [
-            OTPCode(label: "GitHub", account: "you@example.com", secret: "JBSWY3DPEHPK3PXP"),
-            OTPCode(label: "GitHub ", account: "you@example.com", secret: "JBSWY3DPEHPK3PXP"),
-        ]
-        XCTAssertEqual(IncomingLink.newTokens(incoming, existing: existing).map(\.label), ["GitHub "])
-    }
 }

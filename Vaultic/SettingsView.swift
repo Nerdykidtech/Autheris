@@ -289,12 +289,9 @@ struct SettingsView: View {
             do {
                 let data = try Data(contentsOf: url)
                 let tokens = try ExternalImportParser.parse(data: data)
-                let existing = dataStore.codes
-                let newTokens = tokens.filter { token in
-                    !existing.contains { $0.label == token.label && $0.account == token.account }
-                }
+                let added = dataStore.addCodes(tokens).added
 
-                guard !newTokens.isEmpty else {
+                guard added > 0 else {
                     importMessage = (
                         String(localized: "No New Tokens"),
                         String(localized: "All tokens in this file are already in Autheris.")
@@ -302,12 +299,9 @@ struct SettingsView: View {
                     return
                 }
 
-                for token in newTokens {
-                    dataStore.addCode(token)
-                }
                 importMessage = (
                     String(localized: "Import Complete"),
-                    String(localized: "Added \(newTokens.count) tokens to Autheris.")
+                    String(localized: "Added \(added) tokens to Autheris.")
                 )
             } catch {
                 importMessage = (String(localized: "Import Failed"), error.localizedDescription)
