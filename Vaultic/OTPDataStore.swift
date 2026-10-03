@@ -39,6 +39,10 @@ final class OTPDataStore: ObservableObject {
 
     private var syncService: TokenSyncService
     private var syncTask: Task<Void, Never>?
+    /// Set while a sync is running. A sync requested meanwhile only sets
+    /// `needsResync`, and runs once the current one finishes.
+    private var isSyncInFlight = false
+    private var needsResync = false
     /// Hands the token list to the paired Apple Watch. Inert on the Mac, which has
     /// no watch to talk to.
     private let watchRelay: WatchTokenRelayService
@@ -56,6 +60,7 @@ final class OTPDataStore: ObservableObject {
         backupDirectory = documentsDirectory.appendingPathComponent("OTPBackups")
 
         try? FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+        Self.protectBackups(in: backupDirectory)
 
         let enabled = UserDefaults.standard.bool(forKey: Self.syncEnabledKey)
         isSyncEnabled = enabled
@@ -160,6 +165,37 @@ final class OTPDataStore: ObservableObject {
         saveCodes()
         persistTombstones()
         scheduleSync()
+    }
+
+    /// Adds codes brought in from outside — a file from another app, an Autheris
+    /// link, or a scanned transfer QR code — and reports how many made it in.
+    ///
+    /// Each code gets a new id and is stamped as edited now. The payload's own
+    /// values can't be trusted: a reused id would collide with a code already
+    /// here, and a future `modifiedAt` would win every sync conflict from then on.
+    /// A code whose label and account match one already here, or one earlier in
+    /// the same payload, is skipped and counted as such.
+    @discardableResult
+    func addCodes(_ incoming: [OTPCode]) -> (added: Int, skipped: Int) {
+        let now = Date()
+        var added: [OTPCode] = []
+        for token in incoming {
+            let imported = OTPCode(id: UUID(), label: token.label, account: token.account,
+                                   secret: token.secret, algorithm: token.algorithm,
+                                   digits: token.digits, period: token.period,
+                                   kind: token.kind, counter: token.counter,
+                                   timerRingHex: token.timerRingHex, isPinned: token.isPinned,
+                                   modifiedAt: now)
+            guard !TrashBin.collides(imported, with: codes + added) else { continue }
+            added.append(imported)
+        }
+
+        if !added.isEmpty {
+            codes.append(contentsOf: added)
+            saveCodes()
+            scheduleSync()
+        }
+        return (added.count, incoming.count - added.count)
     }
 
     /// Keeps the first token per id and per label+account pair.
@@ -414,8 +450,28 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
+    /// Runs one sync at a time.
+    ///
+    /// The sync service refuses to start a second sync while one is running, so an
+    /// edit made mid-sync used to wait for the next foreground or push before it
+    /// was uploaded. Instead it is remembered here, and one more sync runs as soon
+    /// as the current one finishes — with a fresh snapshot, so it includes the edit.
     private func performSync() async {
         guard isSyncEnabled else { return }
+        guard !isSyncInFlight else {
+            needsResync = true
+            return
+        }
+        isSyncInFlight = true
+        defer { isSyncInFlight = false }
+
+        repeat {
+            needsResync = false
+            await syncOnce()
+        } while needsResync && isSyncEnabled
+    }
+
+    private func syncOnce() async {
         let snapshot = SyncLocalState(tokens: codes, tombstones: tombstones)
         guard let outcome = await syncService.sync(local: snapshot) else {
             isSyncAvailable = syncService.isAvailable
@@ -426,24 +482,36 @@ final class OTPDataStore: ObservableObject {
         // tombstones that path just cleared, so re-check before writing anything.
         guard isSyncEnabled else { return }
         isSyncAvailable = syncService.isAvailable
-        apply(outcome)
+        apply(outcome, snapshot: snapshot)
     }
 
     /// Folds a merge result back into local storage.
-    private func apply(_ outcome: SyncMergeOutcome) {
+    ///
+    /// `snapshot` is what was handed to the sync. Anything that changed locally
+    /// since then — a token added, or a token deleted — is not reflected in
+    /// `outcome` and has to be carried over rather than overwritten.
+    private func apply(_ outcome: SyncMergeOutcome, snapshot: SyncLocalState) {
+        // Tombstones written locally while the sync was in flight, and ones
+        // cleared locally (a re-add or a restore from the trash).
+        let newLocalTombstones = tombstones.filter { snapshot.tombstones[$0.key] == nil }
+        let clearedLocalTombstones = Set(snapshot.tombstones.keys).subtracting(tombstones.keys)
         if outcome.didAdoptRemoteChanges {
-            // The sync snapshot was taken before this apply ran; a token added or
-            // edited locally in the meantime is not in `outcome.tokens`. Preserve
-            // those local changes instead of clobbering them with the older
-            // snapshot (and giving SwiftUI an insert-then-delete diff).
-            var merged = outcome.tokens
-            let outcomeIDs = Set(outcome.tokens.map { $0.id })
-            for local in codes where !outcomeIDs.contains(local.id) {
+            // A token deleted locally mid-sync is still in `outcome.tokens`,
+            // because the snapshot had it; keep it deleted.
+            var merged = outcome.tokens.filter { newLocalTombstones[$0.id.uuidString] == nil }
+            // Only tokens added after the snapshot are missing from the outcome
+            // for a good reason. A snapshot token the outcome left out was removed
+            // by the merge (e.g. a remote tombstone won) and must stay gone.
+            let snapshotIDs = Set(snapshot.tokens.map(\.id))
+            let outcomeIDs = Set(merged.map(\.id))
+            for local in codes where !outcomeIDs.contains(local.id) && !snapshotIDs.contains(local.id) {
                 merged.append(local)
             }
             codes = merged
         }
         tombstones = outcome.tombstones
+            .merging(newLocalTombstones) { _, new in new }
+            .filter { !clearedLocalTombstones.contains($0.key) }
         persistTombstones()
         saveCodes()
     }
@@ -499,7 +567,7 @@ final class OTPDataStore: ObservableObject {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(codes)
-            try data.write(to: backupURL)
+            try Self.writeBackup(data, to: backupURL)
             return backupURL
         } catch {
             #if DEBUG
@@ -520,7 +588,7 @@ final class OTPDataStore: ObservableObject {
         do {
             let plaintext = try JSONEncoder().encode(codes)
             let encrypted = try BackupCrypto.encrypt(plaintext: plaintext, password: password)
-            try encrypted.write(to: backupURL)
+            try Self.writeBackup(encrypted, to: backupURL)
             return backupURL
         } catch {
             #if DEBUG
@@ -528,6 +596,37 @@ final class OTPDataStore: ObservableObject {
             #endif
             return nil
         }
+    }
+
+    /// Writes a backup that stays on this device.
+    ///
+    /// Backups live in Documents, which iCloud Backup and Finder backups copy by
+    /// default. An unencrypted backup holds every secret in plain JSON, so
+    /// letting it ride along would undo the `ThisDeviceOnly` Keychain protection
+    /// the codes themselves have. Sharing a backup is still the user's call.
+    private static func writeBackup(_ data: Data, to url: URL) throws {
+        try data.write(to: url, options: [.atomic, .completeFileProtection])
+        excludeFromBackup(url)
+    }
+
+    /// Applies the same protection to the backup folder and to backups written by
+    /// earlier versions, which had none.
+    private static func protectBackups(in directory: URL) {
+        excludeFromBackup(directory)
+        let existing = (try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)) ?? []
+        for url in existing {
+            try? FileManager.default.setAttributes([.protectionKey: FileProtectionType.complete],
+                                                   ofItemAtPath: url.path)
+            excludeFromBackup(url)
+        }
+    }
+
+    private static func excludeFromBackup(_ url: URL) {
+        var url = url
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? url.setResourceValues(values)
     }
 
     /// Lists all available backup files
@@ -550,19 +649,27 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
-    /// Restores codes from a backup file. Pass the password for `.autheris`
+    /// Restores codes from a backup's contents. Pass the password for `.autheris`
     /// encrypted backups; plain `.json` backups ignore it.
-    func restoreFromBackup(at url: URL, password: String? = nil) -> Bool {
+    ///
+    /// Takes the bytes rather than a URL because a file picked from Files can only
+    /// be read while its security scope is open, which the caller controls.
+    func restoreFromBackup(_ fileData: Data, isEncrypted: Bool, password: String? = nil) -> Bool {
         do {
-            let fileData = try Data(contentsOf: url)
             let plaintext: Data
-            if url.pathExtension.lowercased() == "autheris" {
+            if isEncrypted {
                 guard let password else { return false }
                 plaintext = try BackupCrypto.decrypt(data: fileData, password: password)
             } else {
                 plaintext = fileData
             }
+            let now = Date()
+            // Restored tokens are stamped as edited now. They keep the date they had
+            // when the backup was made otherwise, and the tombstone a later delete
+            // left in iCloud is newer than that — so the next sync would delete
+            // them again. Restoring from the trash does the same for the same reason.
             let restoredCodes = try JSONDecoder().decode([OTPCode].self, from: plaintext)
+                .map { $0.edited(modifiedAt: now) }
             // A restore replaces local state wholesale, so a token the backup does
             // not contain has effectively been deleted and must propagate as a
             // deletion rather than silently reappearing from iCloud later.
@@ -570,7 +677,7 @@ final class OTPDataStore: ObservableObject {
             let restoredIDs = Set(restoredCodes.map { $0.id.uuidString })
             codes = restoredCodes
             for id in previousIDs.subtracting(restoredIDs) {
-                tombstones[id] = Date()
+                tombstones[id] = now
             }
             for id in restoredIDs {
                 tombstones.removeValue(forKey: id)
@@ -621,35 +728,6 @@ final class OTPDataStore: ObservableObject {
             print("Failed to export data: \(error)")
             #endif
             return nil
-        }
-    }
-
-    /// Imports data from JSON
-    func importData(from data: Data) -> Bool {
-        do {
-            // First try to decode as ExportData (new format)
-            if let exportData = try? JSONDecoder().decode(ExportData.self, from: data) {
-                codes.append(contentsOf: exportData.tokens)
-                saveCodes()
-                scheduleSync()
-                // Explicitly trigger UI update
-                objectWillChange.send()
-                return true
-            }
-
-            // Fall back to old format (array of OTPCode)
-            let importedCodes = try JSONDecoder().decode([OTPCode].self, from: data)
-            codes.append(contentsOf: importedCodes)
-            saveCodes()
-            scheduleSync()
-            // Explicitly trigger UI update
-            objectWillChange.send()
-            return true
-        } catch {
-            #if DEBUG
-            print("Failed to import data: \(error)")
-            #endif
-            return false
         }
     }
 }

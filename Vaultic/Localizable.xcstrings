@@ -1749,6 +1749,166 @@
         }
       }
     },
+    "Authenticate to back up your tokens.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um Ihre Codes zu sichern."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para hacer una copia de seguridad de tus códigos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour sauvegarder vos codes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをバックアップするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para fazer backup dos seus códigos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以备份你的账户。"
+          }
+        }
+      }
+    },
+    "Authenticate to export your tokens.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um Ihre Codes zu exportieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para exportar tus códigos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour exporter vos codes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを書き出すには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para exportar seus códigos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以导出你的账户。"
+          }
+        }
+      }
+    },
+    "Authenticate to turn off App Lock.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um die App-Sperre auszuschalten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para desactivar el bloqueo de la app."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour désactiver le verrouillage de l'app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックをオフにするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para desativar o bloqueio do app."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以关闭 App 锁定。"
+          }
+        }
+      }
+    },
+    "Authenticate to view this setup key.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifizieren Sie sich, um diesen Einrichtungsschlüssel anzuzeigen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para ver esta clave de configuración."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour afficher cette clé de configuration."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このセットアップキーを表示するには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para ver esta chave de configuração."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请进行验证以查看此设置密钥。"
+          }
+        }
+      }
+    },
     "Authentication failed.": {
       "localizations": {
         "de-DE": {
@@ -2068,6 +2228,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "备份信息"
+          }
+        }
+      }
+    },
+    "Backup Restored": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sicherung wiederhergestellt"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia de seguridad restaurada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegarde restaurée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップを復元しました"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup restaurado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份已恢复"
           }
         }
       }
@@ -9746,6 +9946,46 @@
         }
       }
     },
+    "This backup couldn't be read.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Sicherung konnte nicht gelesen werden."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo leer esta copia de seguridad."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de lire cette sauvegarde."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このバックアップを読み込めませんでした。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível ler este backup."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取此备份。"
+          }
+        }
+      }
+    },
     "This backup is encrypted. Enter the password used when it was created.": {
       "localizations": {
         "de-DE": {
@@ -10826,6 +11066,46 @@
         }
       }
     },
+    "Use a password of at least %lld characters.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verwende ein Passwort mit mindestens %lld Zeichen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa una contraseña de al menos %lld caracteres."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utilisez un mot de passe d'au moins %lld caractères."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld文字以上のパスワードを使用してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use uma senha com pelo menos %lld caracteres."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用至少 %lld 个字符的密码。"
+          }
+        }
+      }
+    },
     "Use service default": {
       "localizations": {
         "de-DE": {
@@ -11462,6 +11742,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "账户已成功备份。"
+          }
+        }
+      }
+    },
+    "Your tokens have been restored from the backup.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ihre Codes wurden aus der Sicherung wiederhergestellt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus códigos se han restaurado desde la copia de seguridad."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos codes ont été restaurés à partir de la sauvegarde."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをバックアップから復元しました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seus códigos foram restaurados a partir do backup."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账户已从备份中恢复。"
           }
         }
       }

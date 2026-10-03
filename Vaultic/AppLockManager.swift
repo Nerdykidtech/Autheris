@@ -89,6 +89,31 @@ final class AppLockManager: ObservableObject {
         backgroundedAt = nil
     }
 
+    /// Asks for Face ID, Touch ID or the passcode again before a sensitive action:
+    /// turning App Lock off, exporting or backing up every secret, or showing a
+    /// setup key.
+    ///
+    /// The grace period means a phone unlocked moments ago opens straight into
+    /// Autheris, so without this anyone holding it could export the whole vault.
+    /// Returns `true` straight away when App Lock is off, since the user has chosen
+    /// not to be asked, and when the device has no passcode, since there is then
+    /// nothing to authenticate with.
+    static func reauthenticate(reason: String) async -> Bool {
+        guard UserDefaults.standard.bool(forKey: AppLockEnabledKey) else { return true }
+
+        let context = LAContext()
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+            return (error as? LAError)?.code == .passcodeNotSet
+        }
+
+        do {
+            return try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
+        } catch {
+            return false
+        }
+    }
+
     /// Evaluate device owner authentication (Face ID, Touch ID, or passcode fallback).
     func authenticate() {
         let context = LAContext()

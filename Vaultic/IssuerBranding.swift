@@ -221,25 +221,6 @@ class LogoCacheManager {
         ]
         return components.url
     }
-    
-    private func logoURLByDomain(for domain: String) -> URL? {
-        guard let token = logoDevPublishableKey, token.hasPrefix("pk_") else {
-            return nil
-        }
-        
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = "img.logo.dev"
-        components.path = "/\(domain)"
-        components.queryItems = [
-            URLQueryItem(name: "token", value: token),
-            URLQueryItem(name: "format", value: "png"),
-            URLQueryItem(name: "size", value: "64"),
-            URLQueryItem(name: "retina", value: "true"),
-            URLQueryItem(name: "fit", value: "cover")
-        ]
-        return components.url
-    }
 }
 
 // MARK: - Icon View with Caching
@@ -339,36 +320,6 @@ struct IssuerIconView: View {
                 if let image = image {
                     self.cachedImage = image
                 }
-            }
-        }
-    }
-}
-
-// MARK: - Helper Extension for Token Management
-extension OTPDataStore {
-    func handleNewTokenAddition(_ token: OTPCode) {
-        // When a new token is added, check if we need to fetch its logo
-        let branding = IssuerBranding.forLabel(token.label)
-        
-        // Only fetch if not already cached
-        if !LogoCacheManager.shared.hasCachedLogo(for: branding) {
-            LogoCacheManager.shared.fetchAndCacheLogo(for: branding) { _ in
-                // Logo fetched and cached, view will update automatically
-            }
-        }
-    }
-    
-    func handleTokenUpdate(oldToken: OTPCode, newToken: OTPCode) {
-        let oldBranding = IssuerBranding.forLabel(oldToken.label)
-        let newBranding = IssuerBranding.forLabel(newToken.label)
-        
-        // Remove old cached logo if branding changed
-        LogoCacheManager.shared.removeOldLogo(forOldBranding: oldBranding, newBranding: newBranding)
-        
-        // Fetch new logo if needed
-        if !LogoCacheManager.shared.hasCachedLogo(for: newBranding) {
-            LogoCacheManager.shared.fetchAndCacheLogo(for: newBranding) { _ in
-                // Logo fetched and cached
             }
         }
     }
