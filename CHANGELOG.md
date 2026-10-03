@@ -31,6 +31,7 @@ A version number lives in four places, and a release is not finished until they 
 - Restoring a backup you picked with "Import Backup from File" now works reliably. Picking one from Files or iCloud Drive could fail with "Incorrect password or corrupted backup" even when the password was right.
 - With iCloud sync on, deleting a code on one device now removes it from your other devices too. The other devices used to put it straight back. A code you deleted, re-added or restored from Recently Deleted while a sync was running could also be undone when that sync finished; it now stays the way you left it.
 - With iCloud sync on, restoring a backup now brings back codes you had deleted since it was made. They used to disappear again at the next sync, because the deletion looked newer than the copy in the backup.
+- With iCloud sync on, a change you make while a sync is already running is now uploaded as soon as that sync finishes. It used to wait until you next opened the app or another device made a change.
 
 ## [2.8] — October 2026
 

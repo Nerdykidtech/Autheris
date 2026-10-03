@@ -229,6 +229,31 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(result.skipped, 2)
         XCTAssertEqual(store.codes.map(\.label).sorted(), ["GitHub", "GitHub ", "GitLab"])
     }
+
+    // MARK: - Overlapping syncs
+
+    func testAnEditDuringASyncIsSyncedAsSoonAsItFinishes() async {
+        let existing = token("GitHub")
+        let added = token("GitLab")
+        store.addCode(existing)
+        var snapshots: [SyncLocalState] = []
+        sync.handler = { [store] local in
+            snapshots.append(local)
+            if snapshots.count == 1 {
+                // An edit lands mid-sync and asks for a sync of its own.
+                store!.addCode(added)
+                await store!.syncNow()
+            }
+            return SyncMergeOutcome(tokens: local.tokens, tombstones: local.tombstones,
+                                    uploads: [], didAdoptRemoteChanges: false)
+        }
+
+        await store.syncNow()
+        sync.handler = nil
+
+        XCTAssertEqual(snapshots.count, 2, "the sync requested mid-sync must run, once")
+        XCTAssertEqual(Set(snapshots.last?.tokens.map(\.id) ?? []), [existing.id, added.id])
+    }
 }
 
 /// A `TokenSyncService` whose `sync(local:)` result each test supplies.
@@ -239,15 +264,21 @@ private final class FakeTokenSyncService: TokenSyncService {
     var isAvailable = true
     var onStatusChange: ((CloudSyncStatus) -> Void)?
 
-    var handler: ((SyncLocalState) -> SyncMergeOutcome?)?
+    var handler: ((SyncLocalState) async -> SyncMergeOutcome?)?
     private(set) var syncCallCount = 0
 
     func refreshAvailability() async {}
     func setEnabled(_ enabled: Bool) { isEnabled = enabled }
 
+    /// Refuses to overlap, like `CloudKitTokenSyncService`.
+    private var isSyncing = false
+
     func sync(local: SyncLocalState) async -> SyncMergeOutcome? {
+        guard !isSyncing else { return nil }
+        isSyncing = true
+        defer { isSyncing = false }
         syncCallCount += 1
-        return handler?(local)
+        return await handler?(local)
     }
 
     func deleteRemoteRecords() async throws {}

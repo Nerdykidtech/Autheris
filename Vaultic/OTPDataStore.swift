@@ -39,6 +39,10 @@ final class OTPDataStore: ObservableObject {
 
     private var syncService: TokenSyncService
     private var syncTask: Task<Void, Never>?
+    /// Set while a sync is running. A sync requested meanwhile only sets
+    /// `needsResync`, and runs once the current one finishes.
+    private var isSyncInFlight = false
+    private var needsResync = false
     /// Hands the token list to the paired Apple Watch. Inert on the Mac, which has
     /// no watch to talk to.
     private let watchRelay: WatchTokenRelayService
@@ -446,8 +450,28 @@ final class OTPDataStore: ObservableObject {
         }
     }
 
+    /// Runs one sync at a time.
+    ///
+    /// The sync service refuses to start a second sync while one is running, so an
+    /// edit made mid-sync used to wait for the next foreground or push before it
+    /// was uploaded. Instead it is remembered here, and one more sync runs as soon
+    /// as the current one finishes — with a fresh snapshot, so it includes the edit.
     private func performSync() async {
         guard isSyncEnabled else { return }
+        guard !isSyncInFlight else {
+            needsResync = true
+            return
+        }
+        isSyncInFlight = true
+        defer { isSyncInFlight = false }
+
+        repeat {
+            needsResync = false
+            await syncOnce()
+        } while needsResync && isSyncEnabled
+    }
+
+    private func syncOnce() async {
         let snapshot = SyncLocalState(tokens: codes, tombstones: tombstones)
         guard let outcome = await syncService.sync(local: snapshot) else {
             isSyncAvailable = syncService.isAvailable
