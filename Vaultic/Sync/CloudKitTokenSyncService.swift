@@ -44,9 +44,12 @@ struct CloudKitUnavailableError: LocalizedError {
 ///   record is kept: discarding it would shrink the window in which a deletion is
 ///   protected against a device that stayed offline longer than that.
 /// - Conflict → last write wins on `modifiedAt`, with a deterministic tie-break.
-///   Pushes use `savePolicy: .changedKeys`; if the server copy moved underneath
-///   us CloudKit returns the server record, which we re-run through the merge
-///   rules and retry once.
+///   Uploads are written onto the records this sync fetched, so they carry the
+///   server's change tags, and saved with `.ifServerRecordUnchanged`. If another
+///   device wrote in between, CloudKit refuses the save and returns its copy,
+///   which we re-run through the merge rules and retry once. (`.changedKeys`
+///   compares no change tags at all, so with it a stale device simply overwrote
+///   the newer copy.)
 ///
 /// ### Availability
 /// Every failure maps to a `CloudSyncStatus` the UI can show, and no failure ever
@@ -286,13 +289,16 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
             try await installSubscriptionIfNeeded()
 
-            let remote = try await fetchRemoteRecords()
+            let fetched = try await fetchObjects(ofType: Self.recordType)
+            let remote = fetched.compactMap { Self.decode($0) }
             var outcome = SyncMergeEngine.merge(local: local, remote: remote)
 
             // A conflict during the push means another device wrote first. Fold
             // the server's winning copies back through the merge rules so this
             // device ends up with the same answer as everyone else.
-            let adoptedDuringPush = try await push(outcome.uploads)
+            let serverRecords = Dictionary(fetched.map { ($0.recordID.recordName, $0) },
+                                           uniquingKeysWith: { first, _ in first })
+            let adoptedDuringPush = try await push(outcome.uploads, onto: serverRecords)
             if !adoptedDuringPush.isEmpty {
                 outcome = SyncMergeEngine.merge(
                     local: SyncLocalState(tokens: outcome.tokens, tombstones: outcome.tombstones),
@@ -300,6 +306,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
                 )
                 outcome.uploads = []
             }
+
+            // Best effort: a failure here leaves the next sync to try again, and
+            // must not report the sync itself as failed.
+            try? await scrubTombstones(in: fetched, skipping: Set(outcome.uploads.map(\.id)))
 
             defaults.set(Date(), forKey: Self.lastSyncedAtKey)
             updateStatus(.synced(defaults.object(forKey: Self.lastSyncedAtKey) as? Date))
@@ -386,10 +396,6 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
     // MARK: - Fetch
 
-    private func fetchRemoteRecords() async throws -> [SyncRecord] {
-        try await fetchObjects(ofType: Self.recordType).compactMap { Self.decode($0) }
-    }
-
     /// Paged fetch of every record of one type. The dataset is small (one record
     /// per token), so a full fetch is simpler and more robust than change tokens,
     /// and it means a missed push can never leave a device permanently stale.
@@ -436,8 +442,13 @@ final class CloudKitTokenSyncService: TokenSyncService {
 
     /// Uploads winning local records, returning any server copies that won a
     /// conflict so the caller can adopt them.
-    private func push(_ uploads: [SyncRecord]) async throws -> [SyncRecord] {
-        var pending = uploads.map { (item: $0, record: Self.encode($0)) }
+    ///
+    /// Each upload is written onto `serverRecords`' copy when there is one — what
+    /// this sync fetched — so it carries that copy's change tag. A record that is
+    /// new to the server starts fresh, and if another device created it meanwhile
+    /// that is a conflict like any other.
+    private func push(_ uploads: [SyncRecord], onto serverRecords: [String: CKRecord]) async throws -> [SyncRecord] {
+        var pending = uploads.map { (item: $0, record: Self.encode($0, into: serverRecords[$0.id])) }
         var adopted: [SyncRecord] = []
 
         for _ in 0..<Self.maxPushAttempts {
@@ -445,9 +456,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
             let response = try await cloudDatabase().modifyRecords(
                 saving: pending.map(\.record),
                 deleting: [],
-                // Only send fields we changed, so two devices editing different
-                // fields of one record do not clobber each other.
-                savePolicy: .changedKeys,
+                // Refused when the server's copy has changed since it was fetched,
+                // which is what makes a stale device find out instead of
+                // overwriting. Only changed keys are sent either way.
+                savePolicy: .ifServerRecordUnchanged,
                 atomically: false
             )
 
@@ -471,6 +483,31 @@ final class CloudKitTokenSyncService: TokenSyncService {
         }
         // Anything still pending exhausted its retries; the next sync picks it up.
         return adopted
+    }
+
+    /// Clears the encrypted fields still left on tombstones.
+    ///
+    /// Earlier versions wrote a tombstone onto a fresh record with `.changedKeys`,
+    /// and setting a key that was never set on that record to `nil` is not a
+    /// change — so the old label, account and secret could stay on the server
+    /// under a record that says it was deleted. Tombstones written now start from
+    /// the fetched record and clear properly; this catches the ones already there.
+    /// `skipping` is the records this sync has just uploaded.
+    private func scrubTombstones(in fetched: [CKRecord], skipping uploaded: Set<String>) async throws {
+        let leftovers = fetched.filter { record in
+            (record[Field.deleted] as? NSNumber)?.boolValue == true
+                && !uploaded.contains(record.recordID.recordName)
+                && Field.encrypted.contains { record.encryptedValues[$0] != nil }
+        }
+        guard !leftovers.isEmpty else { return }
+        for record in leftovers {
+            for key in Field.encrypted { record.encryptedValues[key] = nil }
+        }
+        // A conflict means another device wrote the record since, and it will be
+        // looked at again on the next sync.
+        _ = try await cloudDatabase().modifyRecords(saving: leftovers, deleting: [],
+                                                    savePolicy: .ifServerRecordUnchanged,
+                                                    atomically: false)
     }
 
     private static func serverRecord(from error: Error) -> CKRecord? {
