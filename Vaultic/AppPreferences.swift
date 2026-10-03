@@ -16,6 +16,29 @@ struct AppPreferences: Codable, Equatable {
     var enableAppLock: Bool
     var isICloudSyncEnabled: Bool
     var fetchIssuerLogos: Bool
+    /// Which release's rules wrote this blob; see `currentSchemaVersion`.
+    var schemaVersion: Int
+
+    /// Bumped when a blob written by an older release has to be treated
+    /// differently on restore.
+    ///
+    /// 2: releases before 2.9 mirrored the three privacy switches as `false`
+    /// for anyone who had never touched them, because `UserDefaults.bool(forKey:)`
+    /// reads a missing key as `false` rather than as the switch's `true` default.
+    /// A version-1 blob's `false` there can't be trusted, so restoring one turns
+    /// them back on, once; see `PreferencesStore.restoreIntoUserDefaults`.
+    static let currentSchemaVersion = 2
+
+    /// What each preference is before the user has touched it. The `@AppStorage`
+    /// defaults in the views must match these.
+    static let defaults = AppPreferences(hasCompletedOnboarding: false,
+                                         enablePrivacyBlur: true,
+                                         hideCodesInAppSwitcher: true,
+                                         hideCodesWhenScreenCaptured: true,
+                                         accentTheme: "",
+                                         enableAppLock: false,
+                                         isICloudSyncEnabled: false,
+                                         fetchIssuerLogos: true)
 
     /// The `@AppStorage` key the Settings switch and the logo lookup share, so the
     /// one that writes and the one that reads cannot drift apart.
@@ -32,7 +55,8 @@ struct AppPreferences: Codable, Equatable {
          accentTheme: String,
          enableAppLock: Bool,
          isICloudSyncEnabled: Bool,
-         fetchIssuerLogos: Bool) {
+         fetchIssuerLogos: Bool,
+         schemaVersion: Int = AppPreferences.currentSchemaVersion) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.enablePrivacyBlur = enablePrivacyBlur
         self.hideCodesInAppSwitcher = hideCodesInAppSwitcher
@@ -41,6 +65,7 @@ struct AppPreferences: Codable, Equatable {
         self.enableAppLock = enableAppLock
         self.isICloudSyncEnabled = isICloudSyncEnabled
         self.fetchIssuerLogos = fetchIssuerLogos
+        self.schemaVersion = schemaVersion
     }
 
     enum CodingKeys: String, CodingKey {
@@ -52,6 +77,7 @@ struct AppPreferences: Codable, Equatable {
         case enableAppLock
         case isICloudSyncEnabled
         case fetchIssuerLogos
+        case schemaVersion
     }
 
     /// Every key is optional on the way in.
@@ -63,20 +89,24 @@ struct AppPreferences: Codable, Equatable {
     /// missing key has to fall back to that preference's own default instead of
     /// failing the decode.
     ///
-    /// The defaults here must match the `@AppStorage` defaults in the views and
-    /// the `UserDefaults.bool(forKey:)` reads in `AppLockManager` / `OTPDataStore`.
+    /// The fallbacks are `defaults`, which must also match the
+    /// `UserDefaults.bool(forKey:)` reads in `AppLockManager` / `OTPDataStore`.
+    /// A blob with no `schemaVersion` was written before there was one: version 1.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? false
-        enablePrivacyBlur = try container.decodeIfPresent(Bool.self, forKey: .enablePrivacyBlur) ?? true
-        hideCodesInAppSwitcher = try container.decodeIfPresent(Bool.self, forKey: .hideCodesInAppSwitcher) ?? true
-        hideCodesWhenScreenCaptured = try container.decodeIfPresent(Bool.self, forKey: .hideCodesWhenScreenCaptured) ?? true
-        accentTheme = try container.decodeIfPresent(String.self, forKey: .accentTheme) ?? ""
-        enableAppLock = try container.decodeIfPresent(Bool.self, forKey: .enableAppLock) ?? false
-        isICloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .isICloudSyncEnabled) ?? false
+        let defaults = Self.defaults
+        hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? defaults.hasCompletedOnboarding
+        enablePrivacyBlur = try container.decodeIfPresent(Bool.self, forKey: .enablePrivacyBlur) ?? defaults.enablePrivacyBlur
+        hideCodesInAppSwitcher = try container.decodeIfPresent(Bool.self, forKey: .hideCodesInAppSwitcher) ?? defaults.hideCodesInAppSwitcher
+        hideCodesWhenScreenCaptured = try container.decodeIfPresent(Bool.self, forKey: .hideCodesWhenScreenCaptured) ?? defaults.hideCodesWhenScreenCaptured
+        accentTheme = try container.decodeIfPresent(String.self, forKey: .accentTheme) ?? defaults.accentTheme
+        enableAppLock = try container.decodeIfPresent(Bool.self, forKey: .enableAppLock) ?? defaults.enableAppLock
+        isICloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .isICloudSyncEnabled) ?? defaults.isICloudSyncEnabled
         // On by default, because that is what the app has always done and what most
         // people expect an authenticator's list to look like. The switch is there for
         // the ones who would rather the lookup never happened; see `SettingsView`.
-        fetchIssuerLogos = try container.decodeIfPresent(Bool.self, forKey: .fetchIssuerLogos) ?? true
+        fetchIssuerLogos = try container.decodeIfPresent(Bool.self, forKey: .fetchIssuerLogos) ?? defaults.fetchIssuerLogos
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
     }
+
 }

@@ -53,7 +53,8 @@ final class AppPreferencesTests: XCTestCase {
                                              accentTheme: "",
                                              enableAppLock: false,
                                              isICloudSyncEnabled: false,
-                                             fetchIssuerLogos: true))
+                                             fetchIssuerLogos: true,
+                                             schemaVersion: 1))
     }
 
     func testRoundTripPreservesEveryPreference() throws {

@@ -37,29 +37,53 @@ enum PreferencesStore {
     }
 
     static func persist() {
-        let defaults = UserDefaults.standard
-        let prefs = AppPreferences(
-            hasCompletedOnboarding: defaults.bool(forKey: "hasCompletedOnboarding"),
-            enablePrivacyBlur: defaults.bool(forKey: "enablePrivacyBlur"),
-            hideCodesInAppSwitcher: defaults.bool(forKey: "hideCodesInAppSwitcher"),
-            hideCodesWhenScreenCaptured: defaults.bool(forKey: "hideCodesWhenScreenCaptured"),
-            accentTheme: defaults.string(forKey: "accentTheme") ?? "",
-            enableAppLock: defaults.bool(forKey: AppLockEnabledKey),
-            isICloudSyncEnabled: defaults.bool(forKey: OTPDataStore.syncEnabledKey),
-            fetchIssuerLogos: defaults.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
-        )
+        let prefs = snapshot(of: .standard)
 
         if let data = try? JSONEncoder().encode(prefs) {
             _ = KeychainStore.save(data, account: account)
         }
     }
 
+    /// The preferences as `defaults` currently holds them.
+    ///
+    /// A key that has never been written reads as that preference's default.
+    /// `UserDefaults.bool(forKey:)` would read it as `false`, which for the three
+    /// privacy switches — `true` by default, and never written by `@AppStorage`
+    /// until the user flips them — mirrored "off" into the Keychain for anyone who
+    /// had left them alone.
+    static func snapshot(of defaults: UserDefaults) -> AppPreferences {
+        let fallback = AppPreferences.defaults
+        func bool(_ key: String, _ fallback: Bool) -> Bool {
+            defaults.object(forKey: key) as? Bool ?? fallback
+        }
+        return AppPreferences(
+            hasCompletedOnboarding: bool("hasCompletedOnboarding", fallback.hasCompletedOnboarding),
+            enablePrivacyBlur: bool("enablePrivacyBlur", fallback.enablePrivacyBlur),
+            hideCodesInAppSwitcher: bool("hideCodesInAppSwitcher", fallback.hideCodesInAppSwitcher),
+            hideCodesWhenScreenCaptured: bool("hideCodesWhenScreenCaptured", fallback.hideCodesWhenScreenCaptured),
+            accentTheme: defaults.string(forKey: "accentTheme") ?? fallback.accentTheme,
+            enableAppLock: bool(AppLockEnabledKey, fallback.enableAppLock),
+            isICloudSyncEnabled: bool(OTPDataStore.syncEnabledKey, fallback.isICloudSyncEnabled),
+            fetchIssuerLogos: bool(AppPreferences.fetchIssuerLogosKey, fallback.fetchIssuerLogos)
+        )
+    }
+
     /// Copies the Keychain-backed preferences back into UserDefaults. Call this
     /// before anything reads `@AppStorage` / UserDefaults-backed state.
     static func restoreIntoUserDefaults() {
         guard let data = KeychainStore.load(account: account),
-              let prefs = try? JSONDecoder().decode(AppPreferences.self, from: data) else {
+              var prefs = try? JSONDecoder().decode(AppPreferences.self, from: data) else {
             return
+        }
+
+        // A blob from before 2.9 may hold `false` for the privacy switches only
+        // because they were never touched; see `AppPreferences.currentSchemaVersion`.
+        // Turn them back on once, and re-save so it is only once.
+        let needsPrivacyRepair = prefs.schemaVersion < 2
+        if needsPrivacyRepair {
+            prefs.enablePrivacyBlur = true
+            prefs.hideCodesInAppSwitcher = true
+            prefs.hideCodesWhenScreenCaptured = true
         }
 
         let defaults = UserDefaults.standard
@@ -71,5 +95,9 @@ enum PreferencesStore {
         defaults.set(prefs.enableAppLock, forKey: AppLockEnabledKey)
         defaults.set(prefs.isICloudSyncEnabled, forKey: OTPDataStore.syncEnabledKey)
         defaults.set(prefs.fetchIssuerLogos, forKey: AppPreferences.fetchIssuerLogosKey)
+
+        if needsPrivacyRepair {
+            persist()
+        }
     }
 }
