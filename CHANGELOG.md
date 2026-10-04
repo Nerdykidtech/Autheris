@@ -15,6 +15,14 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [3.0] — October 2026
+
+### Added
+
+- Other apps can now offer an "Add to Autheris" button. When you turn on two-factor authentication in an app that has one, a single tap opens Autheris with the new code, instead of a QR code you can't scan from the same phone. The button opens an `autheris://add?uri=<otpauth link>` link, which goes through the same review as every other link since 2.8: Autheris shows the code, waits behind App Lock if it's on, and adds nothing until you tap Import. Developers can use [AutherisKit](https://github.com/Nerdykidtech/AutherisKit), an open-source Swift package, or build the link themselves; see [autheris.app/developers](https://autheris.app/developers).
+
+- Your codes, iCloud sync and settings are exactly where you left them.
+
 ## [2.9] — October 2026
 
 ### Security

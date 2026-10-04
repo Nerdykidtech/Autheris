@@ -55,6 +55,16 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "3.0",
+            version: "3.0",
+            date: "October 2026",
+            changes: [
+                "Other apps can now offer an Add to Autheris button. When you turn on two-factor authentication in an app that has one, a single tap opens Autheris with the new code, instead of a QR code you can't scan from the same phone.",
+                "As with every link since 2.8, Autheris shows you the code and waits for you to tap Import. Nothing is added unless you do, and if App Lock is on it waits until you unlock.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "2.9",
             version: "2.9",
             date: "October 2026",

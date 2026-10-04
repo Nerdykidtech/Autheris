@@ -56,6 +56,44 @@ final class IncomingLinkTests: XCTestCase {
         }
     }
 
+    // MARK: - autheris://add
+
+    /// The format AutherisKit opens: a percent-encoded `otpauth://` link.
+    func testAnAddLinkDecodesToOnePendingCode() throws {
+        let inner = "otpauth://totp/Example:alice@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example"
+        let encoded = try XCTUnwrap(inner.addingPercentEncoding(withAllowedCharacters: .alphanumerics))
+        let decoded = try tokens("autheris://add?uri=\(encoded)")
+        XCTAssertEqual(decoded.count, 1)
+        XCTAssertEqual(decoded.first?.label, "Example")
+        XCTAssertEqual(decoded.first?.account, "alice@example.com")
+    }
+
+    /// Byte for byte what AutherisKit's `AutherisSetup.autherisURL()` produces for
+    /// issuer "My App" and account "alice@example.com". Third-party apps ship this
+    /// format, so a change here breaks them: keep it decoding.
+    func testTheAutherisKitLinkDecodes() throws {
+        let decoded = try tokens("autheris://add?uri=otpauth%3A%2F%2Ftotp%2FMy%2520App%3Aalice%2540example.com%3Fsecret%3DJBSWY3DPEHPK3PXP%26issuer%3DMy%2520App")
+        XCTAssertEqual(decoded.first?.label, "My App")
+        XCTAssertEqual(decoded.first?.account, "alice@example.com")
+        XCTAssertEqual(decoded.first?.secret, "JBSWY3DPEHPK3PXP")
+    }
+
+    func testAnAddLinkWithoutAnOTPAuthLinkIsAFailure() throws {
+        guard case .failure = try parse("autheris://add") else {
+            return XCTFail("a missing uri should be reported")
+        }
+        guard case .failure = try parse("autheris://add?uri=https%3A%2F%2Fexample.com") else {
+            return XCTFail("only otpauth:// is accepted inside an add link")
+        }
+        // A batch has its own review path; `add` is for one code.
+        guard case .failure = try parse("autheris://add?uri=otpauth-migration%3A%2F%2Foffline%3Fdata%3DAAAA") else {
+            return XCTFail("a migration link should not be accepted inside an add link")
+        }
+        guard case .failure = try parse("autheris://add?uri=otpauth%3A%2F%2Ftotp%2FExample%3Fsecret%3Dnot-base32!") else {
+            return XCTFail("an invalid secret should be reported")
+        }
+    }
+
     // MARK: - otpauth:// and otpauth-migration://
 
     func testAnOTPAuthLinkDecodesToOnePendingCode() throws {
