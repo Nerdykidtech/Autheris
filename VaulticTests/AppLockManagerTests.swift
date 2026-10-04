@@ -76,11 +76,11 @@ final class AppLockManagerTests: XCTestCase {
 
     // MARK: - The unlock button
 
-    func testTheUnlockButtonNamesFaceIDWhenTheAppMayUseIt() {
+    func testTheUnlockButtonNamesFaceIDWhenTheAppMayUseIt() async {
         XCTAssertEqual(manager(.faceID(allowed: true)).unlockBiometry, .faceID)
     }
 
-    func testTheUnlockButtonDoesNotPromiseFaceIDTheAppHasBeenRefused() {
+    func testTheUnlockButtonDoesNotPromiseFaceIDTheAppHasBeenRefused() async {
         // The hardware is Face ID, but the user turned it off for Autheris: the
         // system will ask for the passcode, so the button must not say Face ID.
         XCTAssertEqual(manager(.faceID(allowed: false)).unlockBiometry, .none)
