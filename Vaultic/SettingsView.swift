@@ -101,73 +101,52 @@ struct SettingsView: View {
         }
     }
 
+    // `body` is split across four properties, in modifier order, because as
+    // one expression it was too long for the compiler to type-check in time
+    // (Xcode 26 gives up on it). Nothing here changes what the screen does.
     var body: some View {
-        Group {
-            #if os(macOS)
-            if presentation == .preferences {
-                macPreferencesBody
-            } else {
-                sheetBody
-            }
-            #else
-            sheetBody
-            #endif
-        }
-        // A change to any setting on this screen is what earns the review ask —
-        // see `ReviewPrompt.settingsChanged`.
-        //
-        // `onChange` does not fire for the values already present when the screen
-        // appears, so opening Settings is never itself "doing something", and
-        // flipping a toggle back and forth counts as the two changes it is.
-        //
-        // The iCloud sync toggle is deliberately absent from this list: it is a
-        // flow with its own dialogs rather than a plain preference, and the app
-        // itself can flip it when the account changes — which would be the app
-        // counting its own housekeeping as a user action.
-        .onChange(of: enablePrivacyBlur) { _, _ in settingsDidChange() }
-        .onChange(of: hideCodesInAppSwitcher) { _, _ in settingsDidChange() }
-        .onChange(of: hideCodesWhenScreenCaptured) { _, _ in settingsDidChange() }
-        .onChange(of: enableAppLock) { _, _ in settingsDidChange() }
-        .onChange(of: accentThemeRaw) { _, _ in settingsDidChange() }
-        // Shared by both containers, so it is attached outside the branch: the
-        // Help tab can trigger the same support error as the iPhone's Help section.
-        .alert(
-            "Support Email",
-            isPresented: $showingSupportError
+        contentWithSheets
+        .confirmationDialog(
+            "Turn off iCloud Sync?",
+            isPresented: $showingTeardownDialog,
+            titleVisibility: .visible
         ) {
-            Button("OK", role: .cancel) { showingSupportError = false }
+            Button("Keep Tokens on This Device") {
+                isICloudSyncEnabled = false
+                dataStore.setSyncEnabled(false)
+            }
+            Button("Delete Tokens from iCloud", role: .destructive) {
+                Task { await teardown(deleteCloudData: true) }
+            }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text(supportErrorMessage)
+            Text("Tokens stay on this device either way. Deleting from iCloud also removes them from your other devices.")
         }
-        .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
-            Button("OK", role: .cancel) { }
+        .confirmationDialog(
+            "Delete Tokens from iCloud?",
+            isPresented: $showingDeleteCloudDataDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Delete from iCloud", role: .destructive) {
+                Task { await teardown(deleteCloudData: true) }
+            }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
-        }
-        .task {
-            // Re-check the iCloud account each time Settings opens, so a user who
-            // signed in while the app was running sees the toggle enabled.
-            await dataStore.refreshSyncAvailability()
-        }
-        .fileImporter(
-            isPresented: $showingImporter,
-            allowedContentTypes: [.json, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            handleImportedFile(result)
+            Text("Removes your tokens from iCloud and your other devices — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept.")
         }
         .alert(
-            Text(importMessage?.title ?? "Import"),
-            isPresented: Binding(
-                get: { importMessage != nil },
-                set: { if !$0 { importMessage = nil } }
-            ),
-            presenting: importMessage
-        ) { _ in
-            Button("OK") { importMessage = nil }
-        } message: { message in
-            Text(message.body)
+            "iCloud Sync",
+            isPresented: Binding(get: { syncErrorMessage != nil }, set: { if !$0 { syncErrorMessage = nil } })
+        ) {
+            Button("OK", role: .cancel) { syncErrorMessage = nil }
+        } message: {
+            Text(syncErrorMessage ?? "")
         }
+    }
+
+    /// `contentWithAlerts` with the sheets.
+    private var contentWithSheets: some View {
+        contentWithAlerts
         .sheet(isPresented: $showingBackupView) {
             BackupView(dataStore: dataStore)
         }
@@ -209,42 +188,82 @@ struct SettingsView: View {
                 messageBody: supportBody
             )
         }
-        .confirmationDialog(
-            "Turn off iCloud Sync?",
-            isPresented: $showingTeardownDialog,
-            titleVisibility: .visible
+    }
+
+    /// `trackedContent` with the alerts, the iCloud refresh and the importer.
+    private var contentWithAlerts: some View {
+        trackedContent
+        // Shared by both containers, so it is attached outside the branch: the
+        // Help tab can trigger the same support error as the iPhone's Help section.
+        .alert(
+            "Support Email",
+            isPresented: $showingSupportError
         ) {
-            Button("Keep Tokens on This Device") {
-                isICloudSyncEnabled = false
-                dataStore.setSyncEnabled(false)
-            }
-            Button("Delete Tokens from iCloud", role: .destructive) {
-                Task { await teardown(deleteCloudData: true) }
-            }
-            Button("Cancel", role: .cancel) {}
+            Button("OK", role: .cancel) { showingSupportError = false }
         } message: {
-            Text("Tokens stay on this device either way. Deleting from iCloud also removes them from your other devices.")
+            Text(supportErrorMessage)
         }
-        .confirmationDialog(
-            "Delete Tokens from iCloud?",
-            isPresented: $showingDeleteCloudDataDialog,
-            titleVisibility: .visible
-        ) {
-            Button("Delete from iCloud", role: .destructive) {
-                Task { await teardown(deleteCloudData: true) }
-            }
-            Button("Cancel", role: .cancel) {}
+        .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
+            Button("OK", role: .cancel) { }
         } message: {
-            Text("Removes your tokens from iCloud and your other devices — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept.")
+            Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
+        }
+        .task {
+            // Re-check the iCloud account each time Settings opens, so a user who
+            // signed in while the app was running sees the toggle enabled.
+            await dataStore.refreshSyncAvailability()
+        }
+        .fileImporter(
+            isPresented: $showingImporter,
+            allowedContentTypes: [.json, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImportedFile(result)
         }
         .alert(
-            "iCloud Sync",
-            isPresented: Binding(get: { syncErrorMessage != nil }, set: { if !$0 { syncErrorMessage = nil } })
-        ) {
-            Button("OK", role: .cancel) { syncErrorMessage = nil }
-        } message: {
-            Text(syncErrorMessage ?? "")
+            Text(importMessage?.title ?? "Import"),
+            isPresented: Binding(
+                get: { importMessage != nil },
+                set: { if !$0 { importMessage = nil } }
+            ),
+            presenting: importMessage
+        ) { _ in
+            Button("OK") { importMessage = nil }
+        } message: { message in
+            Text(message.body)
         }
+    }
+
+    /// The screen for this platform, with the change tracking that earns the
+    /// review ask.
+    private var trackedContent: some View {
+        Group {
+            #if os(macOS)
+            if presentation == .preferences {
+                macPreferencesBody
+            } else {
+                sheetBody
+            }
+            #else
+            sheetBody
+            #endif
+        }
+        // A change to any setting on this screen is what earns the review ask —
+        // see `ReviewPrompt.settingsChanged`.
+        //
+        // `onChange` does not fire for the values already present when the screen
+        // appears, so opening Settings is never itself "doing something", and
+        // flipping a toggle back and forth counts as the two changes it is.
+        //
+        // The iCloud sync toggle is deliberately absent from this list: it is a
+        // flow with its own dialogs rather than a plain preference, and the app
+        // itself can flip it when the account changes — which would be the app
+        // counting its own housekeeping as a user action.
+        .onChange(of: enablePrivacyBlur) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesInAppSwitcher) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesWhenScreenCaptured) { _, _ in settingsDidChange() }
+        .onChange(of: enableAppLock) { _, _ in settingsDidChange() }
+        .onChange(of: accentThemeRaw) { _, _ in settingsDidChange() }
     }
 
     @ViewBuilder
