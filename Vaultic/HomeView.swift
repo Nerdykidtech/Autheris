@@ -20,6 +20,8 @@ struct HomeView: View {
     @State private var isRearrangingGrid = false
     @State private var showingAddToken = false
     @State private var importResult: (title: String, body: String)? = nil
+    /// The confirmation before codes that won't decode are set aside.
+    @State private var showingSetAsideConfirmation = false
     @State private var searchText = ""
     @State private var showingSettings = false
     
@@ -46,7 +48,40 @@ struct HomeView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            if searchText.isEmpty {
+            if !dataStore.isVaultLoaded {
+                // Not an empty vault: one that can't be read yet. Saying "No Tokens
+                // Yet" here would be wrong, and adding would be refused anyway.
+                Image(systemName: "exclamationmark.lock")
+                    .font(.system(size: 40))
+                    .foregroundColor(.secondary)
+                    .opacity(0.5)
+
+                Text("Codes Unavailable")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+
+                if dataStore.hasUnreadableCodes {
+                    // Stored, but not in a form this version can read. That won't
+                    // fix itself, so there has to be a way forward.
+                    Text("The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+
+                    Button("Set Aside and Start Over") {
+                        showingSetAsideConfirmation = true
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .padding(.top, 8)
+                } else {
+                    Text(OTPDataStore.vaultUnavailableMessage)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary.opacity(0.8))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+            } else if searchText.isEmpty {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 40))
                     .foregroundColor(.accentColor)
@@ -200,6 +235,9 @@ struct HomeView: View {
                     .font(.title3)
                     .foregroundColor(.accentColor)
             }
+            // Nothing can be added to a vault that hasn't loaded; see
+            // `OTPDataStore.isVaultLoaded`.
+            .disabled(!dataStore.isVaultLoaded)
         }
     }
 
@@ -247,6 +285,17 @@ struct HomeView: View {
                 Button("OK") { importResult = nil }
             } message: { result in
                 Text(result.body)
+            }
+            .confirmationDialog("Start Over?", isPresented: $showingSetAsideConfirmation, titleVisibility: .visible) {
+                Button("Set Aside and Start Over", role: .destructive) {
+                    if !dataStore.setAsideUnreadableCodes() {
+                        importResult = (String(localized: "Couldn't Start Over"),
+                                        String(localized: "The unreadable codes couldn't be set aside, so nothing was changed."))
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none. Apple Watch keeps its codes until the next change here.")
             }
         }
     }
@@ -1006,8 +1055,16 @@ struct EditTokenView: View {
             timerRingHex: .some(ringHexForSave())
         )
         
-        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
-            dataStore.updateCode(updatedCode, at: index)
+        // A rename onto a name another code already has would leave two tokens
+        // the user can't tell apart, so it is refused here rather than saved.
+        if dataStore.nameIsTaken(by: updatedCode) {
+            alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
+            showingAlert = true
+            return
+        }
+
+        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }),
+           dataStore.updateCode(updatedCode, at: index) {
             // Success haptic feedback
             Haptics.notify(.success)
         }

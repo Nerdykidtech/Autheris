@@ -5,6 +5,26 @@ import Combine
 /// Shared UserDefaults key so the Settings toggle and the lock manager cannot drift.
 let AppLockEnabledKey = "enableAppLock"
 
+/// The part of `LAContext` App Lock uses, so tests can stand in a device that has
+/// no passcode, or one that refuses.
+nonisolated protocol DeviceOwnerAuthenticating {
+    func canEvaluatePolicy(_ policy: LAPolicy, error: NSErrorPointer) -> Bool
+    func evaluatePolicy(_ policy: LAPolicy,
+                        localizedReason: String,
+                        reply: @escaping @Sendable (Bool, (any Error)?) -> Void)
+}
+
+extension LAContext: DeviceOwnerAuthenticating {}
+
+extension DeviceOwnerAuthenticating {
+    /// Whether the device can authenticate its owner and, when it can't, why.
+    func ownerAuthenticationAvailability() -> (available: Bool, error: NSError?) {
+        var error: NSError?
+        let available = canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
+        return (available, error)
+    }
+}
+
 final class AppLockManager: ObservableObject {
     @Published private(set) var isLocked: Bool
     @Published var errorMessage: String?
@@ -14,6 +34,8 @@ final class AppLockManager: ObservableObject {
     /// user quickly switches apps to copy a code.
     private let gracePeriod: TimeInterval = 30
     private var backgroundedAt: Date?
+    /// A fresh context per attempt, as `LAContext` expects. Injectable for tests.
+    private let makeContext: () -> DeviceOwnerAuthenticating
 
     #if os(macOS)
     /// Activation observers, held so they are removed with the manager.
@@ -28,7 +50,8 @@ final class AppLockManager: ObservableObject {
         UserDefaults.standard.bool(forKey: AppLockEnabledKey)
     }
 
-    init() {
+    init(makeContext: @escaping () -> DeviceOwnerAuthenticating = { LAContext() }) {
+        self.makeContext = makeContext
         // Restore Keychain-backed preferences before reading the lock setting.
         PreferencesStore.restoreIntoUserDefaults()
 
@@ -102,30 +125,46 @@ final class AppLockManager: ObservableObject {
     /// Returns `true` straight away when App Lock is off, since the user has chosen
     /// not to be asked, and when the device has no passcode, since there is then
     /// nothing to authenticate with.
-    static func reauthenticate(reason: String) async -> Bool {
+    static func reauthenticate(reason: String,
+                               context: DeviceOwnerAuthenticating = LAContext()) async -> Bool {
         guard UserDefaults.standard.bool(forKey: AppLockEnabledKey) else { return true }
 
-        let context = LAContext()
-        var error: NSError?
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            return (error as? LAError)?.code == .passcodeNotSet
+        let availability = context.ownerAuthenticationAvailability()
+        guard availability.available else {
+            return (availability.error as? LAError)?.code == .passcodeNotSet
         }
 
-        do {
-            return try await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)
-        } catch {
-            return false
+        return await withCheckedContinuation { continuation in
+            context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
+                continuation.resume(returning: success)
+            }
         }
+    }
+
+    /// Whether this device can authenticate its owner at all, which App Lock
+    /// needs before it can be turned on. `false` when it has no passcode.
+    static func canLock(context: DeviceOwnerAuthenticating = LAContext()) -> Bool {
+        context.ownerAuthenticationAvailability().available
     }
 
     /// Evaluate device owner authentication (Face ID, Touch ID, or passcode fallback).
     func authenticate() {
-        let context = LAContext()
-        var error: NSError?
+        let context = makeContext()
         let reason = String(localized: "Unlock Autheris to view your tokens.")
 
-        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
-            errorMessage = error?.localizedDescription
+        let availability = context.ownerAuthenticationAvailability()
+        guard availability.available else {
+            // With no passcode there is nothing to authenticate with — the answer
+            // `reauthenticate` already gives. Holding the lock here would leave the
+            // user on this screen for good, on every launch, with no way past it.
+            // App Lock is turned off as well, so Settings doesn't go on showing a
+            // lock that no longer locks anything.
+            if (availability.error as? LAError)?.code == .passcodeNotSet {
+                UserDefaults.standard.set(false, forKey: AppLockEnabledKey)
+                unlock()
+                return
+            }
+            errorMessage = availability.error?.localizedDescription
                 ?? String(localized: "Biometric authentication is unavailable.")
             return
         }

@@ -7,6 +7,11 @@ import Security
 /// `SyncMergeEngineTests` covers the merge itself; these cover what happens
 /// after it, including edits that land while a sync is in flight. A fake
 /// `TokenSyncService` stands in for CloudKit and can run code mid-sync.
+///
+/// A test that makes and drops its own store is `async` even when it awaits
+/// nothing. On iOS 26, freeing a main-actor object inside a synchronous test
+/// method crashes the Swift runtime (`swift_task_deinitOnExecutor` frees a
+/// task-local scope it never allocated); the same release inside a task is fine.
 @MainActor
 final class OTPDataStoreSyncTests: XCTestCase {
 
@@ -183,8 +188,8 @@ final class OTPDataStoreSyncTests: XCTestCase {
         store.removeCode(restored)
         let remoteTombstone = SyncRecord.tombstone(id: restored.id.uuidString, deletedAt: Date())
 
-        XCTAssertTrue(store.restoreFromBackup(backup, isEncrypted: true,
-                                              password: "correct horse battery staple"))
+        store.replaceAll(with: try await OTPDataStore.readBackup(backup, isEncrypted: true,
+                                                                 password: "correct horse battery staple"))
         await runSync { local in
             SyncMergeEngine.merge(local: local, remote: [remoteTombstone], now: Date(),
                                   tombstoneRetention: SyncMergeEngine.defaultTombstoneRetention)
@@ -203,10 +208,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
                               secret: "JBSWY3DPEHPK3PXP",
                               modifiedAt: Date(timeIntervalSinceNow: 365 * 24 * 3600))
 
-        let result = store.addCodes([hostile])
-
-        XCTAssertEqual(result.added, 1)
-        XCTAssertEqual(result.skipped, 0)
+        XCTAssertEqual(store.addCodes([hostile]), .imported(added: 1, skipped: 0))
         let imported = store.codes.first { $0.label == "GitLab" }
         XCTAssertNotNil(imported)
         XCTAssertNotEqual(imported?.id, existing.id)
@@ -225,8 +227,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
             OTPCode(label: "GitHub ", account: "user", secret: "JBSWY3DPEHPK3PXP"),
         ])
 
-        XCTAssertEqual(result.added, 2)
-        XCTAssertEqual(result.skipped, 2)
+        XCTAssertEqual(result, .imported(added: 2, skipped: 2))
         XCTAssertEqual(store.codes.map(\.label).sorted(), ["GitHub", "GitHub ", "GitLab"])
     }
 
@@ -254,6 +255,268 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(snapshots.count, 2, "the sync requested mid-sync must run, once")
         XCTAssertEqual(Set(snapshots.last?.tokens.map(\.id) ?? []), [existing.id, added.id])
     }
+
+    // MARK: - Codes that share a name
+
+    func testTwoCodesThatOnlyShareANameAreBothSavedAndShown() async throws {
+        // Two different secrets under one name — what arrives when two devices
+        // each added a different account under the same label. Saving used to keep
+        // only the first, which lost the other secret for good.
+        let first = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let second = OTPCode(label: "github", account: "User", secret: "JBSWY3DPEHPK3PXQ")
+        store.codes = [first, second]
+        store.saveCodes()
+
+        let saved = try JSONDecoder().decode([OTPCode].self,
+                                             from: try XCTUnwrap(KeychainStore.load(account: "otpCodes")))
+        XCTAssertEqual(saved.map(\.id), [first.id, second.id])
+        XCTAssertEqual(Set(store.orderedCodes.map(\.id)), [first.id, second.id])
+
+        let reloaded = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+        XCTAssertEqual(reloaded.codes.map(\.id), [first.id, second.id])
+    }
+
+    func testCopiesAreShownOnceAndDeletedTogetherButANameSakeIsLeftAlone() {
+        let original = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let copy = OTPCode(label: "GitHub", account: "user", secret: "jbsw y3dp ehpk 3pxp")
+        let namesake = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXQ")
+        store.codes = [original, copy, namesake]
+
+        XCTAssertEqual(Set(store.orderedCodes.map(\.id)), [original.id, namesake.id])
+
+        store.removeCode(original)
+
+        XCTAssertEqual(store.codes.map(\.id), [namesake.id])
+        XCTAssertEqual(Set(store.trash.map(\.code.id)), [original.id, copy.id])
+    }
+
+    func testARenameOntoAnotherCodesNameIsRefused() throws {
+        let work = OTPCode(label: "GitHub", account: "work", secret: "JBSWY3DPEHPK3PXP")
+        let personal = OTPCode(label: "GitHub", account: "personal", secret: "JBSWY3DPEHPK3PXQ")
+        store.addCode(work)
+        store.addCode(personal)
+        let index = try XCTUnwrap(store.codes.firstIndex { $0.id == work.id })
+        let renamed = work.edited(account: "Personal")
+
+        XCTAssertTrue(store.nameIsTaken(by: renamed))
+        XCTAssertFalse(store.updateCode(renamed, at: index))
+        XCTAssertEqual(store.codes.first { $0.id == work.id }?.account, "work")
+
+        // Renaming a code to its own name, in another case, is not a clash.
+        XCTAssertTrue(store.updateCode(work.edited(account: "Work"), at: index))
+    }
+
+    func testAddingACodeThatIsAlreadyHereReportsIt() {
+        XCTAssertTrue(store.addCode(OTPCode(label: "GitHub", account: "alice", secret: "JBSWY3DPEHPK3PXP")))
+        XCTAssertFalse(store.addCode(OTPCode(label: "github", account: "Alice", secret: "JBSWY3DPEHPK3PXQ")),
+                       "a name that differs only in case is the same name")
+        XCTAssertEqual(store.codes.count, 1)
+    }
+
+    // MARK: - Restoring a backup, continued
+
+    func testRestoringABackupSendsTheCodesItReplacesToRecentlyDeleted() async throws {
+        let kept = token("GitHub")
+        let replaced = token("GitLab")
+        store.addCode(kept)
+        store.addCode(replaced)
+        let backup = try BackupCrypto.encrypt(plaintext: try JSONEncoder().encode([kept]),
+                                              password: "correct horse battery staple")
+
+        store.replaceAll(with: try await OTPDataStore.readBackup(backup, isEncrypted: true,
+                                                                 password: "correct horse battery staple"))
+
+        XCTAssertEqual(store.codes.map(\.id), [kept.id])
+        XCTAssertEqual(store.trash.map(\.code.id), [replaced.id])
+        let next = await runSync { _ in nil }
+        XCTAssertNotNil(next?.tombstones[replaced.id.uuidString],
+                        "the replaced code still has to be deleted on the other devices")
+    }
+
+    func testReadingAnEncryptedBackupWithTheWrongPasswordChangesNothing() async throws {
+        let existing = token("GitHub")
+        store.addCode(existing)
+        let backup = try BackupCrypto.encrypt(plaintext: try JSONEncoder().encode([token("GitLab")]),
+                                              password: "correct horse battery staple")
+
+        do {
+            _ = try await OTPDataStore.readBackup(backup, isEncrypted: true, password: "wrong password!")
+            XCTFail("a wrong password must not read the backup")
+        } catch {}
+        XCTAssertEqual(store.codes.map(\.id), [existing.id])
+    }
+
+    // MARK: - A vault that can't be read
+
+    func testAVaultThatWontDecodeIsLeftAloneAndEditsAreRefused() async {
+        // Present but unreadable — corruption, or a field from a newer build. The
+        // first edit used to save `[]` over it.
+        let stored = Data("not a list of codes".utf8)
+        XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
+
+        let unreadable = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+
+        XCTAssertFalse(unreadable.isVaultLoaded)
+        XCTAssertTrue(unreadable.hasUnreadableCodes)
+        XCTAssertFalse(unreadable.addCode(token("GitHub")), "an edit must not look saved when it can't be")
+        XCTAssertEqual(unreadable.addCodes([token("GitLab")]), .vaultUnavailable,
+                       "a refused import must not read as \"all duplicates\"")
+        XCTAssertFalse(unreadable.replaceAll(with: [token("GitLab")]),
+                       "a refused restore must not read as restored")
+        XCTAssertTrue(unreadable.codes.isEmpty)
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored)
+    }
+
+    func testUnreadableCodesCanBeSetAsideToStartOver() async throws {
+        let setAsideAccount = OTPDataStore.setAsideAccount
+        let previouslySetAside = KeychainStore.load(account: setAsideAccount)
+        defer {
+            if let previouslySetAside {
+                _ = KeychainStore.save(previouslySetAside, account: setAsideAccount)
+            } else {
+                deleteKeychainItem(account: setAsideAccount)
+            }
+        }
+        let stored = Data("not a list of codes".utf8)
+        XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
+        let relay = RecordingWatchTokenRelay()
+        let unreadable = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: relay)
+
+        XCTAssertTrue(unreadable.setAsideUnreadableCodes())
+
+        XCTAssertEqual(KeychainStore.load(account: setAsideAccount), stored,
+                       "the unreadable codes are kept, not thrown away")
+        XCTAssertTrue(unreadable.isVaultLoaded)
+        XCTAssertFalse(unreadable.hasUnreadableCodes)
+        XCTAssertTrue(relay.pushes.isEmpty,
+                      "the watch's copy may be the only readable one; starting over must not clear it")
+        XCTAssertTrue(unreadable.addCode(token("GitHub")), "the vault works again")
+        XCTAssertEqual(relay.pushes.last?.map(\.label), ["GitHub"], "and the next real change updates the watch")
+        let saved = try JSONDecoder().decode([OTPCode].self,
+                                             from: try XCTUnwrap(KeychainStore.load(account: "otpCodes")))
+        XCTAssertEqual(saved.map(\.label), ["GitHub"])
+
+        // Setting aside again replaces the one copy rather than adding another.
+        let newer = Data("different unreadable bytes".utf8)
+        XCTAssertTrue(KeychainStore.save(newer, account: "otpCodes"))
+        let again = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay())
+        XCTAssertTrue(again.setAsideUnreadableCodes())
+        XCTAssertEqual(KeychainStore.load(account: setAsideAccount), newer)
+    }
+
+    func testALockedVaultIsNeverSetAside() async {
+        // Locked is not unreadable: it sorts itself out, and setting codes aside
+        // then would start over for nothing.
+        let locked = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay()) { _ in
+            .unavailable(errSecInteractionNotAllowed)
+        }
+
+        XCTAssertFalse(locked.hasUnreadableCodes)
+        XCTAssertFalse(locked.setAsideUnreadableCodes())
+        XCTAssertFalse(locked.isVaultLoaded)
+    }
+
+    func testNoSyncRunsWhileTheTombstonesCantBeRead() async throws {
+        XCTAssertTrue(KeychainStore.save(try JSONEncoder().encode([token("GitHub")]), account: "otpCodes"))
+        let partialSync = FakeTokenSyncService()
+        let partial = OTPDataStore(syncService: partialSync, watchRelay: DisabledWatchTokenRelay()) { account in
+            account == "otpSyncTombstones" ? .unavailable(errSecDecode) : KeychainStore.read(account: account)
+        }
+        XCTAssertTrue(partial.isVaultLoaded)
+
+        partial.setSyncEnabled(true)
+        await partial.syncNow()
+
+        XCTAssertEqual(partialSync.syncCallCount, 0,
+                       "without its tombstones, a local delete would look like a code to bring back")
+    }
+
+    func testAnUnreadableTrashDoesNotHoldUpTheCodesAndIsNotWrittenOver() async throws {
+        let existing = token("GitHub")
+        XCTAssertTrue(KeychainStore.save(try JSONEncoder().encode([existing]), account: "otpCodes"))
+        let storedTrash = Data("whatever the trash still holds".utf8)
+        XCTAssertTrue(KeychainStore.save(storedTrash, account: "otpTrash"))
+
+        let partial = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay()) { account in
+            account == "otpTrash" ? .unavailable(errSecDecode) : KeychainStore.read(account: account)
+        }
+
+        XCTAssertTrue(partial.isVaultLoaded, "a damaged trash must not keep anyone from their codes")
+        XCTAssertEqual(partial.codes.map(\.id), [existing.id])
+
+        partial.removeCode(existing)
+
+        XCTAssertTrue(partial.codes.isEmpty)
+        XCTAssertEqual(KeychainStore.load(account: "otpTrash"), storedTrash,
+                       "an item that couldn't be read must not be replaced")
+    }
+
+    func testDraggingKeepsTheCopiesTheListHides() {
+        let first = token("GitHub")
+        let copy = OTPCode(label: "GitHub", account: "user", secret: "JBSWY3DPEHPK3PXP")
+        let second = token("GitLab")
+        store.codes = [first, copy, second]
+        XCTAssertEqual(store.orderedCodes.map(\.id), [first.id, second.id])
+
+        store.move(offsets: IndexSet(integer: 1), destination: 0)
+
+        XCTAssertEqual(store.orderedCodes.map(\.id), [second.id, first.id])
+        XCTAssertTrue(store.codes.contains { $0.id == copy.id },
+                      "dropping a hidden copy is a delete with no tombstone")
+    }
+
+    // MARK: - Launching while the device is locked
+
+    func testALaunchThatCannotReadTheKeychainLeavesTheVaultAloneUntilItCan() async throws {
+        let existing = token("GitHub")
+        let stored = try JSONEncoder().encode([existing])
+        XCTAssertTrue(KeychainStore.save(stored, account: "otpCodes"))
+
+        // What a silent push sees on a locked phone: every `WhenUnlocked` read
+        // fails with errSecInteractionNotAllowed.
+        let device = DeviceLockState()
+        let relay = RecordingWatchTokenRelay()
+        let lockedSync = FakeTokenSyncService()
+        let locked = OTPDataStore(syncService: lockedSync, watchRelay: relay) { account in
+            device.isLocked ? .unavailable(errSecInteractionNotAllowed) : KeychainStore.read(account: account)
+        }
+
+        XCTAssertFalse(locked.isVaultLoaded)
+        XCTAssertTrue(locked.codes.isEmpty)
+        XCTAssertTrue(relay.pushes.isEmpty, "an empty push would clear the watch's cache")
+
+        locked.setSyncEnabled(true)
+        await locked.syncNow()
+        XCTAssertEqual(lockedSync.syncCallCount, 0, "an unloaded vault must not be merged with iCloud")
+
+        locked.addCode(token("GitLab"))
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored,
+                       "a save before the vault loads would overwrite it")
+
+        // Unlocking the device retries the load.
+        device.isLocked = false
+        for name in AppActivity.keychainMayHaveBecomeReadable {
+            NotificationCenter.default.post(name: name, object: nil)
+        }
+        for _ in 0..<100 where !locked.isVaultLoaded { await Task.yield() }
+
+        XCTAssertTrue(locked.isVaultLoaded)
+        XCTAssertEqual(locked.codes.map(\.id), [existing.id])
+        XCTAssertEqual(relay.pushes.last?.map(\.id), [existing.id])
+        XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored)
+    }
+}
+
+/// Whether the simulated device is locked, shared with the store's Keychain reader.
+@MainActor
+private final class DeviceLockState {
+    var isLocked = true
+}
+
+/// Records what the store offers the watch.
+private final class RecordingWatchTokenRelay: WatchTokenRelayService {
+    private(set) var pushes: [[OTPCode]] = []
+    func push(_ tokens: [OTPCode]) { pushes.append(tokens) }
 }
 
 /// A `TokenSyncService` whose `sync(local:)` result each test supplies.

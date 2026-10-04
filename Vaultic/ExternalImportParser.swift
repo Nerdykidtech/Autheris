@@ -40,6 +40,10 @@ enum ExternalImportError: LocalizedError {
 /// behaviour it already had; guessing a field name would replace a skip with an
 /// import whose counter silently starts at 0, which is a wrong code rather than a
 /// missing one.
+///
+/// Entries that repeat a name are passed through rather than dropped here:
+/// `OTPDataStore.addCodes` skips them with the same rule every other add uses, and
+/// counts them as skipped.
 enum ExternalImportParser {
     static func parse(data: Data) throws -> [OTPCode] {
         let json = try JSONSerialization.jsonObject(with: data)
@@ -110,7 +114,7 @@ enum ExternalImportParser {
                 counter: counter(from: entry["counter"] ?? info["counter"], for: kind)
             ))
         }
-        return deduplicated(tokens)
+        return tokens
     }
 
     // MARK: - andOTP
@@ -139,7 +143,7 @@ enum ExternalImportParser {
                 counter: counter(from: entry["counter"], for: kind)
             ))
         }
-        return deduplicated(tokens)
+        return tokens
     }
 
     // MARK: - 2FAS
@@ -162,17 +166,21 @@ enum ExternalImportParser {
             guard let secret = service["secret"] as? String,
                   OTPGenerator.isValidSecret(secret) else { continue }
 
+            // The account lives in `otp`, beside the issuer. Leaving it out made two
+            // accounts at one service the same token, and the second was dropped.
             let name = (service["name"] as? String) ?? ""
+            let issuer = (otp["issuer"] as? String) ?? ""
+            let label = issuer.isEmpty ? name : issuer
             tokens.append(OTPCode(
-                label: name.isEmpty ? "Imported" : name,
-                account: "",
+                label: label.isEmpty ? "Imported" : label,
+                account: (otp["account"] as? String) ?? "",
                 secret: secret,
                 algorithm: algorithm(from: otp["algorithm"] as? String),
                 digits: (otp["digits"] as? Int) ?? 6,
                 period: (otp["period"] as? Int) ?? 30
             ))
         }
-        return deduplicated(tokens)
+        return tokens
     }
 
     // MARK: - Helpers
@@ -214,13 +222,6 @@ enum ExternalImportParser {
             return .sha512
         default:
             return .sha1
-        }
-    }
-
-    private static func deduplicated(_ tokens: [OTPCode]) -> [OTPCode] {
-        var seen = Set<String>()
-        return tokens.filter { token in
-            seen.insert("\(token.label.lowercased())|\(token.account.lowercased())").inserted
         }
     }
 }

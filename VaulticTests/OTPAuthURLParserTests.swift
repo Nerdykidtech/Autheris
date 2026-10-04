@@ -171,4 +171,31 @@ final class OTPAuthURLParserTests: XCTestCase {
         XCTAssertEqual(parsed.label, "Issuer")
         XCTAssertEqual(parsed.account, "acct")
     }
+
+    // MARK: - A path with no issuer prefix
+
+    func testAPathWithoutAnIssuerPrefixIsTheAccountWhenTheQueryNamesTheIssuer() throws {
+        // A common form. The path used to become the label, which the issuer then
+        // overwrote — so the account was lost, and a second account at the same
+        // service parsed as the same token and could not be added.
+        let parsed = try parse("otpauth://totp/alice@example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub")
+
+        XCTAssertEqual(parsed.label, "GitHub")
+        XCTAssertEqual(parsed.account, "alice@example.com")
+    }
+
+    func testTwoAccountsAtOneIssuerParseAsTwoTokens() throws {
+        let alice = try parse("otpauth://totp/alice%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=GitHub")
+        let bob = try parse("otpauth://totp/bob%40example.com?secret=JBSWY3DPEHPK3PXQ&issuer=GitHub")
+
+        XCTAssertEqual(alice.account, "alice@example.com")
+        XCTAssertNotEqual(alice.account, bob.account)
+    }
+
+    func testAPathWithNoIssuerAnywhereIsTheLabel() throws {
+        let parsed = try parse("otpauth://totp/GitHub?secret=JBSWY3DPEHPK3PXP")
+
+        XCTAssertEqual(parsed.label, "GitHub")
+        XCTAssertEqual(parsed.account, "")
+    }
 }

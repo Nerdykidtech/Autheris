@@ -29,6 +29,25 @@ nonisolated enum IncomingLink: Equatable {
         }
     }
 
+    /// A scanned QR code that carries a batch of codes — a transfer link, a Google
+    /// Authenticator export, or the bare export payload older transfer codes held —
+    /// or `nil` for anything else, including a single `otpauth://` code, which the
+    /// scanner adds itself.
+    ///
+    /// A batch goes to the same review a link does. Scanning is the user's choice,
+    /// but what a QR code on someone else's page holds is not, and it could add
+    /// dozens of codes with nothing to look over.
+    static func scannedBatch(_ payload: String) -> IncomingLink? {
+        if let url = URL(string: payload), let scheme = url.scheme?.lowercased(),
+           scheme == "otpauth-migration" || (scheme == "autheris" && url.host?.lowercased() == "import") {
+            return parse(url)
+        }
+        // Base64 first, as the transfer screen encodes it; JSON text otherwise.
+        let data = Data(base64Encoded: payload) ?? Data(payload.utf8)
+        guard let tokens = decodeTokens(data), !tokens.isEmpty else { return nil }
+        return .tokens(tokens)
+    }
+
     // MARK: - Schemes
 
     private static func parseOTPAuth(_ url: URL) -> IncomingLink {
@@ -69,10 +88,13 @@ nonisolated enum IncomingLink: Equatable {
     }
 
     private static func parseAutherisImport(_ url: URL) -> IncomingLink {
-        guard let dataString = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-                .queryItems?.first(where: { $0.name == "data" })?.value,
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        // `v=2` is the compact transfer format; no `v` is the JSON every release
+        // has written. See `TransferPayload`.
+        let isCompact = items.first(where: { $0.name == "v" })?.value == "2"
+        guard let dataString = items.first(where: { $0.name == "data" })?.value,
               let data = decodeBase64URL(dataString),
-              let tokens = decodeTokens(data),
+              let tokens = isCompact ? TransferPayload.decodeCompact(data) : decodeTokens(data),
               !tokens.isEmpty
         else {
             return .failure(

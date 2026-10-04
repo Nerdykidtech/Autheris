@@ -63,7 +63,10 @@ nonisolated enum OTPAuthURLParser {
             label = parts.first ?? ""
             account = parts.dropFirst().joined(separator: ":")
         } else if !path.isEmpty {
-            label = path
+            // No "Issuer:" prefix, so the path is the account — the
+            // `otpauth://totp/alice@example.com?issuer=GitHub` form. It only
+            // becomes the label if nothing names an issuer; see below.
+            account = path
         }
 
         var secret = ""
@@ -112,6 +115,12 @@ nonisolated enum OTPAuthURLParser {
                     break
                 }
             }
+        }
+
+        // No issuer anywhere: the path was the service's name, not an account.
+        if label.isEmpty {
+            label = account
+            account = ""
         }
 
         label = label.removingPercentEncoding ?? label

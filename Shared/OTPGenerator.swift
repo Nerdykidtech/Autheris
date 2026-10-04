@@ -101,7 +101,9 @@ nonisolated struct OTPGenerator {
         return String(format: "%0\(safeDigits)llu", otpValue)
     }
     
-    private static func decodeBase32(_ string: String) -> Data {
+    /// Internal, not private, for `TransferPayload`, which carries a secret as
+    /// the bytes it encodes.
+    static func decodeBase32(_ string: String) -> Data {
         let base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
         let string = string.uppercased().replacingOccurrences(of: " ", with: "")
         var bits = 0

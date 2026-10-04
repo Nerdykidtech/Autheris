@@ -43,7 +43,16 @@ struct SettingsView: View {
     @State private var syncErrorMessage: String?
 
     @State private var showingBackupView = false
-    @State private var showingQRCodeView = false
+    /// The open transfer sheet and the link it shows.
+    ///
+    /// The link is built once as the sheet opens rather than on every redraw of
+    /// this screen — it encodes and compresses the whole vault. The sheet is
+    /// presented *from* this value (`sheet(item:)`), so its first frame always has
+    /// the link: presenting from a flag set alongside it let SwiftUI draw the
+    /// sheet before the link arrived, and "too large" flashed up first. SwiftUI
+    /// sets it back to `nil` when the sheet closes, which drops the link — it
+    /// holds every secret.
+    @State private var transferSheet: TransferSheet?
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
     @State private var showingChangelog = false
@@ -53,6 +62,7 @@ struct SettingsView: View {
     @State private var supportSubject = "Support Request from Autheris User"
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false
+    @State private var showingAppLockUnavailable = false
     @State private var supportErrorMessage = ""
 
     private var appMarketingVersion: String {
@@ -91,109 +101,11 @@ struct SettingsView: View {
         }
     }
 
+    // `body` is split across four properties, in modifier order, because as
+    // one expression it was too long for the compiler to type-check in time
+    // (Xcode 26 gives up on it). Nothing here changes what the screen does.
     var body: some View {
-        Group {
-            #if os(macOS)
-            if presentation == .preferences {
-                macPreferencesBody
-            } else {
-                sheetBody
-            }
-            #else
-            sheetBody
-            #endif
-        }
-        // A change to any setting on this screen is what earns the review ask —
-        // see `ReviewPrompt.settingsChanged`.
-        //
-        // `onChange` does not fire for the values already present when the screen
-        // appears, so opening Settings is never itself "doing something", and
-        // flipping a toggle back and forth counts as the two changes it is.
-        //
-        // The iCloud sync toggle is deliberately absent from this list: it is a
-        // flow with its own dialogs rather than a plain preference, and the app
-        // itself can flip it when the account changes — which would be the app
-        // counting its own housekeeping as a user action.
-        .onChange(of: enablePrivacyBlur) { _, _ in settingsDidChange() }
-        .onChange(of: hideCodesInAppSwitcher) { _, _ in settingsDidChange() }
-        .onChange(of: hideCodesWhenScreenCaptured) { _, _ in settingsDidChange() }
-        .onChange(of: enableAppLock) { _, _ in settingsDidChange() }
-        .onChange(of: accentThemeRaw) { _, _ in settingsDidChange() }
-        // Shared by both containers, so it is attached outside the branch: the
-        // Help tab can trigger the same support error as the iPhone's Help section.
-        .alert(
-            "Support Email",
-            isPresented: $showingSupportError
-        ) {
-            Button("OK", role: .cancel) { showingSupportError = false }
-        } message: {
-            Text(supportErrorMessage)
-        }
-        .task {
-            // Re-check the iCloud account each time Settings opens, so a user who
-            // signed in while the app was running sees the toggle enabled.
-            await dataStore.refreshSyncAvailability()
-        }
-        .fileImporter(
-            isPresented: $showingImporter,
-            allowedContentTypes: [.json, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            handleImportedFile(result)
-        }
-        .alert(
-            Text(importMessage?.title ?? "Import"),
-            isPresented: Binding(
-                get: { importMessage != nil },
-                set: { if !$0 { importMessage = nil } }
-            ),
-            presenting: importMessage
-        ) { _ in
-            Button("OK") { importMessage = nil }
-        } message: { message in
-            Text(message.body)
-        }
-        .sheet(isPresented: $showingBackupView) {
-            BackupView(dataStore: dataStore)
-        }
-        .sheet(isPresented: $showingQRCodeView) {
-            if let exportData = dataStore.exportData() {
-                QRCodeView(data: exportData, title: "Export Tokens")
-            } else {
-                VStack(spacing: 20) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 50))
-                        .foregroundColor(.orange)
-                    
-                    Text("Unable to Generate QR Code")
-                        .font(.headline)
-                    
-                    Text("There was an error preparing your tokens for export.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                    
-                    Button("Dismiss") {
-                        showingQRCodeView = false
-                    }
-                    .padding(.top, 20)
-                }
-                .padding()
-            }
-        }
-        .sheet(isPresented: $showingChangelog) {
-            ChangelogView()
-        }
-        .sheet(isPresented: $showingRecentlyDeleted) {
-            RecentlyDeletedView(dataStore: dataStore)
-        }
-        .sheet(isPresented: $showingSupportMail) {
-            SupportMailComposer(
-                to: supportTo,
-                subject: supportSubject,
-                messageBody: supportBody
-            )
-        }
+        contentWithSheets
         .confirmationDialog(
             "Turn off iCloud Sync?",
             isPresented: $showingTeardownDialog,
@@ -230,6 +142,128 @@ struct SettingsView: View {
         } message: {
             Text(syncErrorMessage ?? "")
         }
+    }
+
+    /// `contentWithAlerts` with the sheets.
+    private var contentWithSheets: some View {
+        contentWithAlerts
+        .sheet(isPresented: $showingBackupView) {
+            BackupView(dataStore: dataStore)
+        }
+        .sheet(item: $transferSheet) { sheet in
+            if let link = sheet.link {
+                QRCodeView(link: link, title: "Export Tokens")
+            } else {
+                VStack(spacing: 20) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.orange)
+                    
+                    Text("Unable to Generate QR Code")
+                        .font(.headline)
+                    
+                    Text(transferUnavailableReason)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    
+                    Button("Dismiss") {
+                        transferSheet = nil
+                    }
+                    .padding(.top, 20)
+                }
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showingChangelog) {
+            ChangelogView()
+        }
+        .sheet(isPresented: $showingRecentlyDeleted) {
+            RecentlyDeletedView(dataStore: dataStore)
+        }
+        .sheet(isPresented: $showingSupportMail) {
+            SupportMailComposer(
+                to: supportTo,
+                subject: supportSubject,
+                messageBody: supportBody
+            )
+        }
+    }
+
+    /// `trackedContent` with the alerts, the iCloud refresh and the importer.
+    private var contentWithAlerts: some View {
+        trackedContent
+        // Shared by both containers, so it is attached outside the branch: the
+        // Help tab can trigger the same support error as the iPhone's Help section.
+        .alert(
+            "Support Email",
+            isPresented: $showingSupportError
+        ) {
+            Button("OK", role: .cancel) { showingSupportError = false }
+        } message: {
+            Text(supportErrorMessage)
+        }
+        .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
+        }
+        .task {
+            // Re-check the iCloud account each time Settings opens, so a user who
+            // signed in while the app was running sees the toggle enabled.
+            await dataStore.refreshSyncAvailability()
+        }
+        .fileImporter(
+            isPresented: $showingImporter,
+            allowedContentTypes: [.json, .plainText],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImportedFile(result)
+        }
+        .alert(
+            Text(importMessage?.title ?? "Import"),
+            isPresented: Binding(
+                get: { importMessage != nil },
+                set: { if !$0 { importMessage = nil } }
+            ),
+            presenting: importMessage
+        ) { _ in
+            Button("OK") { importMessage = nil }
+        } message: { message in
+            Text(message.body)
+        }
+    }
+
+    /// The screen for this platform, with the change tracking that earns the
+    /// review ask.
+    private var trackedContent: some View {
+        Group {
+            #if os(macOS)
+            if presentation == .preferences {
+                macPreferencesBody
+            } else {
+                sheetBody
+            }
+            #else
+            sheetBody
+            #endif
+        }
+        // A change to any setting on this screen is what earns the review ask —
+        // see `ReviewPrompt.settingsChanged`.
+        //
+        // `onChange` does not fire for the values already present when the screen
+        // appears, so opening Settings is never itself "doing something", and
+        // flipping a toggle back and forth counts as the two changes it is.
+        //
+        // The iCloud sync toggle is deliberately absent from this list: it is a
+        // flow with its own dialogs rather than a plain preference, and the app
+        // itself can flip it when the account changes — which would be the app
+        // counting its own housekeeping as a user action.
+        .onChange(of: enablePrivacyBlur) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesInAppSwitcher) { _, _ in settingsDidChange() }
+        .onChange(of: hideCodesWhenScreenCaptured) { _, _ in settingsDidChange() }
+        .onChange(of: enableAppLock) { _, _ in settingsDidChange() }
+        .onChange(of: accentThemeRaw) { _, _ in settingsDidChange() }
     }
 
     @ViewBuilder
@@ -289,7 +323,10 @@ struct SettingsView: View {
             do {
                 let data = try Data(contentsOf: url)
                 let tokens = try ExternalImportParser.parse(data: data)
-                let added = dataStore.addCodes(tokens).added
+                guard case .imported(let added, _) = dataStore.addCodes(tokens) else {
+                    importMessage = (String(localized: "Codes Unavailable"), OTPDataStore.vaultUnavailableMessage)
+                    return
+                }
 
                 guard added > 0 else {
                     importMessage = (
@@ -496,12 +533,19 @@ struct SettingsView: View {
 
     /// Turning App Lock on takes effect straight away; turning it off asks for
     /// authentication first, so a phone unlocked moments ago can't be stripped of it.
+    ///
+    /// It only turns on when the device can authenticate its owner. Without a
+    /// passcode the lock screen would have nothing to ask for.
     private var appLockToggleBinding: Binding<Bool> {
         Binding(
             get: { enableAppLock },
             set: { newValue in
                 guard !newValue else {
-                    enableAppLock = true
+                    if AppLockManager.canLock() {
+                        enableAppLock = true
+                    } else {
+                        showingAppLockUnavailable = true
+                    }
                     return
                 }
                 Task {
@@ -513,6 +557,14 @@ struct SettingsView: View {
                 }
             }
         )
+    }
+
+    /// Why there is no transfer QR code: the codes can't be read, or there are
+    /// more than one QR code holds even in the compact format.
+    private var transferUnavailableReason: String {
+        dataStore.isVaultLoaded
+            ? String(localized: "This export is too large for a single QR code. Use Backup from the menu to transfer your tokens as a file instead.")
+            : OTPDataStore.vaultUnavailableMessage
     }
 
     /// The App Lock switch's label.
@@ -650,7 +702,7 @@ struct SettingsView: View {
                     if await AppLockManager.reauthenticate(
                         reason: String(localized: "Authenticate to export your tokens.")
                     ) {
-                        showingQRCodeView = true
+                        transferSheet = TransferSheet(link: dataStore.transferLink())
                     }
                 }
             } label: {
@@ -907,4 +959,12 @@ private struct MailComposerRepresentable: UIViewControllerRepresentable {
 
 #Preview {
     SettingsView(dataStore: OTPDataStore())
+}
+
+/// What the transfer sheet shows: the link, or `nil` when there is none to show
+/// (see `OTPDataStore.transferLink()`). A fresh id each time, so each opening
+/// is its own presentation.
+private struct TransferSheet: Identifiable {
+    let id = UUID()
+    let link: String?
 }

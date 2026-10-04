@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
@@ -86,6 +87,44 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
 
     var currentCode: String { code(at: Date()) }
 
+    /// Whether `other` goes by the same name: label and account, ignoring case.
+    ///
+    /// Two codes with one name look like one token to a person, so this is what
+    /// every path that *introduces* a name — adding, importing, restoring from the
+    /// trash, renaming — checks before it does. It is never a filter on what is
+    /// stored: two codes can still arrive under one name from another device, and
+    /// dropping either would throw away a secret nobody else has.
+    func hasSameName(as other: OTPCode) -> Bool {
+        label.lowercased() == other.label.lowercased()
+            && account.lowercased() == other.account.lowercased()
+    }
+
+    /// Whether `other` is this token again — the same id, or the same name *and*
+    /// the same secret — rather than a different token that shares a name.
+    ///
+    /// Copies come from two devices adding the same setup code before they sync,
+    /// and they are the only duplicates it is safe to hide or delete together.
+    func isCopy(of other: OTPCode) -> Bool {
+        id == other.id || copyKey == other.copyKey
+    }
+
+    /// Equal for two codes with the same name and secret: `isCopy(of:)` without
+    /// the id, as a value that can go in a set.
+    ///
+    /// A hash rather than the joined text, because the text would hold the secret
+    /// under a name that doesn't say so — one log line away from a leak. Joined
+    /// with a control character no label or account contains first, so "a|b" +
+    /// "c" can't equal "a" + "b|c".
+    var copyKey: String {
+        let joined = [label.lowercased(), account.lowercased(), normalizedSecret].joined(separator: "\u{1F}")
+        return SHA256.hash(data: Data(joined.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// The secret as Base32 means it: case and spacing are presentation.
+    private var normalizedSecret: String {
+        secret.uppercased().filter { !$0.isWhitespace }
+    }
+
     /// The code shown at `now`. A counter-based code ignores the time.
     func code(at now: Date) -> String {
         switch kind {
@@ -142,14 +181,17 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     /// without failing the whole decode. `algorithm`, `digits`, `period`, `kind`,
     /// `counter`, `timerRingHex` and `isPinned` are tolerated as missing for the
     /// same reason: a key added by a later release must not make an existing vault
-    /// unreadable.
+    /// unreadable. `algorithm` and `kind` also tolerate a value they don't know.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
         label = try container.decode(String.self, forKey: .label)
         account = try container.decode(String.self, forKey: .account)
         secret = try container.decode(String.self, forKey: .secret)
-        algorithm = try container.decodeIfPresent(OTPAlgorithm.self, forKey: .algorithm) ?? .sha1
+        // Read as a string and matched, rather than decoded as the enum, for the
+        // same reason as `kind` below: one value this build has never heard of
+        // would otherwise fail the decode of every code in the vault.
+        algorithm = OTPAlgorithm(rawValue: try container.decodeIfPresent(String.self, forKey: .algorithm) ?? "") ?? .sha1
         digits = try container.decodeIfPresent(Int.self, forKey: .digits) ?? 6
         period = try container.decodeIfPresent(Int.self, forKey: .period) ?? 30
         // Absent on every token written before counter-based codes existed, which is

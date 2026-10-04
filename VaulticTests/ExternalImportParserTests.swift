@@ -213,6 +213,38 @@ final class ExternalImportParserTests: XCTestCase {
         XCTAssertEqual(try parse(json).count, 0)
     }
 
+    func testTwoFasReadsTheAccountSoTwoAccountsAtOneServiceBothImport() throws {
+        // 2FAS keeps the account (and the issuer) inside `otp`. Reading neither made
+        // every entry `name` with no account, so a second Google account was the
+        // "same token" and was dropped before the import could even count it.
+        let json = """
+        {
+          "services": [
+            { "name": "Google", "secret": "\(secret)",
+              "otp": { "account": "alice@example.com", "issuer": "Google", "tokenType": "TOTP" } },
+            { "name": "Google", "secret": "JBSWY3DPEHPK3PXQ",
+              "otp": { "account": "bob@example.com", "issuer": "Google", "tokenType": "TOTP" } }
+          ]
+        }
+        """
+
+        let tokens = try parse(json)
+
+        XCTAssertEqual(tokens.map(\.label), ["Google", "Google"])
+        XCTAssertEqual(tokens.map(\.account), ["alice@example.com", "bob@example.com"])
+    }
+
+    func testTwoFasFallsBackToTheServiceNameWithoutAnIssuer() throws {
+        let json = """
+        { "services": [ { "name": "Example", "secret": "\(secret)", "otp": {} } ] }
+        """
+
+        let tokens = try parse(json)
+
+        XCTAssertEqual(tokens.first?.label, "Example")
+        XCTAssertEqual(tokens.first?.account, "")
+    }
+
     // MARK: - Shared behaviour
 
     func testASecretTooShortToBeValidIsSkipped() throws {

@@ -3,7 +3,8 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 
 struct QRCodeView: View {
-    let data: Data
+    /// The `autheris://import` link to draw, from `TransferPayload`.
+    let link: String
     /// `LocalizedStringKey` because the only thing done with it is
     /// `.navigationTitle(title)`, which looks the value up only when it is a key.
     let title: LocalizedStringKey
@@ -104,34 +105,13 @@ struct QRCodeView: View {
     }
     
     private func generateQRCode() {
-        let payloadData = data
+        let messageData = Data(link.utf8)
         DispatchQueue.global(qos: .userInitiated).async {
             let context = CIContext()
             let filter = CIFilter.qrCodeGenerator()
+            // `TransferPayload.maximumQRBytes` is this level's capacity; keep the two
+            // in step.
             filter.setValue("L", forKey: "inputCorrectionLevel")
-            
-            let base64String = payloadData.base64EncodedString()
-            let encodedBase64String = base64String
-                .replacingOccurrences(of: "+", with: "-")
-                .replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: "=", with: "")
-            
-            let urlString = "autheris://import?data=\(encodedBase64String)"
-            
-            let messageData: Data?
-            if let qrData = urlString.data(using: .utf8) {
-                messageData = qrData
-            } else {
-                messageData = payloadData
-            }
-            
-            guard let messageData else {
-                DispatchQueue.main.async {
-                    generationError = String(localized: "The export data could not be encoded for a QR code.")
-                }
-                return
-            }
-            
             filter.message = messageData
             
             guard let outputImage = filter.outputImage else {

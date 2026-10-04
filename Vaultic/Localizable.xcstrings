@@ -715,6 +715,46 @@
         }
       }
     },
+    "A token with this service name and account is already on this device.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Code mit diesem Dienstnamen und Konto ist bereits auf diesem Gerät."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya hay un código con este nombre de servicio y esta cuenta en este dispositivo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un code avec ce nom de service et ce compte existe déjà sur cet appareil."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このサービス名とアカウントのコードはすでにこの端末にあります。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Já existe um código com este nome de serviço e esta conta neste dispositivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上已有使用该服务名称和账户的验证码。"
+          }
+        }
+      }
+    },
     "About": {
       "localizations": {
         "de-DE": {
@@ -831,46 +871,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "账户密钥"
-          }
-        }
-      }
-    },
-    "Add Authentication Token": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Authentifizierungs-Code hinzufügen"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Añadir código de autenticación"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ajouter un code d'authentification"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "認証コードを追加"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Adicionar código de autenticação"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "添加验证码"
           }
         }
       }
@@ -1233,124 +1233,6 @@
         }
       }
     },
-    "All %lld tokens in this export already exist on your device.": {
-      "localizations": {
-        "de-DE": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Code aus diesem Export ist bereits auf Ihrem Gerät vorhanden."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Alle %lld Codes aus diesem Export sind bereits auf Ihrem Gerät vorhanden."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "All %lld token in this export already exist on your device."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "All %lld tokens in this export already exist on your device."
-                }
-              }
-            }
-          }
-        },
-        "es-ES": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código de esta exportación ya existe en tu dispositivo."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Los %lld códigos de esta exportación ya existen en tu dispositivo."
-                }
-              }
-            }
-          }
-        },
-        "fr-FR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld code de cet export existe déjà sur votre appareil."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Les %lld codes de cet export existent déjà sur votre appareil."
-                }
-              }
-            }
-          }
-        },
-        "ja": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "このエクスポートの %lld 件のコードはすでに端末にあります。"
-                }
-              }
-            }
-          }
-        },
-        "pt-BR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código desta exportação já existe no seu dispositivo."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Todos os %lld códigos desta exportação já existem no seu dispositivo."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "这个导出文件中的 %lld 个账户都已在你的设备上。"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "All %lld tokens in this import already exist on your device.": {
       "localizations": {
         "de-DE": {
@@ -1669,6 +1551,126 @@
         }
       }
     },
+    "Another token already uses this service name and account. Choose a different name.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein anderer Code verwendet bereits diesen Dienstnamen und dieses Konto. Wählen Sie einen anderen Namen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otro código ya usa este nombre de servicio y esta cuenta. Elige otro nombre."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un autre code utilise déjà ce nom de service et ce compte. Choisissez un autre nom."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このサービス名とアカウントはすでに別のコードで使われています。別の名前を選んでください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Outro código já usa este nome de serviço e esta conta. Escolha outro nome."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "另一个验证码已在使用该服务名称和账户。请换一个名称。"
+          }
+        }
+      }
+    },
+    "App Lock Unavailable": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Sperre nicht verfügbar"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueo de la app no disponible"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillage de l'app indisponible"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックを使用できません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueio do app indisponível"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 锁定不可用"
+          }
+        }
+      }
+    },
+    "App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die App-Sperre braucht einen Code oder ein Passwort auf diesem Gerät, um Autheris zu entsperren. Richten Sie eines ein und schalten Sie die App-Sperre dann erneut ein."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El bloqueo de la app necesita un código o una contraseña en este dispositivo para desbloquear Autheris. Configura uno y vuelve a activar el bloqueo de la app."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le verrouillage de l'app nécessite un code ou un mot de passe sur cet appareil pour déverrouiller Autheris. Configurez-en un, puis réactivez le verrouillage de l'app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリロックで Autheris のロックを解除するには、この端末にパスコードまたはパスワードが必要です。設定してから、もう一度アプリロックをオンにしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O bloqueio do app precisa de um código ou uma senha neste dispositivo para desbloquear o Autheris. Configure um e ative o bloqueio do app novamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 锁定需要此设备设置了密码才能解锁 Autheris。请先设置密码，然后再次开启 App 锁定。"
+          }
+        }
+      }
+    },
     "Appearance": {
       "localizations": {
         "de-DE": {
@@ -1951,6 +1953,46 @@
     },
     "Autheris": {
       "shouldTranslate": false
+    },
+    "Autheris can't read your codes from the Keychain right now. They haven't been changed, and nothing will be saved until they can be read.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris kann Ihre Codes gerade nicht aus dem Schlüsselbund lesen. Sie wurden nicht verändert, und es wird nichts gespeichert, bis sie wieder gelesen werden können."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris no puede leer tus códigos del llavero en este momento. No se han modificado y no se guardará nada hasta que se puedan leer."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris ne peut pas lire vos codes depuis le trousseau pour le moment. Ils n'ont pas été modifiés, et rien ne sera enregistré tant qu'ils ne pourront pas être lus."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris は現在キーチェーンからコードを読み取れません。コードは変更されておらず、読み取れるようになるまで何も保存されません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Autheris não consegue ler seus códigos das Chaves no momento. Eles não foram alterados, e nada será salvo até que possam ser lidos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 目前无法从钥匙串读取你的验证码。它们没有被更改，在能够读取之前不会保存任何内容。"
+          }
+        }
+      }
     },
     "Automatic (service color)": {
       "localizations": {
@@ -2872,6 +2914,46 @@
         }
       }
     },
+    "Codes Unavailable": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes nicht verfügbar"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos no disponibles"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes indisponibles"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを利用できません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos indisponíveis"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验证码不可用"
+          }
+        }
+      }
+    },
     "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.": {
       "localizations": {
         "de-DE": {
@@ -3588,6 +3670,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法添加账户"
+          }
+        }
+      }
+    },
+    "Couldn't Start Over": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neubeginn nicht möglich"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo empezar de nuevo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible de recommencer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やり直せませんでした"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível recomeçar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法重新开始"
           }
         }
       }
@@ -5310,46 +5432,6 @@
         }
       }
     },
-    "Failed to parse import data. The QR code may be corrupted.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Importdaten konnten nicht gelesen werden. Der QR-Code ist möglicherweise beschädigt."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No se pudieron interpretar los datos de importación. Puede que el código QR esté dañado."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Impossible de lire les données d'import. Le QR code est peut-être corrompu."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込みデータを解析できませんでした。QR コードが破損している可能性があります。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Não foi possível ler os dados da importação. O QR code pode estar corrompido."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法解析导入数据。二维码可能已损坏。"
-          }
-        }
-      }
-    },
     "Fetch service logos": {
       "localizations": {
         "de-DE": {
@@ -6348,86 +6430,6 @@
         }
       }
     },
-    "Invalid OTP URL": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige OTP-URL"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP no válida"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP non valide"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP URL が無効です"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL OTP inválida"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP 链接无效"
-          }
-        }
-      }
-    },
-    "Invalid import URL. Could not extract data.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültige Import-URL. Daten konnten nicht extrahiert werden."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL de importación no válida. No se pudieron extraer los datos."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL d'import non valide. Impossible d'extraire les données."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "読み込み URL が無効です。データを取り出せませんでした。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL de importação inválida. Não foi possível extrair os dados."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导入链接无效，无法提取数据。"
-          }
-        }
-      }
-    },
     "Invalid secret key in QR code. Please enter manually.": {
       "localizations": {
         "de-DE": {
@@ -6464,46 +6466,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "二维码中的密钥无效，请手动输入。"
-          }
-        }
-      }
-    },
-    "Invalid secret key in the URL.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ungültiger Schlüssel in der URL."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clave secreta no válida en la URL."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Clé secrète non valide dans l'URL."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "URL 内のシークレットキーが無効です。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chave secreta inválida na URL."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "链接中的密钥无效。"
           }
         }
       }
@@ -8268,42 +8230,42 @@
         }
       }
     },
-    "Restoring will replace all current tokens with the backup. This cannot be undone.": {
+    "Restoring will replace all current tokens with the backup. Tokens that aren't in the backup move to Recently Deleted.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beim Wiederherstellen werden alle aktuellen Codes durch die Sicherung ersetzt. Das kann nicht rückgängig gemacht werden."
+            "value": "Beim Wiederherstellen werden alle aktuellen Codes durch die Sicherung ersetzt. Codes, die nicht in der Sicherung sind, werden nach „Zuletzt gelöscht“ verschoben."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Al restaurar se reemplazarán todos los códigos actuales por los de la copia. Esta acción no se puede deshacer."
+            "value": "Al restaurar se reemplazarán todos los códigos actuales por los de la copia. Los códigos que no estén en la copia pasarán a Eliminados recientemente."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "La restauration remplacera tous les codes actuels par ceux de la sauvegarde. Cette action est irréversible."
+            "value": "La restauration remplacera tous les codes actuels par ceux de la sauvegarde. Les codes absents de la sauvegarde seront déplacés dans Supprimés récemment."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "復元すると現在のコードはすべてバックアップの内容に置き換わります。この操作は取り消せません。"
+            "value": "復元すると現在のコードはすべてバックアップの内容に置き換わります。バックアップにないコードは「最近削除した項目」に移動します。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "A restauração substituirá todos os códigos atuais pelos do backup. Isso não pode ser desfeito."
+            "value": "A restauração substituirá todos os códigos atuais pelos do backup. Os códigos que não estiverem no backup irão para Excluídos recentemente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "恢复会用备份中的账户替换当前全部账户，此操作无法撤销。"
+            "value": "恢复会用备份中的账户替换当前全部账户。备份中没有的账户会移到“最近删除”。"
           }
         }
       }
@@ -8908,6 +8870,46 @@
         }
       }
     },
+    "Set Aside and Start Over": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beiseitelegen und neu beginnen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apartar y empezar de nuevo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mettre de côté et recommencer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別に保管してやり直す"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixar de lado e recomeçar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "另行保存并重新开始"
+          }
+        }
+      }
+    },
     "Settings": {
       "localizations": {
         "de-DE": {
@@ -9308,6 +9310,46 @@
         }
       }
     },
+    "Start Over?": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu beginnen?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Empezar de nuevo?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recommencer ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "やり直しますか？"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recomeçar?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要重新开始吗？"
+          }
+        }
+      }
+    },
     "Start securing your accounts. Your codes stay on your device.": {
       "localizations": {
         "de-DE": {
@@ -9384,124 +9426,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "保存在钥匙串中"
-          }
-        }
-      }
-    },
-    "Successfully imported %lld tokens.": {
-      "localizations": {
-        "de-DE": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Code erfolgreich importiert."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld Codes erfolgreich importiert."
-                }
-              }
-            }
-          }
-        },
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Successfully imported %lld token."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Successfully imported %lld tokens."
-                }
-              }
-            }
-          }
-        },
-        "es-ES": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Se ha importado %lld código correctamente."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "Se han importado %lld códigos correctamente."
-                }
-              }
-            }
-          }
-        },
-        "fr-FR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld code importé avec succès."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld codes importés avec succès."
-                }
-              }
-            }
-          }
-        },
-        "ja": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld 件のコードを読み込みました。"
-                }
-              }
-            }
-          }
-        },
-        "pt-BR": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld código importado com sucesso."
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld códigos importados com sucesso."
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans": {
-          "variations": {
-            "plural": {
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "已成功导入 %lld 个账户。"
-                }
-              }
-            }
           }
         }
       }
@@ -9786,42 +9710,42 @@
         }
       }
     },
-    "The export data could not be encoded for a QR code.": {
+    "The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Exportdaten konnten nicht in einen QR-Code kodiert werden."
+            "value": "Die auf diesem Gerät gespeicherten Codes können von dieser Version von Autheris nicht gelesen werden. Sie wurden nicht verändert. Sie können sie beiseitelegen und neu beginnen und dann eine Sicherung in den Einstellungen wiederherstellen – oder sie bei aktivierter iCloud-Synchronisierung von Ihren anderen Geräten zurückholen lassen."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "No se han podido codificar los datos de exportación en un código QR."
+            "value": "Esta versión de Autheris no puede leer los códigos guardados en este dispositivo. No se han modificado. Puedes apartarlos y empezar de nuevo, y después restaurar una copia desde Ajustes o, con la sincronización con iCloud activada, dejar que tus otros dispositivos los recuperen."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Les données d'export n'ont pas pu être encodées dans un QR code."
+            "value": "Cette version d'Autheris ne peut pas lire les codes enregistrés sur cet appareil. Ils n'ont pas été modifiés. Vous pouvez les mettre de côté et repartir de zéro, puis restaurer une sauvegarde depuis Réglages, ou, avec la synchronisation iCloud activée, laisser vos autres appareils les rapatrier."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "書き出しデータを QR コードに変換できませんでした。"
+            "value": "この端末に保存されているコードは、このバージョンの Autheris では読み取れません。コードは変更されていません。コードを別に保管してやり直し、設定からバックアップを復元できます。iCloud 同期がオンなら、ほかの端末からコードを戻すこともできます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Os dados de exportação não puderam ser codificados em um QR code."
+            "value": "Esta versão do Autheris não consegue ler os códigos salvos neste dispositivo. Eles não foram alterados. Você pode deixá-los de lado e recomeçar, depois restaurar um backup em Ajustes — ou, com a sincronização com o iCloud ativada, deixar que seus outros dispositivos os tragam de volta."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无法把导出数据编码为二维码。"
+            "value": "此版本的 Autheris 无法读取存储在此设备上的验证码。它们没有被更改。你可以将它们另行保存并重新开始，然后在“设置”中恢复备份；如果开启了 iCloud 同步，也可以让其他设备将验证码同步回来。"
           }
         }
       }
@@ -9866,42 +9790,82 @@
         }
       }
     },
-    "There was an error preparing your tokens for export.": {
+    "The unreadable codes couldn't be set aside, so nothing was changed.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Beim Vorbereiten Ihrer Codes für den Export ist ein Fehler aufgetreten."
+            "value": "Die nicht lesbaren Codes konnten nicht beiseitegelegt werden, daher wurde nichts verändert."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ha habido un error al preparar tus códigos para exportarlos."
+            "value": "No se pudieron apartar los códigos ilegibles, así que no se ha cambiado nada."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une erreur est survenue lors de la préparation de vos codes pour l'export."
+            "value": "Les codes illisibles n'ont pas pu être mis de côté ; rien n'a donc été modifié."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "コードの書き出し準備中にエラーが発生しました。"
+            "value": "読み取れないコードを別に保管できなかったため、何も変更されていません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ocorreu um erro ao preparar seus códigos para exportação."
+            "value": "Não foi possível deixar de lado os códigos ilegíveis, então nada foi alterado."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "准备导出账户时出错。"
+            "value": "无法另行保存无法读取的验证码，因此未做任何更改。"
+          }
+        }
+      }
+    },
+    "The unreadable codes stay on this device, kept apart from the codes Autheris uses, and Autheris starts with none. Apple Watch keeps its codes until the next change here.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die nicht lesbaren Codes bleiben auf diesem Gerät, getrennt von den Codes, die Autheris verwendet, und Autheris beginnt ohne Codes. Die Apple Watch behält ihre Codes bis zur nächsten Änderung hier."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos ilegibles se quedan en este dispositivo, separados de los que usa Autheris, y Autheris empieza sin ninguno. El Apple Watch conserva sus códigos hasta el próximo cambio aquí."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes illisibles restent sur cet appareil, à l'écart des codes qu'utilise Autheris, et Autheris repart sans aucun code. L'Apple Watch conserve ses codes jusqu'à la prochaine modification ici."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み取れないコードは、Autheris が使用するコードとは別にこの端末に残り、Autheris はコードがない状態から始まります。Apple Watch のコードは、ここで次に変更があるまでそのまま残ります。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os códigos ilegíveis ficam neste dispositivo, separados dos códigos que o Autheris usa, e o Autheris começa sem nenhum. O Apple Watch mantém seus códigos até a próxima alteração aqui."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取的验证码会保留在此设备上，与 Autheris 使用的验证码分开存放，Autheris 将从零开始。Apple Watch 上的验证码会保留到此处下次更改为止。"
           }
         }
       }
@@ -11542,46 +11506,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你扫描的二维码中包含验证码，要导入吗？"
-          }
-        }
-      }
-    },
-    "You've scanned an OTP QR code. Would you like to add this authentication token to your vault?": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sie haben einen OTP-QR-Code gescannt. Möchten Sie diesen Authentifizierungs-Code hinzufügen?"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Has escaneado un código QR OTP. ¿Quieres añadir este código de autenticación a tu lista?"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous avez scanné un QR code OTP. Voulez-vous ajouter ce code d'authentification à votre liste ?"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OTP QR コードを読み取りました。この認証コードを追加しますか？"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Você escaneou um QR code OTP. Deseja adicionar este código de autenticação à sua lista?"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你扫描了一个 OTP 二维码，要把这个验证码添加到账户列表吗？"
           }
         }
       }
