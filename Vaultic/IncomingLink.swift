@@ -1,7 +1,7 @@
 import Foundation
 
-/// What an `autheris://import`, `otpauth://` or `otpauth-migration://` link
-/// carries, decoded but not yet acted on.
+/// What an `autheris://import`, `autheris://add`, `otpauth://` or
+/// `otpauth-migration://` link carries, decoded but not yet acted on.
 ///
 /// Any installed app, and any web page the user agrees to open, can hand Autheris
 /// one of these links. So parsing one must never touch the vault: the codes it
@@ -24,6 +24,8 @@ nonisolated enum IncomingLink: Equatable {
             return parseMigration(url)
         case "autheris" where url.host?.lowercased() == "import":
             return parseAutherisImport(url)
+        case "autheris" where url.host?.lowercased() == "add":
+            return parseAutherisAdd(url)
         default:
             return nil
         }
@@ -103,6 +105,27 @@ nonisolated enum IncomingLink: Equatable {
             )
         }
         return .tokens(tokens)
+    }
+
+    /// `autheris://add?uri=<otpauth link>`: one code, offered by another app.
+    ///
+    /// This is the public format AutherisKit opens, so it is kept to the standard
+    /// `otpauth://` link rather than the app's own JSON. It exists because iOS sends a
+    /// bare `otpauth://` link to whichever authenticator claims the scheme; wrapping
+    /// it is how an "Add to Autheris" button reaches Autheris. It is reviewed like
+    /// any other link: this only decodes.
+    private static func parseAutherisAdd(_ url: URL) -> IncomingLink {
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        guard let uri = items.first(where: { $0.name == "uri" })?.value,
+              let inner = URL(string: uri),
+              inner.scheme?.lowercased() == "otpauth"
+        else {
+            return .failure(
+                title: String(localized: "Couldn't Add Code"),
+                message: String(localized: "That verification-code link isn't in the expected otpauth format.")
+            )
+        }
+        return parseOTPAuth(inner)
     }
 
     /// An Autheris export is either the current `ExportData` envelope or, from
