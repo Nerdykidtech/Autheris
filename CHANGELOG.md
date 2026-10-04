@@ -15,6 +15,34 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [3.1] — October 2026
+
+A reliability release, mostly for iCloud sync and counter-based codes.
+
+### Security
+
+- Delete Tokens from iCloud now waits for any sync already running and lets no new one start until it's done. A sync that had read your codes just before the delete could upload them all again straight afterwards, while the delete reported success. Tapping it twice now runs one delete, and Settings shows "Deleting from iCloud…" while it works. A record another device had already deleted no longer makes the delete report a failure, and records that failed to load are deleted too.
+- The dialog for deleting from iCloud now says to turn off iCloud Sync on your other devices first. Deleting from iCloud doesn't reach into them, and any device that still has sync on uploads its codes again.
+
+### Fixed
+
+- A counter-based (HOTP) code never goes back to a counter you've already used. Syncing, editing, restoring a backup, and a sync that had to retry because another device wrote first all keep the higher counter. Each lower one is a code that has been shown and may already have been accepted.
+- An edit made while a sync is running is no longer undone when the sync finishes.
+- Editing a code, or its setup key, now changes only what you changed, applied to the code as it is now. A rename, pin or counter change from another device while the screen was open is no longer overwritten.
+- Restoring a backup that lists the same code twice no longer makes Autheris quit at the next sync. Repeats are dropped, and backups are written without them.
+- Apple Watch no longer stops updating after your iPhone's clock was set ahead. It used to ignore every list sent after the clock was corrected, so deleted codes stayed on the watch.
+- Codes with unusual settings, such as a 10-second period or 5 digits, keep them when you edit the code or fix a scanned setup key by hand. They used to be changed to fit the steppers, which changed every code. The period now steps through multiples of 15 seconds from any value, and the steppers stop at their ends instead of overflowing.
+- iOS no longer offers to save a setup key as a password.
+- An encrypted backup whose password has accented letters now opens however those letters were typed.
+- An import file with no codes in it now says so. Google Authenticator exports with very large counters import correctly.
+- The lock screen only offers Face ID or Touch ID when it's available, and says "Unlock" otherwise.
+- iCloud sync status, and several messages that were English everywhere, now appear in your language.
+- iCloud sync status no longer reads "not configured for iCloud" for ordinary errors, and recognises CloudKit's messages in any language.
+- Setup links keep a literal percent sign in the issuer's name.
+- Service icons are kept in memory and fetched only for codes on screen.
+
+- Your codes, iCloud sync and settings are exactly where you left them.
+
 ## [3.0] — October 2026
 
 2.9 was submitted for review but withdrawn before release, and its changes ship here instead. Nobody received 2.9, so they're listed under 3.0.

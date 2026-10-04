@@ -55,6 +55,23 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "3.1",
+            version: "3.1",
+            date: "October 2026",
+            changes: [
+                "A counter-based code never goes back to a code you've already used — not when syncing, editing or restoring a backup.",
+                "An edit made while iCloud sync is running is no longer undone, and editing a code changes only what you changed, so a rename made on another device isn't overwritten.",
+                "Delete Tokens from iCloud now waits for any sync in progress, so your codes can't be uploaded again straight afterwards, and shows that it's working. It also reminds you to turn off iCloud Sync on your other devices first.",
+                "Apple Watch no longer stops updating after your iPhone's clock was set ahead.",
+                "Restoring a backup that lists the same code twice no longer makes Autheris quit.",
+                "Codes with unusual settings, such as a 10-second period or 5 digits, keep them when you edit them, and the period steps in 15-second increments from any value.",
+                "iOS no longer offers to save a setup key as a password.",
+                "Encrypted backups whose password has accented letters now open on any device, and an import file with no codes in it now says so.",
+                "iCloud sync status and messages now appear in your language, and Face ID or Touch ID is only offered on the lock screen when it's available.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "3.0",
             version: "3.0",
             date: "October 2026",
