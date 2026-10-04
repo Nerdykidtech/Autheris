@@ -8,6 +8,11 @@ import Security
 /// Turning App Lock on with no passcode used to work, and the lock screen then
 /// had nothing to ask for: every launch stopped there for good. A fake context
 /// stands in for the device, so the cases that need a passcode removed can run.
+///
+/// A test that makes and drops its own manager is `async` even when it awaits
+/// nothing. On iOS 26, freeing a main-actor object inside a synchronous test
+/// method crashes the Swift runtime (`swift_task_deinitOnExecutor` frees a
+/// task-local scope it never allocated); the same release inside a task is fine.
 @MainActor
 final class AppLockManagerTests: XCTestCase {
 
@@ -71,7 +76,7 @@ final class AppLockManagerTests: XCTestCase {
 
     // MARK: - No passcode
 
-    func testWithNoPasscodeTheLockScreenLetsTheOwnerInAndTurnsAppLockOff() {
+    func testWithNoPasscodeTheLockScreenLetsTheOwnerInAndTurnsAppLockOff() async {
         let lock = manager(.passcodeNotSet)
         XCTAssertTrue(lock.isLocked)
 
@@ -98,7 +103,7 @@ final class AppLockManagerTests: XCTestCase {
 
     // MARK: - Everything else stays locked
 
-    func testAnyOtherReasonKeepsTheLockAndSaysWhy() {
+    func testAnyOtherReasonKeepsTheLockAndSaysWhy() async {
         let lock = manager(.unavailable(.biometryNotAvailable))
 
         lock.authenticate()

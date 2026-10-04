@@ -7,6 +7,11 @@ import Security
 /// `SyncMergeEngineTests` covers the merge itself; these cover what happens
 /// after it, including edits that land while a sync is in flight. A fake
 /// `TokenSyncService` stands in for CloudKit and can run code mid-sync.
+///
+/// A test that makes and drops its own store is `async` even when it awaits
+/// nothing. On iOS 26, freeing a main-actor object inside a synchronous test
+/// method crashes the Swift runtime (`swift_task_deinitOnExecutor` frees a
+/// task-local scope it never allocated); the same release inside a task is fine.
 @MainActor
 final class OTPDataStoreSyncTests: XCTestCase {
 
@@ -253,7 +258,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
     // MARK: - Codes that share a name
 
-    func testTwoCodesThatOnlyShareANameAreBothSavedAndShown() throws {
+    func testTwoCodesThatOnlyShareANameAreBothSavedAndShown() async throws {
         // Two different secrets under one name — what arrives when two devices
         // each added a different account under the same label. Saving used to keep
         // only the first, which lost the other secret for good.
@@ -343,7 +348,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
     // MARK: - A vault that can't be read
 
-    func testAVaultThatWontDecodeIsLeftAloneAndEditsAreRefused() {
+    func testAVaultThatWontDecodeIsLeftAloneAndEditsAreRefused() async {
         // Present but unreadable — corruption, or a field from a newer build. The
         // first edit used to save `[]` over it.
         let stored = Data("not a list of codes".utf8)
@@ -362,7 +367,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(KeychainStore.load(account: "otpCodes"), stored)
     }
 
-    func testUnreadableCodesCanBeSetAsideToStartOver() throws {
+    func testUnreadableCodesCanBeSetAsideToStartOver() async throws {
         let setAsideAccount = OTPDataStore.setAsideAccount
         let previouslySetAside = KeychainStore.load(account: setAsideAccount)
         defer {
@@ -399,7 +404,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(KeychainStore.load(account: setAsideAccount), newer)
     }
 
-    func testALockedVaultIsNeverSetAside() {
+    func testALockedVaultIsNeverSetAside() async {
         // Locked is not unreadable: it sorts itself out, and setting codes aside
         // then would start over for nothing.
         let locked = OTPDataStore(syncService: FakeTokenSyncService(), watchRelay: DisabledWatchTokenRelay()) { _ in
@@ -426,7 +431,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
                        "without its tombstones, a local delete would look like a code to bring back")
     }
 
-    func testAnUnreadableTrashDoesNotHoldUpTheCodesAndIsNotWrittenOver() throws {
+    func testAnUnreadableTrashDoesNotHoldUpTheCodesAndIsNotWrittenOver() async throws {
         let existing = token("GitHub")
         XCTAssertTrue(KeychainStore.save(try JSONEncoder().encode([existing]), account: "otpCodes"))
         let storedTrash = Data("whatever the trash still holds".utf8)
