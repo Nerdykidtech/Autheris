@@ -21,15 +21,18 @@ nonisolated enum CloudSyncStatus: Equatable {
     /// Something else went wrong.
     case failed(String)
 
+    /// `String(localized:)` throughout, here and in `detail`: these reach the
+    /// Settings row as `String`s, which `Text` shows as they are, so plain
+    /// literals shipped in English in every language.
     var title: String {
         switch self {
-        case .disabled: return "iCloud Sync Off"
-        case .syncing: return "Syncing…"
-        case .synced: return "Synced"
-        case .waitingForNetwork: return "Sync Paused"
-        case .accountUnavailable: return "Sign in to iCloud"
-        case .unavailable: return "Sync unavailable"
-        case .failed: return "Sync error"
+        case .disabled: return String(localized: "iCloud Sync Off")
+        case .syncing: return String(localized: "Syncing…")
+        case .synced: return String(localized: "Synced")
+        case .waitingForNetwork: return String(localized: "Sync Paused")
+        case .accountUnavailable: return String(localized: "Sign in to iCloud")
+        case .unavailable: return String(localized: "Sync unavailable")
+        case .failed: return String(localized: "Sync error")
         }
     }
 
@@ -37,18 +40,18 @@ nonisolated enum CloudSyncStatus: Equatable {
     var detail: String? {
         switch self {
         case .disabled:
-            return "Tokens are stored only on this device."
+            return String(localized: "Tokens are stored only on this device.")
         case .syncing:
             return nil
         case .synced(let date):
-            guard let date else { return "Waiting for first sync" }
+            guard let date else { return String(localized: "Waiting for first sync") }
             let formatter = RelativeDateTimeFormatter()
             formatter.unitsStyle = .full
-            return "Last updated \(formatter.localizedString(for: date, relativeTo: Date()))"
+            return String(localized: "Last updated \(formatter.localizedString(for: date, relativeTo: Date()))")
         case .waitingForNetwork:
-            return "Will retry automatically. Changes are saved on this device."
+            return String(localized: "Will retry automatically. Changes are saved on this device.")
         case .accountUnavailable:
-            return "Sign in to iCloud in Settings to sync across your devices."
+            return String(localized: "Sign in to iCloud in Settings to sync across your devices.")
         case .unavailable(let reason):
             return reason
         case .failed(let message):

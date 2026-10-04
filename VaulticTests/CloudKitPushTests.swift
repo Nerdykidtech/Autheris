@@ -69,6 +69,31 @@ final class CloudKitPushTests: XCTestCase {
         XCTAssertEqual(retried.encryptedValues[CloudKitTokenSyncService.Field.label] as? String, "Ours")
     }
 
+    func testARetryNeverWritesALowerCounterOverAHigherOne() async throws {
+        // Ours is the newer edit (a rename), but another device spent two codes
+        // and wrote first. Last-write-wins alone would put the server back on 3.
+        let ours = OTPCode(id: id, label: "Bank (personal)", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                           kind: .hotp, counter: 3, modifiedAt: Date(timeIntervalSince1970: 2_000))
+        let theirs = OTPCode(id: id, label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 5, modifiedAt: Date(timeIntervalSince1970: 1_000))
+        let serverRecord = CloudKitTokenSyncService.encode(.live(theirs))
+        let database = FakeCloudDatabase { records, call in
+            Dictionary(uniqueKeysWithValues: records.map {
+                ($0.recordID, call == 1 ? .failure(self.conflict(serverRecord)) : .success($0))
+            })
+        }
+
+        let adopted = try await CloudKitTokenSyncService.push([.live(ours)], onto: [:], using: database)
+
+        let retried = try XCTUnwrap(database.calls.last?.records.first)
+        XCTAssertEqual(database.calls.count, 2)
+        XCTAssertEqual((retried[CloudKitTokenSyncService.Field.counter] as? NSNumber)?.uint64Value, 5)
+        XCTAssertEqual(retried.encryptedValues[CloudKitTokenSyncService.Field.label] as? String, "Bank (personal)")
+        // This device holds counter 3, so the settled copy comes back to be applied.
+        XCTAssertEqual(adopted.map { $0.token?.counter }, [5])
+        XCTAssertEqual(adopted.map { $0.token?.label }, ["Bank (personal)"])
+    }
+
     // MARK: - Tombstones
 
     func testATombstoneWrittenOntoTheFetchedRecordClearsItsSecrets() async throws {
@@ -140,5 +165,32 @@ private final class FakeCloudDatabase: CloudRecordSaving, @unchecked Sendable {
                        deleteResults: [CKRecord.ID: Result<Void, any Error>]) {
         calls.append((recordsToSave, savePolicy))
         return (respond(recordsToSave, calls.count), [:])
+    }
+}
+
+/// Which CloudKit errors count as "this record type doesn't exist yet", which a
+/// fetch reads as "no records". Too loose, and a failed read looks like an empty
+/// iCloud — so "Delete from iCloud" deletes nothing and says it worked.
+@MainActor
+final class CloudKitMissingRecordTypeTests: XCTestCase {
+
+    func testTheServersOwnWordingCounts() {
+        let error = CKError(.invalidArguments,
+                            userInfo: [NSDebugDescriptionErrorKey: "Did not find record type: AutherisToken"])
+        XCTAssertTrue(CloudKitTokenSyncService.isMissingRecordType(error))
+    }
+
+    func testAnUnknownItemCounts() {
+        XCTAssertTrue(CloudKitTokenSyncService.isMissingRecordType(CKError(.unknownItem)))
+    }
+
+    func testAnErrorThatOnlyMentionsARecordTypeIsStillAFailure() {
+        let error = CKError(.invalidArguments, userInfo: [
+            NSDebugDescriptionErrorKey: "Field 'secret' is not valid for record type AutherisToken",
+            NSUnderlyingErrorKey: NSError(domain: "CKInternalErrorDomain", code: 1009, userInfo: [
+                NSDebugDescriptionErrorKey: "Rejected write to record type AutherisToken"
+            ])
+        ])
+        XCTAssertFalse(CloudKitTokenSyncService.isMissingRecordType(error))
     }
 }

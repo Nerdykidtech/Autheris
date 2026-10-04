@@ -108,9 +108,18 @@ nonisolated enum WatchTokenPayload {
     /// is applied rather than ignored, and so a payload with no predecessor is
     /// always accepted (`appliedAt` starts at `.distantPast`). Kept here rather
     /// than inline in the view so the rule is asserted by a test.
-    static func isNewer(_ candidate: Decoded, than appliedAt: Date) -> Bool {
-        candidate.sentAt >= appliedAt
+    ///
+    /// A stamp more than `futureTolerance` ahead of this device's own clock is
+    /// not trusted. It came from a phone whose clock was wrong — set by hand, or
+    /// off after a restore — and trusting it froze the watch's list until the
+    /// phone's clock caught up, deleted codes and their secrets included.
+    static func isNewer(_ candidate: Decoded, than appliedAt: Date, now: Date = Date()) -> Bool {
+        candidate.sentAt >= appliedAt || appliedAt > now.addingTimeInterval(futureTolerance)
     }
+
+    /// How far ahead of the watch a stamp may be and still be believed. The watch
+    /// keeps its time from the phone, so honest stamps are seconds apart at most.
+    static let futureTolerance: TimeInterval = 5 * 60
 
     /// The wire form. A separate type from its contents so the version and stamp
     /// cannot be forgotten at a call site.

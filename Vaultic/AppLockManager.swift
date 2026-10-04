@@ -8,6 +8,9 @@ let AppLockEnabledKey = "enableAppLock"
 /// The part of `LAContext` App Lock uses, so tests can stand in a device that has
 /// no passcode, or one that refuses.
 nonisolated protocol DeviceOwnerAuthenticating {
+    /// Which biometry the device has. Only meaningful once `canEvaluatePolicy`
+    /// has been called on the same context; `.none` before that.
+    var biometryType: LABiometryType { get }
     func canEvaluatePolicy(_ policy: LAPolicy, error: NSErrorPointer) -> Bool
     func evaluatePolicy(_ policy: LAPolicy,
                         localizedReason: String,
@@ -28,6 +31,9 @@ extension DeviceOwnerAuthenticating {
 final class AppLockManager: ObservableObject {
     @Published private(set) var isLocked: Bool
     @Published var errorMessage: String?
+    /// The biometry the unlock button can name: Face ID or Touch ID when the app
+    /// may actually use it, `.none` otherwise. See `currentUnlockBiometry()`.
+    @Published private(set) var unlockBiometry: LABiometryType = .none
 
     /// How long the app can stay in the background before the lock re-engages.
     /// Kept short enough to be useful, long enough to avoid re-prompting when the
@@ -57,6 +63,7 @@ final class AppLockManager: ObservableObject {
 
         // Cold launches always start locked when the feature is enabled.
         isLocked = UserDefaults.standard.bool(forKey: AppLockEnabledKey)
+        unlockBiometry = currentUnlockBiometry()
 
         #if os(macOS)
         // On iOS the scene phase drives the lock. A Mac window that loses focus
@@ -88,6 +95,8 @@ final class AppLockManager: ObservableObject {
     }
 
     func appDidBecomeActive() {
+        // Face ID can be turned off for the app in Settings while it is away.
+        unlockBiometry = currentUnlockBiometry()
         guard isEnabled else {
             isLocked = false
             return
@@ -108,6 +117,23 @@ final class AppLockManager: ObservableObject {
         // that as a foreground event would re-lock right after a successful scan.
         guard let backgroundedAt else { return false }
         return Date().timeIntervalSince(backgroundedAt) > gracePeriod
+    }
+
+    /// Asked of a fresh context, through the biometrics-only policy.
+    ///
+    /// `biometryType` describes the hardware, so it says Face ID even when the
+    /// user has refused Face ID to this app — and then the button would promise
+    /// Face ID and the system would ask for the passcode. Asking whether the
+    /// biometrics policy can be evaluated first is what tells those apart, and is
+    /// also what fills in `biometryType` at all: read from a context nobody has
+    /// asked, it is always `.none`, which is why the lock screen never named
+    /// either.
+    private func currentUnlockBiometry() -> LABiometryType {
+        let context = makeContext()
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil) else {
+            return .none
+        }
+        return context.biometryType
     }
 
     func unlock() {
@@ -203,8 +229,7 @@ struct AppLockView: View {
     @State private var didAutoPrompt = false
 
     private var biometryIcon: String {
-        let context = LAContext()
-        switch context.biometryType {
+        switch manager.unlockBiometry {
         case .faceID: return "faceid"
         case .touchID: return "touchid"
         default: return "lock"
@@ -214,8 +239,7 @@ struct AppLockView: View {
     /// `LocalizedStringKey`, not `String`: a `String` would reach `Label` as
     /// already-resolved text and never be looked up in the catalog.
     private var unlockTitle: LocalizedStringKey {
-        let context = LAContext()
-        switch context.biometryType {
+        switch manager.unlockBiometry {
         case .faceID: return "Unlock with Face ID"
         case .touchID: return "Unlock with Touch ID"
         default: return "Unlock"

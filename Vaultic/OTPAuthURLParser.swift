@@ -123,9 +123,9 @@ nonisolated enum OTPAuthURLParser {
             account = ""
         }
 
-        label = label.removingPercentEncoding ?? label
-        account = account.removingPercentEncoding ?? account
-        secret = secret.removingPercentEncoding ?? secret
+        // Nothing to percent-decode here: `URL.path` and `URLComponents.queryItems`
+        // already have. Decoding a second time turned an issuer's literal `%41`
+        // into `A`.
 
         guard !label.isEmpty, !secret.isEmpty else { return nil }
         return ParsedOTPAuth(

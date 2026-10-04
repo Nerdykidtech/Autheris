@@ -146,4 +146,23 @@ final class WatchTokenPayloadTests: XCTestCase {
         let decoded = WatchTokenPayload.Decoded(sentAt: .distantPast, tokens: [])
         XCTAssertTrue(WatchTokenPayload.isNewer(decoded, than: .distantPast))
     }
+
+    /// A stamp from the future came from a phone whose clock was wrong. Trusting
+    /// it would ignore every list after the clock was put right.
+    func testAStampFromTheFutureIsNotTrusted() {
+        let watchNow = Date(timeIntervalSince1970: 1_700_000_000)
+        let fromAFastClock = watchNow.addingTimeInterval(365 * 24 * 60 * 60)
+        let corrected = WatchTokenPayload.Decoded(sentAt: watchNow, tokens: [token(label: "New")])
+
+        XCTAssertTrue(WatchTokenPayload.isNewer(corrected, than: fromAFastClock, now: watchNow))
+    }
+
+    func testAStampSlightlyAheadIsStillTrusted() {
+        let watchNow = Date(timeIntervalSince1970: 1_700_000_000)
+        let applied = watchNow.addingTimeInterval(30)
+        let older = WatchTokenPayload.Decoded(sentAt: watchNow, tokens: [token(label: "Old")])
+
+        XCTAssertFalse(WatchTokenPayload.isNewer(older, than: applied, now: watchNow),
+                       "a phone a few seconds ahead is ordinary, and the order still counts")
+    }
 }

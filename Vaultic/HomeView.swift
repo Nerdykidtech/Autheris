@@ -767,8 +767,8 @@ struct EditTokenView: View {
     @State private var account: String
     @State private var ringColor: Color
     /// Seeded from the *effective* values, so opening this screen on a token whose
-    /// stored digits or period is malformed shows something sane, and saving repairs
-    /// it. `OTPGenerator` decides what "effective" means.
+    /// stored digits or period is malformed shows the values its codes are really
+    /// generated with. `OTPGenerator` decides what "effective" means.
     @State private var algorithm: OTPAlgorithm
     @State private var digits: Int
     @State private var period: Int
@@ -799,10 +799,12 @@ struct EditTokenView: View {
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
         _algorithm = State(initialValue: code.algorithm)
-        // Clamped into the ranges the steppers offer, so a malformed stored value
-        // opens as a usable one rather than leaving a control out of range.
-        _digits = State(initialValue: min(max(code.effectiveDigits, 6), 10))
-        _period = State(initialValue: min(max(code.effectivePeriod, 15), 300))
+        // Not clamped into the steppers' usual ranges: the steppers widen to take
+        // these instead (`digitsRange`, `periodRange`). Clamping here changed a
+        // 5-digit or 10-second token's codes the moment anything else on this
+        // screen was saved, with nothing on screen to say so.
+        _digits = State(initialValue: code.effectiveDigits)
+        _period = State(initialValue: code.effectivePeriod)
         _counter = State(initialValue: Int(clamping: code.counter))
         let branding = IssuerBranding.forLabel(code.label)
         if let hex = code.timerRingHex, let c = Color(hex: hex) {
@@ -879,7 +881,7 @@ struct EditTokenView: View {
     private var headerSection: some View {
         Section {
             HStack(spacing: 14) {
-                IssuerIconView(branding: previewBranding, size: 44)
+                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(label.isEmpty ? code.label : label)
@@ -916,7 +918,6 @@ struct EditTokenView: View {
             TextField("Service name", text: $label)
 
             TextField("Account (optional)", text: $account)
-                .platformTextContentType(.username)
                 .platformNoAutocapitalization()
         }
     }
@@ -929,7 +930,7 @@ struct EditTokenView: View {
                 }
             }
 
-            Stepper("Digits: \(digits)", value: $digits, in: 6...10)
+            Stepper("Digits: \(digits)", value: $digits, in: digitsRange)
 
             // A period and a counter are the two halves of "when does this code
             // change", and a token has one of them. The kind itself is not offered
@@ -937,15 +938,27 @@ struct EditTokenView: View {
             // being accepted, with no way to check first — the kind is settled by the
             // QR the service gave you, and a mis-scanned one is better re-added.
             if code.isTimeBased {
-                Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+                PeriodStepper(period: $period, range: periodRange)
             } else {
-                Stepper("Counter: \(counter)", value: $counter, in: 0...10_000)
+                // From the current counter up; see `OTPCode.editableCounterRange`.
+                Stepper("Counter: \(counter)", value: $counter, in: code.editableCounterRange)
             }
         } header: {
             Text("Code")
         } footer: {
             Text(codeFooter)
         }
+    }
+
+    /// The usual 6–10, widened to include what the token already has, so a token
+    /// set up with fewer or more digits keeps them unless the user moves the stepper.
+    private var digitsRange: ClosedRange<Int> {
+        min(6, code.effectiveDigits)...max(10, code.effectiveDigits)
+    }
+
+    /// The usual 15–300 seconds, widened the same way.
+    private var periodRange: ClosedRange<Int> {
+        min(15, code.effectivePeriod)...max(300, code.effectivePeriod)
     }
 
     /// Typed explicitly: a ternary of two literals infers as `String`, which `Text`
@@ -1042,33 +1055,40 @@ struct EditTokenView: View {
             return
         }
         
-        // Goes through `edited()` rather than rebuilding the token field by field,
-        // so a field added later cannot be silently reset by this screen — which is
-        // exactly what adding `isPinned` would otherwise have done.
-        let updatedCode = code.edited(
+        // Built from the copy this screen opened with, changing only what the
+        // user changed — digits and period against the values the code is really
+        // generated with, which is what the steppers started from. The store
+        // applies those changes to the code as it is now; see `saveEdit`.
+        let ringHex = ringHexForSave()
+        let edited = code.edited(
             label: label,
             account: account,
             algorithm: algorithm,
-            digits: digits,
-            period: period,
-            counter: UInt64(max(0, counter)),
-            timerRingHex: .some(ringHexForSave())
+            digits: digits != code.effectiveDigits ? digits : nil,
+            period: period != code.effectivePeriod ? period : nil,
+            counter: counter != Int(clamping: code.counter) ? UInt64(max(0, counter)) : nil,
+            timerRingHex: .some(ringHex),
+            modifiedAt: code.modifiedAt
         )
-        
-        // A rename onto a name another code already has would leave two tokens
-        // the user can't tell apart, so it is refused here rather than saved.
-        if dataStore.nameIsTaken(by: updatedCode) {
+
+        switch dataStore.saveEdit(from: code, to: edited) {
+        case .saved:
+            break
+        case .nameTaken:
             alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
             showingAlert = true
             return
+        case .deleted:
+            alertMessage = String(localized: "This token was deleted on another device, so your changes weren't saved.")
+            showingAlert = true
+            return
+        case .vaultUnavailable:
+            // Kept open rather than closed as if it had worked.
+            alertMessage = OTPDataStore.vaultUnavailableMessage
+            showingAlert = true
+            return
         }
-
-        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }),
-           dataStore.updateCode(updatedCode, at: index) {
-            // Success haptic feedback
-            Haptics.notify(.success)
-        }
-        
+        Haptics.notify(.success)
         dismiss()
     }
 }

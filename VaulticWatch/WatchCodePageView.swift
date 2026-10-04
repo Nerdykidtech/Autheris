@@ -121,9 +121,12 @@ struct WatchCodePageView: View {
                 // move it, because advancing a counter is a write and the watch has
                 // no writes by design.
                 VStack(spacing: 1) {
-                    // `Int` so the watch catalog's key is `Counter %lld`, matching the
-                    // app's; the value is bounded by `OTPCode.maximumCounter`.
-                    Text("Counter \(Int(clamping: counter))")
+                    // `Int64` so the watch catalog's key is `Counter %lld`, matching
+                    // the app's. Not `Int`: on the watches whose `Int` is 32 bits, a
+                    // counter past 2,147,483,647 showed as that while the phone
+                    // showed the real number. `OTPCode.maximumCounter` is
+                    // `Int64.max`, so this is exact.
+                    Text("Counter \(Int64(clamping: counter))")
                         .font(.caption.monospacedDigit())
 
                     Text("Advance the counter on your iPhone")

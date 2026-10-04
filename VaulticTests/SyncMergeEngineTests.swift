@@ -345,4 +345,58 @@ final class SyncMergeEngineTests: XCTestCase {
         XCTAssertNil(record.token)
         XCTAssertTrue(record.deleted)
     }
+
+    func testARepeatedLocalIDDoesNotCrashAndKeepsTheFirstCopy() {
+        let id = UUID()
+        let first = token(id: id, label: "First", modifiedAt: now)
+        let second = token(id: id, label: "Second", modifiedAt: now)
+
+        let outcome = merge(local: SyncLocalState(tokens: [first, second]), remote: [])
+
+        XCTAssertEqual(outcome.tokens.map(\.label), ["First"])
+        XCTAssertEqual(outcome.uploads.compactMap(\.token?.label), ["First"])
+    }
+
+    // MARK: - Counter-based codes
+
+    func testANewerEditDoesNotRollAnAdvancedCounterBack() {
+        let id = UUID()
+        // This device spent two codes; another renamed the token later, from 3.
+        let local = token(id: id, kind: .hotp, counter: 5, modifiedAt: now.addingTimeInterval(-60))
+        let remote = token(id: id, label: "GitHub Work", kind: .hotp, counter: 3, modifiedAt: now.addingTimeInterval(-10))
+
+        let outcome = merge(local: SyncLocalState(tokens: [local]), remote: [.live(remote)])
+
+        let merged = outcome.tokens.first
+        XCTAssertEqual(merged?.label, "GitHub Work", "the newer edit still wins")
+        XCTAssertEqual(merged?.counter, 5, "but the counter never goes backwards")
+        XCTAssertEqual(merged?.modifiedAt, remote.modifiedAt.addingTimeInterval(0.001), "the combined copy is a new write, just after the newer copy")
+        XCTAssertTrue(outcome.didAdoptRemoteChanges)
+        XCTAssertEqual(outcome.uploads.map(\.id), [id.uuidString], "and it goes up, so the other device catches up")
+        XCTAssertEqual(outcome.uploads.first?.token?.counter, 5)
+    }
+
+    func testANewerLocalEditTakesTheRemoteCountersLead() {
+        let id = UUID()
+        let local = token(id: id, kind: .hotp, counter: 2, isPinned: true, modifiedAt: now.addingTimeInterval(-10))
+        let remote = token(id: id, kind: .hotp, counter: 7, modifiedAt: now.addingTimeInterval(-60))
+
+        let outcome = merge(local: SyncLocalState(tokens: [local]), remote: [.live(remote)])
+
+        XCTAssertEqual(outcome.tokens.first?.isPinned, true)
+        XCTAssertEqual(outcome.tokens.first?.counter, 7)
+        XCTAssertEqual(outcome.uploads.first?.token?.counter, 7)
+    }
+
+    func testTheWinnerIsTakenAsItIsWhenItsCounterIsAlreadyAhead() {
+        let id = UUID()
+        let local = token(id: id, kind: .hotp, counter: 9, modifiedAt: now.addingTimeInterval(-10))
+        let remote = token(id: id, kind: .hotp, counter: 3, modifiedAt: now.addingTimeInterval(-60))
+
+        let outcome = merge(local: SyncLocalState(tokens: [local]), remote: [.live(remote)])
+
+        XCTAssertEqual(outcome.tokens, [local])
+        XCTAssertFalse(outcome.didAdoptRemoteChanges)
+        XCTAssertEqual(outcome.uploads.first?.token, local)
+    }
 }

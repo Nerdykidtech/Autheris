@@ -1994,6 +1994,46 @@
         }
       }
     },
+    "Autheris can't read your iCloud data yet: the CloudKit schema needs a Queryable index on recordName (CloudKit Console → Schema → Indexes).": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris kann deine iCloud-Daten noch nicht lesen: Das CloudKit-Schema benötigt einen Queryable-Index für recordName (CloudKit Console → Schema → Indexes)."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris aún no puede leer tus datos de iCloud: el esquema de CloudKit necesita un índice Queryable en recordName (CloudKit Console → Schema → Indexes)."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris ne peut pas encore lire vos données iCloud : le schéma CloudKit doit avoir un index Queryable sur recordName (CloudKit Console → Schema → Indexes)."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris はまだ iCloud データを読み取れません。CloudKit スキーマの recordName に Queryable インデックスが必要です（CloudKit Console → Schema → Indexes）。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Autheris ainda não consegue ler seus dados do iCloud: o esquema do CloudKit precisa de um índice Queryable em recordName (CloudKit Console → Schema → Indexes)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 暂时无法读取你的 iCloud 数据：CloudKit 架构需要在 recordName 上添加 Queryable 索引（CloudKit Console → Schema → Indexes）。"
+          }
+        }
+      }
+    },
     "Automatic (service color)": {
       "localizations": {
         "de-DE": {
@@ -4672,6 +4712,46 @@
         }
       }
     },
+    "Deleting from iCloud…": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird aus iCloud gelöscht …"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eliminando de iCloud…"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suppression d’iCloud…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloudから削除中…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apagando do iCloud…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在从 iCloud 删除…"
+          }
+        }
+      }
+    },
     "Digits: %lld": {
       "localizations": {
         "de-DE": {
@@ -6550,6 +6630,46 @@
         }
       }
     },
+    "Last updated %@": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt aktualisiert %@"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última actualización: %@"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dernière mise à jour : %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最終更新：%@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última atualização: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上次更新：%@"
+          }
+        }
+      }
+    },
     "Live Codes & Timers": {
       "localizations": {
         "de-DE": {
@@ -8030,42 +8150,42 @@
         }
       }
     },
-    "Removes your tokens from iCloud and your other devices — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept.": {
+    "Removes your tokens from iCloud — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept. Turn off iCloud Sync on your other devices first: any device that still has it on will upload its tokens again.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Entfernt Ihre Codes aus iCloud und von Ihren anderen Geräten — einschließlich der von früheren Autheris-Versionen gespeicherten Daten — und schaltet dann die Synchronisierung ab. Codes auf diesem Gerät bleiben erhalten."
+            "value": "Entfernt deine Tokens aus iCloud – einschließlich Daten, die von früheren Versionen von Autheris gespeichert wurden – und deaktiviert dann die Synchronisierung. Die Tokens auf diesem Gerät bleiben erhalten. Deaktiviere zuerst die iCloud-Synchronisierung auf deinen anderen Geräten: Jedes Gerät, auf dem sie noch aktiv ist, lädt seine Tokens erneut hoch."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Elimina tus códigos de iCloud y de tus otros dispositivos —incluidos los datos guardados por versiones anteriores de Autheris— y luego desactiva la sincronización. Los códigos de este dispositivo se conservan."
+            "value": "Elimina tus tokens de iCloud (incluidos los datos guardados por versiones anteriores de Autheris) y luego desactiva la sincronización. Los tokens de este dispositivo se conservan. Desactiva primero la sincronización con iCloud en tus otros dispositivos: cualquier dispositivo que la tenga activada volverá a subir sus tokens."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Supprime vos codes d'iCloud et de vos autres appareils — y compris les données enregistrées par des versions antérieures d'Autheris — puis désactive la synchronisation. Les codes de cet appareil sont conservés."
+            "value": "Supprime vos jetons d’iCloud — y compris les données enregistrées par les versions précédentes d’Autheris — puis désactive la synchronisation. Les jetons de cet appareil sont conservés. Désactivez d’abord la synchronisation iCloud sur vos autres appareils : tout appareil sur lequel elle reste activée enverra à nouveau ses jetons."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iCloud とほかの端末からコードを削除し（以前のバージョンの Autheris が保存したデータも含みます）、同期をオフにします。この端末のコードはそのまま残ります。"
+            "value": "iCloud からトークンを削除し（以前のバージョンの Autheris が保存したデータを含む）、同期をオフにします。このデバイスのトークンは残ります。先にほかのデバイスで iCloud 同期をオフにしてください。同期がオンのままのデバイスは、トークンを再びアップロードします。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remove seus códigos do iCloud e dos seus outros dispositivos — inclusive os dados salvos por versões anteriores do Autheris — e depois desliga a sincronização. Os códigos neste dispositivo são mantidos."
+            "value": "Remove seus tokens do iCloud — incluindo dados salvos por versões anteriores do Autheris — e depois desativa a sincronização. Os tokens deste dispositivo são mantidos. Desative primeiro a sincronização com o iCloud nos seus outros dispositivos: qualquer dispositivo que ainda a tenha ativada enviará seus tokens novamente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "会从 iCloud 和你的其他设备上移除账户（包括旧版本 Autheris 保存的数据），然后关闭同步。本设备上的账户会保留。"
+            "value": "从 iCloud 中移除你的令牌（包括早期版本的 Autheris 保存的数据），然后关闭同步。此设备上的令牌会保留。请先在你的其他设备上关闭 iCloud 同步：仍开启同步的设备会再次上传其令牌。"
           }
         }
       }
@@ -8106,6 +8226,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "调整 %@ 的顺序"
+          }
+        }
+      }
+    },
+    "Require Face ID / Touch ID": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face ID / Touch ID verlangen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requerir Face ID / Touch ID"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exiger Face ID / Touch ID"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face ID / Touch ID を要求"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exigir Face ID / Touch ID"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要 Face ID / Touch ID"
+          }
+        }
+      }
+    },
+    "Require Touch ID or password": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch ID oder Passwort verlangen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Requerir Touch ID o contraseña"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exiger Touch ID ou le mot de passe"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch ID またはパスワードを要求"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exigir Touch ID ou senha"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要 Touch ID 或密码"
           }
         }
       }
@@ -9190,6 +9390,86 @@
         }
       }
     },
+    "Sign in to iCloud": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bei iCloud anmelden"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sesión en iCloud"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous à iCloud"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud にサインイン"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicie sessão no iCloud"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录 iCloud"
+          }
+        }
+      }
+    },
+    "Sign in to iCloud in Settings to sync across your devices.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Melde dich in den Einstellungen bei iCloud an, um zwischen deinen Geräten zu synchronisieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicia sesión en iCloud en Ajustes para sincronizar entre tus dispositivos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connectez-vous à iCloud dans Réglages pour synchroniser vos appareils."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバイス間で同期するには、設定で iCloud にサインインしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inicie sessão no iCloud nos Ajustes para sincronizar entre seus dispositivos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“设置”中登录 iCloud 以在你的设备之间同步。"
+          }
+        }
+      }
+    },
     "Skipped:": {
       "localizations": {
         "de-DE": {
@@ -9510,6 +9790,126 @@
         }
       }
     },
+    "Sync Paused": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung pausiert"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronización en pausa"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation en pause"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期を一時停止中"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronização pausada"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步已暂停"
+          }
+        }
+      }
+    },
+    "Sync error": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierungsfehler"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error de sincronización"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erreur de synchronisation"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期エラー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erro de sincronização"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步错误"
+          }
+        }
+      }
+    },
+    "Sync unavailable": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisierung nicht verfügbar"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronización no disponible"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation indisponible"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期を利用できません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronização indisponível"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步不可用"
+          }
+        }
+      }
+    },
     "Sync with iCloud": {
       "localizations": {
         "de-DE": {
@@ -9546,6 +9946,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "与 iCloud 同步"
+          }
+        }
+      }
+    },
+    "Synced": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisiert"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizado"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期済み"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已同步"
+          }
+        }
+      }
+    },
+    "Syncing…": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisiere …"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期中…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizando…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在同步…"
           }
         }
       }
@@ -9706,6 +10186,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "这个验证码链接不是预期的 otpauth 格式。"
+          }
+        }
+      }
+    },
+    "The Autheris CloudKit schema has not been deployed yet.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das CloudKit-Schema von Autheris wurde noch nicht bereitgestellt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El esquema de CloudKit de Autheris aún no se ha implementado."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le schéma CloudKit d’Autheris n’a pas encore été déployé."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris の CloudKit スキーマはまだデプロイされていません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O esquema do CloudKit do Autheris ainda não foi implantado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 的 CloudKit 架构尚未部署。"
           }
         }
       }
@@ -9990,6 +10510,126 @@
         }
       }
     },
+    "This backup uses an unsupported format version.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Backup verwendet eine nicht unterstützte Formatversion."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta copia de seguridad usa una versión de formato no compatible."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette sauvegarde utilise une version de format non prise en charge."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このバックアップはサポートされていない形式のバージョンを使用しています。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este backup usa uma versão de formato não compatível."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此备份使用了不受支持的格式版本。"
+          }
+        }
+      }
+    },
+    "This build is not configured for iCloud. Add the iCloud capability to the Autheris target.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Build ist nicht für iCloud konfiguriert. Füge dem Autheris-Target die iCloud-Fähigkeit hinzu."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta compilación no está configurada para iCloud. Añade la capacidad de iCloud al target de Autheris."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette version n’est pas configurée pour iCloud. Ajoutez la fonctionnalité iCloud à la cible Autheris."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このビルドは iCloud 用に構成されていません。Autheris ターゲットに iCloud 機能を追加してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta compilação não está configurada para o iCloud. Adicione o recurso iCloud ao target do Autheris."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本未配置 iCloud。请为 Autheris 目标添加 iCloud 功能。"
+          }
+        }
+      }
+    },
+    "This build is not entitled to the %@ iCloud container.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Build ist nicht für den iCloud-Container %@ berechtigt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta compilación no tiene permiso para el contenedor de iCloud %@."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette version n’a pas le droit d’accéder au conteneur iCloud %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このビルドには iCloud コンテナ %@ の使用権限がありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta compilação não tem permissão para o contêiner do iCloud %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此版本无权使用 iCloud 容器 %@。"
+          }
+        }
+      }
+    },
     "This code changes only when you ask for the next one. Raise the counter if the service has moved ahead of it — for instance after a code was used on a device that no longer has this account.": {
       "localizations": {
         "de-DE": {
@@ -10106,6 +10746,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "此文件不是受支持的 Aegis、andOTP 或 2FAS 导出文件。"
+          }
+        }
+      }
+    },
+    "This file isn't a valid encrypted Autheris backup.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei ist kein gültiges verschlüsseltes Autheris-Backup."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo no es una copia de seguridad cifrada válida de Autheris."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier n’est pas une sauvegarde Autheris chiffrée valide."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルは有効な暗号化済み Autheris バックアップではありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo não é um backup criptografado válido do Autheris."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件不是有效的 Autheris 加密备份。"
+          }
+        }
+      }
+    },
+    "This token was deleted on another device, so your changes weren't saved.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Token wurde auf einem anderen Gerät gelöscht, daher wurden deine Änderungen nicht gespeichert."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este token se eliminó en otro dispositivo, así que tus cambios no se guardaron."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce jeton a été supprimé sur un autre appareil ; vos modifications n’ont donc pas été enregistrées."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このトークンはほかのデバイスで削除されたため、変更は保存されませんでした。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este token foi excluído em outro dispositivo, então suas alterações não foram salvas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此令牌已在另一台设备上删除，因此你的更改未保存。"
           }
         }
       }
@@ -10310,6 +11030,46 @@
         }
       }
     },
+    "Tokens are stored only on this device.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens werden nur auf diesem Gerät gespeichert."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los tokens se guardan solo en este dispositivo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les jetons sont stockés uniquement sur cet appareil."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンはこのデバイスにのみ保存されています。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os tokens são armazenados apenas neste dispositivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "令牌仅存储在此设备上。"
+          }
+        }
+      }
+    },
     "Tokens live in the device Keychain, protected by your passcode and Face ID / Touch ID.": {
       "localizations": {
         "de-DE": {
@@ -10350,42 +11110,42 @@
         }
       }
     },
-    "Tokens stay on this device either way. Deleting from iCloud also removes them from your other devices.": {
+    "Tokens stay on this device either way. Before deleting from iCloud, turn off iCloud Sync on your other devices — any device that still has it on will upload its tokens again.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Die Codes bleiben in jedem Fall auf diesem Gerät. Beim Löschen aus iCloud werden sie auch von Ihren anderen Geräten entfernt."
+            "value": "Die Tokens bleiben in jedem Fall auf diesem Gerät. Deaktiviere vor dem Löschen aus iCloud die iCloud-Synchronisierung auf deinen anderen Geräten – jedes Gerät, auf dem sie noch aktiv ist, lädt seine Tokens erneut hoch."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Los códigos se quedan en este dispositivo en cualquier caso. Si los eliminas de iCloud, también desaparecen de tus otros dispositivos."
+            "value": "Los tokens se quedan en este dispositivo en cualquier caso. Antes de eliminarlos de iCloud, desactiva la sincronización con iCloud en tus otros dispositivos: cualquier dispositivo que la tenga activada volverá a subir sus tokens."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Dans tous les cas, les codes restent sur cet appareil. Les supprimer d'iCloud les retire aussi de vos autres appareils."
+            "value": "Les jetons restent sur cet appareil dans tous les cas. Avant de les supprimer d’iCloud, désactivez la synchronisation iCloud sur vos autres appareils : tout appareil sur lequel elle reste activée enverra à nouveau ses jetons."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "どちらの場合も、コードはこの端末に残ります。iCloud から削除すると、ほかの端末からも消えます。"
+            "value": "どちらの場合もトークンはこのデバイスに残ります。iCloud から削除する前に、ほかのデバイスで iCloud 同期をオフにしてください。同期がオンのままのデバイスは、トークンを再びアップロードします。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "De qualquer forma, os códigos ficam neste dispositivo. Excluir do iCloud também os remove dos seus outros dispositivos."
+            "value": "Os tokens permanecem neste dispositivo de qualquer forma. Antes de excluir do iCloud, desative a sincronização com o iCloud nos seus outros dispositivos — qualquer dispositivo que ainda a tenha ativada enviará seus tokens novamente."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "无论哪种方式，账户都会留在本设备上。从 iCloud 删除也会把它们从你的其他设备上移除。"
+            "value": "无论哪种方式，令牌都会保留在此设备上。从 iCloud 删除之前，请先在你的其他设备上关闭 iCloud 同步——仍开启同步的设备会再次上传其令牌。"
           }
         }
       }
@@ -11390,6 +12150,46 @@
         }
       }
     },
+    "Waiting for first sync": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warte auf erste Synchronisierung"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esperando la primera sincronización"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En attente de la première synchronisation"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最初の同期を待っています"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aguardando a primeira sincronização"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在等待首次同步"
+          }
+        }
+      }
+    },
     "Website": {
       "localizations": {
         "de-DE": {
@@ -11466,6 +12266,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "为什么选择 Autheris"
+          }
+        }
+      }
+    },
+    "Will retry automatically. Changes are saved on this device.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird automatisch erneut versucht. Änderungen werden auf diesem Gerät gespeichert."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se reintentará automáticamente. Los cambios se guardan en este dispositivo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouvel essai automatique. Les modifications sont enregistrées sur cet appareil."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動的に再試行します。変更はこのデバイスに保存されています。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma nova tentativa será feita automaticamente. As alterações são salvas neste dispositivo."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将自动重试。更改已保存在此设备上。"
           }
         }
       }
@@ -11786,6 +12626,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "iCloud 同步"
+          }
+        }
+      }
+    },
+    "iCloud Sync Off": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud-Synchronisierung aus"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronización con iCloud desactivada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchronisation iCloud désactivée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud 同期オフ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronização com o iCloud desativada"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud 同步已关闭"
+          }
+        }
+      }
+    },
+    "iCloud error %lld: %@": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud-Fehler %lld: %@"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error de iCloud %lld: %@"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erreur iCloud %lld : %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud エラー %lld: %@"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erro do iCloud %lld: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud 错误 %lld：%@"
           }
         }
       }

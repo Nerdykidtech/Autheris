@@ -83,6 +83,16 @@ final class GoogleMigrationParserTests: XCTestCase {
         XCTAssertEqual(tokens[0].account, "alice@example.com")
     }
 
+    func testACounterPast35BitsIsReadWhole() throws {
+        // `int64` on the wire. Varints used to be capped at 35 bits, which every
+        // tag and length fits but a counter need not.
+        let large = 1 << 40
+        let tokens = try parse(export(secret: rawSecret, name: "alice@example.com",
+                                      issuer: "Example", type: 1, counter: large))
+
+        XCTAssertEqual(tokens.first?.counter, UInt64(large))
+    }
+
     func testTheImportedHotpEntryGeneratesTheRfc4226CodeForItsCounter() throws {
         // The end of the path that used to be a silent dead end: what arrives has to
         // be a token that actually produces the service's code.

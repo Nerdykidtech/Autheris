@@ -120,7 +120,11 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Tokens stay on this device either way. Deleting from iCloud also removes them from your other devices.")
+            // Deleting the iCloud copy does not reach into other devices: each one
+            // with sync still on holds its own copy and uploads it again at its
+            // next sync. So the dialog says what to do first, rather than
+            // promising a removal it cannot make.
+            Text("Tokens stay on this device either way. Before deleting from iCloud, turn off iCloud Sync on your other devices — any device that still has it on will upload its tokens again.")
         }
         .confirmationDialog(
             "Delete Tokens from iCloud?",
@@ -132,7 +136,7 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Removes your tokens from iCloud and your other devices — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept.")
+            Text("Removes your tokens from iCloud — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept. Turn off iCloud Sync on your other devices first: any device that still has it on will upload its tokens again.")
         }
         .alert(
             "iCloud Sync",
@@ -268,6 +272,22 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var syncStatusRow: some View {
+        // The delete can take several seconds — it waits for any sync already
+        // running — so it says so rather than leaving the screen looking idle.
+        if dataStore.isDeletingCloudData {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Deleting from iCloud…")
+                    .font(.subheadline.weight(.medium))
+            }
+        } else {
+            syncStatusDetails
+        }
+    }
+
+    @ViewBuilder
+    private var syncStatusDetails: some View {
         HStack(spacing: 10) {
             if dataStore.syncStatus.isBusy {
                 ProgressView()
@@ -571,7 +591,10 @@ struct SettingsView: View {
     ///
     /// macOS has no Face ID, and on a Mac without Touch ID the system falls back to
     /// the login password — so naming Face ID there would be wrong twice over.
-    private var appLockToggleLabel: String {
+    ///
+    /// `LocalizedStringKey`, not `String`: a `String` reaches `Toggle` as text that
+    /// is already final, so this label shipped in English in every language.
+    private var appLockToggleLabel: LocalizedStringKey {
         #if os(macOS)
         return "Require Touch ID or password"
         #else
@@ -584,6 +607,8 @@ struct SettingsView: View {
         Section {
             Toggle("Sync with iCloud", isOn: syncToggleBinding)
                 .platformAccentToggle()
+                // Turning sync off or on mid-delete would race the delete.
+                .disabled(dataStore.isDeletingCloudData)
     
             syncStatusRow
     
@@ -602,6 +627,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Delete Tokens from iCloud")
                 }
+                .disabled(dataStore.isDeletingCloudData)
             }
         } header: {
             Text("iCloud Sync")

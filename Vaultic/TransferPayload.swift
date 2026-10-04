@@ -66,8 +66,11 @@ nonisolated enum TransferPayload {
     /// The payload comes from a QR code or a link anyone can make, so every length
     /// is checked against what is left rather than trusted.
     static func decodeCompact(_ compressed: Data) -> [OTPCode]? {
-        // A QR code's worth of input can't legitimately inflate past this; a
-        // crafted one that tries is refused rather than allocated.
+        // A QR code's worth of input can't legitimately inflate past this, so a
+        // payload that does is refused. The check comes after inflating, not
+        // instead of it — `NSData` has no streaming limit — which is bounded by
+        // the input cap above: DEFLATE expands at most about 1,032 to 1, so
+        // 2,953 bytes can never become more than about 3 MB.
         guard compressed.count <= maximumQRBytes,
               let inflated = try? (compressed as NSData).decompressed(using: .zlib) as Data,
               inflated.count <= 1_000_000 else { return nil }

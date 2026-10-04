@@ -227,11 +227,11 @@ final class CloudKitTokenSyncService: TokenSyncService {
         guard let services = entitlementsValue("com.apple.developer.icloud-services"),
               // A development profile grants `*` rather than naming CloudKit.
               services.contains(where: { $0 == "CloudKit" || $0 == "*" }) else {
-            return "This build is not configured for iCloud. Add the iCloud capability to the Autheris target."
+            return String(localized: "This build is not configured for iCloud. Add the iCloud capability to the Autheris target.")
         }
         guard let containers = entitlementsValue("com.apple.developer.icloud-container-identifiers"),
               containers.contains(identifier) else {
-            return "This build is not entitled to the \(identifier) iCloud container."
+            return String(localized: "This build is not entitled to the \(identifier) iCloud container.")
         }
         return nil
         #else
@@ -318,11 +318,15 @@ final class CloudKitTokenSyncService: TokenSyncService {
             let database = try cloudDatabase()
             let adoptedDuringPush = try await Self.push(outcome.uploads, onto: serverRecords, using: database)
             if !adoptedDuringPush.isEmpty {
+                // The first merge's adoptions are already in `outcome.tokens`, so
+                // they have to be reported even if this second pass adds nothing.
+                let adoptedBeforePush = outcome.didAdoptRemoteChanges
                 outcome = SyncMergeEngine.merge(
                     local: SyncLocalState(tokens: outcome.tokens, tombstones: outcome.tombstones),
                     remote: adoptedDuringPush
                 )
                 outcome.uploads = []
+                outcome.didAdoptRemoteChanges = outcome.didAdoptRemoteChanges || adoptedBeforePush
             }
 
             // Best effort: a failure here leaves the next sync to try again, and
@@ -351,7 +355,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
         var recordIDs: [CKRecord.ID] = []
         for recordType in Self.ownedRecordTypes {
             // A type that was never written simply returns nothing.
-            recordIDs.append(contentsOf: try await fetchObjects(ofType: recordType).map(\.recordID))
+            // Every record the query names, including one that failed to load:
+            // its id comes back either way, and leaving it out was a record this
+            // reported deleted but left behind.
+            recordIDs.append(contentsOf: try await fetchResults(ofType: recordType).map(\.0))
         }
         guard !recordIDs.isEmpty else { return }
 
@@ -362,8 +369,11 @@ final class CloudKitTokenSyncService: TokenSyncService {
                 atomically: false
             )
             // `atomically: false` reports failures per record, so surface the first.
+            // A record that is already gone — deleted from another device since,
+            // which is often why it failed to load — is what was asked for.
             for result in response.deleteResults.values {
-                if case .failure(let error) = result { throw error }
+                if case .failure(let error) = result,
+                   (error as? CKError)?.code != .unknownItem { throw error }
             }
         }
         // Nothing left to reconcile against, so drop the local bookkeeping too.
@@ -421,7 +431,14 @@ final class CloudKitTokenSyncService: TokenSyncService {
     ///
     /// `recordType` is a parameter rather than a constant because the delete path
     /// also sweeps the legacy type; the sync path only ever passes `Self.recordType`.
+    /// The records that loaded. One that failed to is left for the next sync,
+    /// which fetches again; nothing here depends on seeing every record.
     private func fetchObjects(ofType recordType: String) async throws -> [CKRecord] {
+        try await fetchResults(ofType: recordType).compactMap { try? $0.1.get() }
+    }
+
+    /// Every record the query matched, loaded or not.
+    private func fetchResults(ofType recordType: String) async throws -> [(CKRecord.ID, Result<CKRecord, Error>)] {
         do {
             return try await fetchPage(ofType: recordType)
         } catch let error as CKError where Self.isMissingRecordType(error) {
@@ -432,8 +449,8 @@ final class CloudKitTokenSyncService: TokenSyncService {
         }
     }
 
-    private func fetchPage(ofType recordType: String) async throws -> [CKRecord] {
-        var records: [CKRecord] = []
+    private func fetchPage(ofType recordType: String) async throws -> [(CKRecord.ID, Result<CKRecord, Error>)] {
+        var records: [(CKRecord.ID, Result<CKRecord, Error>)] = []
         var cursor: CKQueryOperation.Cursor?
         let query = CKQuery(recordType: recordType, predicate: NSPredicate(value: true))
         repeat {
@@ -443,24 +460,32 @@ final class CloudKitTokenSyncService: TokenSyncService {
             } else {
                 response = try await cloudDatabase().records(matching: query, resultsLimit: Self.pageSize)
             }
-            for (_, result) in response.matchResults {
-                if case .success(let record) = result { records.append(record) }
-            }
+            records.append(contentsOf: response.matchResults)
             cursor = response.queryCursor
         } while cursor != nil
         return records
     }
 
-    private static func isMissingRecordType(_ error: CKError) -> Bool {
+    /// Whether `error` means the record type has never been created — the one
+    /// failure that is the same as "no records".
+    ///
+    /// Only the server's exact wording counts. A true here turns a failed read
+    /// into an empty iCloud: sync then offers up everything this device has, and
+    /// "Delete from iCloud", which fetches through the same path, finds nothing,
+    /// deletes nothing and reports success. A bare "record type" match did that
+    /// for any error that mentioned one in passing — and the wider text this
+    /// searches made that likelier. Internal rather than private for its test.
+    static func isMissingRecordType(_ error: CKError) -> Bool {
         if error.code == .unknownItem { return true }
-        let message = error.localizedDescription.lowercased()
-        return message.contains("did not find record type") || message.contains("record type")
+        return diagnosticText(error).contains("did not find record type")
     }
 
     // MARK: - Push
 
-    /// Uploads winning local records, returning any server copies that won a
-    /// conflict so the caller can adopt them.
+    /// Uploads winning local records, returning the records the caller has to
+    /// adopt: server copies that won a conflict, and copies that settled on the
+    /// server's higher counter (see `SyncMergeEngine.resolve`), which differ from
+    /// what this device holds.
     ///
     /// Each upload is written onto `serverRecords`' copy when there is one — what
     /// this sync fetched — so it carries that copy's change tag. A record that is
@@ -492,12 +517,20 @@ final class CloudKitTokenSyncService: TokenSyncService {
                       let serverItem = Self.decode(serverRecord) else {
                     throw error
                 }
-                if SyncMergeEngine.localWins(entry.item, over: serverItem) {
+                switch SyncMergeEngine.resolve(entry.item, against: serverItem) {
+                case .keepLocal:
                     // Ours is newer: re-apply our values onto the server's record
                     // so the retry carries a current change tag.
                     retries.append((entry.item, Self.encode(entry.item, into: serverRecord)))
-                } else {
+                case .takeRemote:
                     adopted.append(serverItem)
+                case .combined(let combined):
+                    // Ours is newer but the server's counter is further along:
+                    // what goes up is ours with that counter, and it is handed
+                    // back as adopted too, because it differs from what this
+                    // device holds.
+                    retries.append((combined, Self.encode(combined, into: serverRecord)))
+                    adopted.append(combined)
                 }
             }
             pending = retries
@@ -650,7 +683,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         if let unavailable = error as? CloudKitUnavailableError {
             return .unavailable(unavailable.reason)
         }
-        let message = error.localizedDescription.lowercased()
+        let message = diagnosticText(error)
         guard let cloudError = error as? CKError else {
             return .failed(error.localizedDescription)
         }
@@ -660,7 +693,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         case .notAuthenticated, .permissionFailure, .accountTemporarilyUnavailable, .managedAccountRestricted:
             return .accountUnavailable
         case .unknownItem:
-            return .unavailable("The Autheris CloudKit schema has not been deployed yet.")
+            return .unavailable(String(localized: "The Autheris CloudKit schema has not been deployed yet."))
         default:
             // CloudKit refuses an unfiltered query unless the system `recordName`
             // field carries a Queryable index, and a record type created implicitly
@@ -668,13 +701,61 @@ final class CloudKitTokenSyncService: TokenSyncService {
             // schema has never been tuned, and it is actionable rather than a bug —
             // report it as such instead of a generic sync failure.
             if message.contains("not marked queryable") {
-                return .unavailable("Autheris can't read your iCloud data yet: the CloudKit schema needs a Queryable index on recordName (CloudKit Console → Schema → Indexes).")
+                return .unavailable(String(localized: "Autheris can't read your iCloud data yet: the CloudKit schema needs a Queryable index on recordName (CloudKit Console → Schema → Indexes)."))
             }
-            if message.contains("entitlement") || message.contains("container") {
-                return .unavailable("This build is not configured for iCloud. Add the iCloud capability to the Autheris target.")
+            // Against the error's own text only, not the underlying error's: those
+            // are CloudKit's internals, which mention "container" in passing often
+            // enough to turn an ordinary failure into the wrong advice.
+            let ownText = primaryText(error)
+            if ownText.contains("entitlement") || ownText.contains("container") {
+                return .unavailable(String(localized: "This build is not configured for iCloud. Add the iCloud capability to the Autheris target."))
             }
             return .failed(describe(error))
         }
+    }
+
+    /// Everything an error says about itself, lowercased, for the two checks
+    /// that can only be made by what the server wrote: "did not find record type"
+    /// and "not marked queryable".
+    ///
+    /// `localizedDescription` alone is in the device's language, so a phrase
+    /// match against it worked only on an English device, and everywhere else the
+    /// precise status fell through to a generic error. The untranslated wording is
+    /// looked for alongside it:
+    ///
+    /// - `NSDebugDescriptionErrorKey`, the documented Foundation key for it;
+    /// - the underlying error (`NSUnderlyingErrorKey`), read the same way, since
+    ///   CloudKit often wraps the server's error rather than copying its text;
+    /// - `"ServerErrorDescription"`, which CloudKit's errors carry in practice but
+    ///   `CKError.h` does not declare. **Undocumented**: it can disappear in any
+    ///   release, and nothing depends on it being there — missing, it adds
+    ///   nothing.
+    ///
+    /// Only for phrases specific enough not to turn up by accident in all that
+    /// text. A loose one — "container", say — goes through `primaryText` instead.
+    private static func diagnosticText(_ error: Error) -> String {
+        let nsError = error as NSError
+        var parts = [primaryText(error)]
+        if let server = nsError.userInfo["ServerErrorDescription"] as? String {
+            parts.append(server)
+        }
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+            parts.append(underlying.localizedDescription)
+            if let debug = underlying.userInfo[NSDebugDescriptionErrorKey] as? String {
+                parts.append(debug)
+            }
+        }
+        return parts.joined(separator: "\n").lowercased()
+    }
+
+    /// The error's own words: its description and its debug description, but
+    /// not the underlying error's or the server's. For checks whose phrases are
+    /// common enough in CloudKit's internals to match by accident.
+    private static func primaryText(_ error: Error) -> String {
+        let nsError = error as NSError
+        let debug = nsError.userInfo[NSDebugDescriptionErrorKey] as? String
+        return ([nsError.localizedDescription] + [debug].compactMap { $0 })
+            .joined(separator: "\n").lowercased()
     }
 
     /// Renders a `CKError` into something worth showing a user, including the
@@ -683,7 +764,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
         let nsError = error as NSError
         var message = error.localizedDescription
         if let cloudError = error as? CKError {
-            message = "iCloud error \(cloudError.code.rawValue): \(message)"
+            message = String(localized: "iCloud error \(cloudError.code.rawValue): \(message)")
             if cloudError.code == .partialFailure,
                let partialErrors = cloudError.userInfo[CKPartialErrorsByItemIDKey] as? [AnyHashable: Error] {
                 let details = partialErrors

@@ -44,6 +44,13 @@ struct AddTokenView: View {
     @State private var kind: OTPKind = .totp
     @State private var counter = 0
 
+    /// What the steppers offer: the usual ranges, widened by `prefill` to take
+    /// whatever a scanned link carried. Fixed once filled in, so stepping away
+    /// from an unusual value can still step back to it.
+    @State private var digitsRange = 6...10
+    @State private var periodRange = 15...300
+    @State private var counterRange = 0...10_000
+
     /// Account is deliberately optional: plenty of people never fill it in, and the
     /// edit screen has always allowed it to be blank. Requiring it here only meant
     /// the token had to be created and then immediately edited to clear it.
@@ -158,13 +165,12 @@ struct AddTokenView: View {
                             TextField("Service name", text: $label)
 
                             TextField("Account (optional)", text: $account)
-                                .platformTextContentType(.username)
                                 .platformNoAutocapitalization()
 
                             SecureField("Setup key", text: $secret)
                                 .platformNoAutocapitalization()
                                 .autocorrectionDisabled()
-                                .platformTextContentType(.password)
+                                .platformSetupKeyContentType()
                         }
 
                         Section {
@@ -186,16 +192,16 @@ struct AddTokenView: View {
                                 }
                             }
 
-                            Stepper("Digits: \(digits)", value: $digits, in: 6...10)
+                            Stepper("Digits: \(digits)", value: $digits, in: digitsRange)
 
                             // A time-based code counts down against a period and a
                             // counter-based one against a counter, so exactly one of
                             // these is on screen. Showing the other would be a field
                             // that does nothing.
                             if kind == .totp {
-                                Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+                                PeriodStepper(period: $period, range: periodRange)
                             } else {
-                                Stepper("Counter: \(counter)", value: $counter, in: 0...10_000)
+                                Stepper("Counter: \(counter)", value: $counter, in: counterRange)
                             }
                         } header: {
                             Text("Advanced")
@@ -252,8 +258,9 @@ struct AddTokenView: View {
                     do {
                         if let data = try await newItem.loadTransferable(type: Data.self),
                            let image = PlatformImage(data: data) {
+                            // The spinner stays up through the read itself, which is
+                            // the slow part; `readQRFromImage` takes it down.
                             await MainActor.run {
-                                isProcessingImage = false
                                 readQRFromImage(image)
                             }
                         } else {
@@ -293,7 +300,7 @@ struct AddTokenView: View {
     private func readQRFromImage(_ image: PlatformImage) {
         guard let cgImage = image.cgImageForExport else {
             isProcessingImage = false
-            deferAlert(message: "Could not read the selected image.")
+            deferAlert(message: String(localized: "Could not read the selected image."))
             return
         }
         // Downscale large photos so Vision runs faster and UI doesn't feel frozen
@@ -362,6 +369,8 @@ struct AddTokenView: View {
     }
 
     /// Show an alert on the next run loop so it isn't lost when a sheet has just closed.
+    ///
+    /// `message` is shown as it is, so pass it already localized.
     private func deferAlert(message: String) {
         DispatchQueue.main.async {
             self.alertMessage = message
@@ -503,12 +512,19 @@ struct AddTokenView: View {
         account = parsed.account
         secret = parsed.secret
         algorithm = parsed.algorithm
-        // Clamped into the ranges the steppers offer, so a URL carrying a value
-        // outside them opens as a usable one rather than leaving a control blank.
-        digits = min(max(parsed.digits, 6), 10)
-        period = min(max(parsed.period, 15), 300)
+        // Taken as the link has them, with the steppers widened to fit, rather
+        // than clamped into their usual ranges: clamping turned a 10-second or
+        // 5-digit token into one whose codes were all wrong, with nothing on
+        // screen to say so — and a link that scans cleanly is saved unclamped.
+        // The *effective* values, as on the Edit screen: what the codes would
+        // really be generated with, so a nonsense `period=0` opens as 30.
+        digits = OTPGenerator.effectiveDigits(parsed.digits)
+        period = OTPGenerator.effectivePeriod(parsed.period)
         kind = parsed.kind
-        counter = Int(min(parsed.counter, UInt64(Int.max)))
+        counter = Int(clamping: parsed.counter)
+        digitsRange = min(6, digits)...max(10, digits)
+        periodRange = min(15, period)...max(300, period)
+        counterRange = 0...max(10_000, counter)
     }
     
     private func parseOtherOTPFormats(_ qrCode: String) -> (label: String, account: String, secret: String, algorithm: OTPAlgorithm, digits: Int, period: Int)? {

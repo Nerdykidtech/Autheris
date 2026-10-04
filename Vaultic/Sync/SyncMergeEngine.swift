@@ -144,8 +144,13 @@ nonisolated enum SyncMergeEngine {
             remoteRecords[record.id] = record
         }
 
-        var tokensByID = Dictionary(uniqueKeysWithValues: local.tokens.map { ($0.id.uuidString, $0) })
-        var order = local.tokens.map { $0.id.uuidString }
+        // A repeated id keeps its first copy, as `OTPDataStore.uniqueIDs` and
+        // `recordsByID` do. `uniqueKeysWithValues:` trapped on one instead, and a
+        // restored backup could put one in the store.
+        var tokensByID = Dictionary(local.tokens.map { ($0.id.uuidString, $0) },
+                                    uniquingKeysWith: { first, _ in first })
+        var seenIDs = Set<String>()
+        var order = local.tokens.map { $0.id.uuidString }.filter { seenIDs.insert($0).inserted }
         var tombstones = local.tombstones
         var uploads: [SyncRecord] = []
         var didAdoptRemoteChanges = false
@@ -195,10 +200,17 @@ nonisolated enum SyncMergeEngine {
 
             case (.some(let local), .some(let remote)):
                 if local.fingerprint == remote.fingerprint { continue }
-                if wins(local, over: remote) {
+                switch resolve(local, against: remote) {
+                case .keepLocal:
                     uploads.append(local)
-                } else {
+                case .takeRemote:
                     adopt(remote)
+                case .combined(let combined):
+                    // Neither copy alone is right: the winner's content with the
+                    // loser's further-along counter. It is a new write, so it
+                    // goes up *and* is applied here.
+                    adopt(combined)
+                    uploads.append(combined)
                 }
             }
         }
@@ -218,10 +230,61 @@ nonisolated enum SyncMergeEngine {
         )
     }
 
-    /// The conflict rule, exposed so the CloudKit transport can decide a single
-    /// per-record retry against a server copy without re-running a whole merge.
+    /// How one conflict between two copies of a record settles.
+    enum Resolution {
+        /// This device's copy wins, and is what goes up.
+        case keepLocal
+        /// The other copy wins, and is applied here.
+        case takeRemote
+        /// Neither as it stands: the winner carrying the loser's higher counter.
+        /// Both applied here *and* written up. See `combiningCounters`.
+        case combined(SyncRecord)
+    }
+
+    /// The conflict rule for one record.
+    ///
+    /// The single place it is decided, so the merge and the CloudKit transport's
+    /// per-record retry cannot disagree. They did: the counter rule lived only in
+    /// the merge, and a push refused by the server — because another device wrote
+    /// first — fell back to plain last-write-wins, which could write a lower
+    /// counter over a higher one.
+    static func resolve(_ local: SyncRecord, against remote: SyncRecord) -> Resolution {
+        let localWon = wins(local, over: remote)
+        let (winner, loser) = localWon ? (local, remote) : (remote, local)
+        if let combined = combiningCounters(winner, loser) {
+            return .combined(combined)
+        }
+        return localWon ? .keepLocal : .takeRemote
+    }
+
+    /// Last write wins on its own, without the counter rule. For tests of the
+    /// timestamp and tie-break order; anything deciding a real conflict calls
+    /// `resolve`.
     static func localWins(_ local: SyncRecord, over remote: SyncRecord) -> Bool {
         wins(local, over: remote)
+    }
+
+    /// The winner of a conflict between two counter-based copies, carrying the
+    /// higher counter of the two — or `nil` when the winner already has it.
+    ///
+    /// Last write wins for everything else, but not for a counter. A counter only
+    /// moves forward, and each value is a code that has been shown and may have
+    /// been used: if one device spent codes 3 and 4, a rename made later on
+    /// another device still at 3 must not put this token back on 3, because the
+    /// service has already accepted that code and will refuse it.
+    ///
+    /// Stamped just after the newer of the two copies, so every device adopts it
+    /// rather than tie-breaking against either, and two devices settling the same
+    /// conflict make the same copy. Not stamped with the time of the merge: the
+    /// copy is built from what this device had when the sync *started*, and an
+    /// edit made here while the sync was out has to stay newer than it, or
+    /// applying the result would quietly undo that edit.
+    private static func combiningCounters(_ winner: SyncRecord, _ loser: SyncRecord) -> SyncRecord? {
+        guard let winnerToken = winner.token, let loserToken = loser.token,
+              winnerToken.kind == .hotp, loserToken.kind == .hotp,
+              loserToken.counter > winnerToken.counter else { return nil }
+        let stamp = max(winner.modifiedAt, loser.modifiedAt).addingTimeInterval(0.001)
+        return .live(winnerToken.edited(counter: loserToken.counter, modifiedAt: stamp))
     }
 
     /// Last write wins; ties are broken deterministically so all devices agree.
@@ -234,7 +297,8 @@ nonisolated enum SyncMergeEngine {
 
     private static func recordsByID(from local: SyncLocalState) -> [String: SyncRecord] {
         var records: [String: SyncRecord] = [:]
-        for token in local.tokens {
+        // The first copy of a repeated id, matching `tokensByID` in `merge`.
+        for token in local.tokens where records[token.id.uuidString] == nil {
             records[token.id.uuidString] = .live(token)
         }
         // A live token always outranks a leftover tombstone for the same id.

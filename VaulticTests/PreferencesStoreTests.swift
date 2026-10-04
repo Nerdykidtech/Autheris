@@ -92,6 +92,35 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertEqual(try storedPreferences().schemaVersion, AppPreferences.currentSchemaVersion)
     }
 
+    func testAChangeToSomethingThatIsNotAPreferenceWritesNothing() throws {
+        XCTAssertTrue(PreferencesStore.persist())
+        // Stand-in for the item, so a write would show.
+        let marker = Data("untouched since the last write".utf8)
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+
+        // What the sync service does after every sync: a key that isn't a preference.
+        PreferencesStore.persistIfChanged()
+
+        XCTAssertEqual(KeychainStore.load(account: account), marker)
+    }
+
+    func testAChangedPreferenceIsWrittenAndADirectPersistAlwaysIs() throws {
+        XCTAssertTrue(PreferencesStore.persist())
+        let marker = Data("untouched since the last write".utf8)
+
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+        let current = UserDefaults.standard.object(forKey: "hideCodesInAppSwitcher") as? Bool ?? true
+        UserDefaults.standard.set(!current, forKey: "hideCodesInAppSwitcher")
+        PreferencesStore.persistIfChanged()
+        XCTAssertEqual(try storedPreferences().hideCodesInAppSwitcher, !current)
+
+        // The privacy repair calls `persist()` directly, and it must write even
+        // when nothing it can see has changed.
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+        XCTAssertTrue(PreferencesStore.persist())
+        XCTAssertNotEqual(KeychainStore.load(account: account), marker)
+    }
+
     func testPersistWritesNothingBeforeTheStoredCopyHasBeenRead() throws {
         // A launch on a locked device can't read the Keychain copy. Saving over it
         // then would skip what the read was for — the privacy repair, most of all.

@@ -106,28 +106,46 @@ class LogoCacheManager {
         Bundle.main.object(forInfoDictionaryKey: "LOGODEV_PUBLISHABLE_KEY") as? String
     }()
     
+    /// Logos already decoded this launch, so an icon can draw its logo on its
+    /// first frame. Without it, every icon drew its letter first and swapped the
+    /// logo in a frame later — at launch, on every scroll, in every sheet —
+    /// because the disk read waited for `.task`.
+    private let decoded = NSCache<NSString, PlatformImage>()
+
+    /// Names logo.dev answered without a logo, this launch. Remembered so an
+    /// unknown service is asked about once rather than every time its icon
+    /// appears, which is both a request wasted and the service's name sent again.
+    /// Not kept across launches, so a logo added later is still found.
+    private var notFound: Set<String> = []
+
     // MARK: - Public Methods
-    
-    func hasCachedLogo(for branding: IssuerBranding) -> Bool {
-        let fileURL = cacheDirectory.appendingPathComponent("\(branding.cacheKey).png")
-        return fileManager.fileExists(atPath: fileURL.path)
+
+    /// The logo if it is already decoded, and `nil` otherwise. Cheap enough to
+    /// call from `body`; it never touches the disk.
+    func decodedLogo(for branding: IssuerBranding) -> PlatformImage? {
+        decoded.object(forKey: branding.cacheKey as NSString)
     }
-    
+
+    /// The logo from memory, or else from the cache on disk — read and decoded
+    /// once per name per launch.
     func getCachedLogo(for branding: IssuerBranding) -> PlatformImage? {
+        if let image = decodedLogo(for: branding) { return image }
         let fileURL = cacheDirectory.appendingPathComponent("\(branding.cacheKey).png")
-        
+
         guard fileManager.fileExists(atPath: fileURL.path),
               let data = try? Data(contentsOf: fileURL),
               let image = PlatformImage(data: data) else {
             return nil
         }
-        
+
+        decoded.setObject(image, forKey: branding.cacheKey as NSString)
         return image
     }
-    
+
     func cacheLogo(_ image: PlatformImage, for branding: IssuerBranding) {
+        decoded.setObject(image, forKey: branding.cacheKey as NSString)
         let fileURL = cacheDirectory.appendingPathComponent("\(branding.cacheKey).png")
-        
+
         // Save as PNG
         if let data = image.pngData() {
             try? data.write(to: fileURL)
@@ -152,6 +170,11 @@ class LogoCacheManager {
             completion(nil)
             return
         }
+
+        guard !notFound.contains(branding.cacheKey) else {
+            completion(nil)
+            return
+        }
         
         // Try to fetch by company name first (works for all services)
         if let url = logoURLByName(for: branding.companyName) {
@@ -164,11 +187,20 @@ class LogoCacheManager {
     private func fetchLogo(url: URL, branding: IssuerBranding, completion: @escaping @MainActor (PlatformImage?) -> Void) {
         URLSession.shared.dataTask(with: url) { data, response, error in
             let image = data.flatMap { error == nil ? PlatformImage(data: $0) : nil }
-            // The cache is main-actor state, read by `hasCachedLogo` and the views,
-            // so it is written there too rather than from URLSession's queue.
+            // Only a real "no logo" is remembered: a 404, or a successful reply
+            // that isn't an image. A request that never got an answer (offline),
+            // or one refused for some other reason — rate limited, a bad key, a
+            // server error — says nothing about the service, so it is tried again.
+            let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            let answeredWithoutLogo = error == nil && image == nil
+                && (status == 404 || (200..<300).contains(status))
+            // The cache is main-actor state, read by the views, so it is written
+            // there too rather than from URLSession's queue.
             Task { @MainActor in
                 if let image {
                     self.cacheLogo(image, for: branding)
+                } else if answeredWithoutLogo {
+                    self.notFound.insert(branding.cacheKey)
                 }
                 completion(image)
             }
@@ -176,20 +208,9 @@ class LogoCacheManager {
     }
     
     func clearCache() {
+        decoded.removeAllObjects()
+        notFound.removeAll()
         try? fileManager.removeItem(at: cacheDirectory)
-    }
-    
-    // Remove old cached logos when label changes
-    func removeOldLogo(forOldBranding oldBranding: IssuerBranding?, newBranding: IssuerBranding) {
-        guard let oldBranding = oldBranding,
-              oldBranding.cacheKey != newBranding.cacheKey else {
-            return
-        }
-        
-        let oldFileURL = cacheDirectory.appendingPathComponent("\(oldBranding.cacheKey).png")
-        if fileManager.fileExists(atPath: oldFileURL.path) {
-            try? fileManager.removeItem(at: oldFileURL)
-        }
     }
     
     // MARK: - Private Methods
@@ -222,21 +243,40 @@ class LogoCacheManager {
 // MARK: - Icon View with Caching
 struct IssuerIconView: View {
     let branding: IssuerBranding
-    @State private var cachedImage: PlatformImage?
-    @State private var isLoading = false
-    
+
     // Icon diameter; the token card passes 44, other callers use the default.
     var size: CGFloat = 28
-    
+
+    /// Whether a logo that isn't cached may be looked up.
+    ///
+    /// `false` for the Edit Token preview, which follows the name field as it is
+    /// typed: looking each keystroke up sent logo.dev "G", "Gi", "Git" in turn —
+    /// none of them names a service the user has — for a picture the card fetches
+    /// anyway once the rename is saved.
+    var fetchesMissingLogo = true
+
+    /// The logo, once read from the cache or fetched. Read from disk in `.task`
+    /// rather than in `body`, which used to read and decode the file on every
+    /// evaluation — and the token list re-evaluates every second. `body` only
+    /// asks the in-memory copy, which costs nothing.
+    @State private var logo: PlatformImage?
+    @State private var isLoading = false
+
+    /// How long a name has to stay put before it is looked up, so a list that
+    /// scrolls past, or a label that is still changing, doesn't send a request
+    /// for each step on the way.
+    private static let fetchDelay: Duration = .milliseconds(400)
+
     var body: some View {
         ZStack {
             // Background circle
             Circle()
                 .fill(branding.color.opacity(0.10))
-            
-            if let cachedImage = cachedImage {
-                // Use cached image - fill the entire circle
-                Image(platformImage: cachedImage)
+
+            // The decoded copy first, so a logo seen before draws on this frame
+            // rather than after `.task` runs.
+            if let logo = logo ?? LogoCacheManager.shared.decodedLogo(for: branding) {
+                Image(platformImage: logo)
                     .resizable()
                     .scaledToFill()
                     .frame(width: size, height: size)
@@ -246,14 +286,6 @@ struct IssuerIconView: View {
                 ProgressView()
                     .controlSize(size >= 44 ? .regular : .small)
                     .frame(width: size, height: size)
-            } else if LogoCacheManager.shared.hasCachedLogo(for: branding),
-                      let image = LogoCacheManager.shared.getCachedLogo(for: branding) {
-                // Load from cache if available - fill the entire circle
-                Image(platformImage: image)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: size, height: size)
-                    .clipShape(Circle())
             } else {
                 // Fallback monogram - centered in circle
                 fallbackMonogram
@@ -266,57 +298,46 @@ struct IssuerIconView: View {
                 .stroke(branding.color.opacity(0.18), lineWidth: 1)
         )
         .accessibilityLabel(Text("\(branding.displayName) icon"))
-        .onAppear {
-            // Check if we need to fetch a new logo
-            if !LogoCacheManager.shared.hasCachedLogo(for: branding) {
-                fetchLogoIfNeeded()
-            }
-        }
-        .onChange(of: branding) { oldBranding, newBranding in
-            // When branding changes (e.g., service name edited), update logo
-            LogoCacheManager.shared.removeOldLogo(forOldBranding: oldBranding, newBranding: newBranding)
-            cachedImage = nil
-            if !LogoCacheManager.shared.hasCachedLogo(for: newBranding) {
-                fetchLogoIfNeeded()
-            }
+        // Keyed on the cache key, so a rename loads the new name's logo and a
+        // change that doesn't affect it (a colour, say) doesn't reload anything.
+        // Nothing is ever deleted from here: two tokens can share one cached
+        // logo, and the one being renamed is not the only one using it.
+        .task(id: branding.cacheKey) {
+            await loadLogo()
         }
     }
-    
+
+    private func loadLogo() async {
+        isLoading = false
+        logo = LogoCacheManager.shared.getCachedLogo(for: branding)
+        guard logo == nil, fetchesMissingLogo, !branding.companyName.isEmpty,
+              LogoCacheManager.isFetchingEnabled else { return }
+
+        // Cancelled by the next change to the name, or by the icon going away.
+        try? await Task.sleep(for: Self.fetchDelay)
+        guard !Task.isCancelled else { return }
+
+        isLoading = true
+        let fetched = await withCheckedContinuation { continuation in
+            LogoCacheManager.shared.fetchAndCacheLogo(for: branding) { image in
+                continuation.resume(returning: image)
+            }
+        }
+        guard !Task.isCancelled else { return }
+        isLoading = false
+        logo = fetched
+    }
+
     private var fallbackMonogram: some View {
         ZStack {
             // Monogram circle background
             Circle()
                 .fill(branding.color.opacity(0.15))
-            
+
             // Monogram letter
             Text(String(branding.displayName.prefix(1)).uppercased())
                 .font(.system(size: size * 0.5, weight: .semibold, design: .rounded))
                 .foregroundColor(branding.color)
-        }
-    }
-    
-    private func fetchLogoIfNeeded() {
-        // Check if we have API key
-        guard let token = Bundle.main.object(forInfoDictionaryKey: "LOGODEV_PUBLISHABLE_KEY") as? String,
-              token.hasPrefix("pk_") else {
-            // No API key, don't fetch
-            return
-        }
-        
-        // Only fetch if we have a valid company name
-        guard !branding.companyName.isEmpty else {
-            return
-        }
-        
-        isLoading = true
-        
-        LogoCacheManager.shared.fetchAndCacheLogo(for: branding) { image in
-            DispatchQueue.main.async {
-                self.isLoading = false
-                if let image = image {
-                    self.cachedImage = image
-                }
-            }
         }
     }
 }

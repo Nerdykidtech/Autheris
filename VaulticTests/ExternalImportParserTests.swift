@@ -94,7 +94,7 @@ final class ExternalImportParserTests: XCTestCase {
         // Steam Guard is its own algorithm, not either of the two the app can
         // generate, so it is refused rather than imported as something that produces
         // codes the service will reject.
-        XCTAssertEqual(try parse(aegisEntry(type: "steam", counterField: nil)).count, 0)
+        assertNoTokens(try parse(aegisEntry(type: "steam", counterField: nil)))
     }
 
     func testAnEncryptedAegisVaultIsRefusedRatherThanImportedEmpty() throws {
@@ -210,7 +210,7 @@ final class ExternalImportParserTests: XCTestCase {
         }
         """
 
-        XCTAssertEqual(try parse(json).count, 0)
+        assertNoTokens(try parse(json))
     }
 
     func testTwoFasReadsTheAccountSoTwoAccountsAtOneServiceBothImport() throws {
@@ -255,6 +255,15 @@ final class ExternalImportParserTests: XCTestCase {
         [ { "type": "TOTP", "secret": "ABC", "issuer": "Example", "label": "a" } ]
         """
 
-        XCTAssertEqual(try parse(json).count, 0)
+        assertNoTokens(try parse(json))
+    }
+
+    /// A supported file with nothing importable in it is an error the import
+    /// screen can explain, not an empty list it reads as "all duplicates".
+    private func assertNoTokens(_ parse: @autoclosure () throws -> [OTPCode],
+                                file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertThrowsError(try parse(), file: file, line: line) { error in
+            XCTAssertEqual(error as? ExternalImportError, .noTokens, file: file, line: line)
+        }
     }
 }

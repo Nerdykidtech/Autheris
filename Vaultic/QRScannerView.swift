@@ -14,6 +14,17 @@ struct QRScannerView: UIViewControllerRepresentable {
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
         var parent: QRScannerView
         var captureSession: AVCaptureSession?
+        /// Set by the first code read. `stopRunning()` does not take back the
+        /// callbacks already queued behind it, so one QR code could be delivered
+        /// twice — and the second add, finding the first, reported "Already on
+        /// this device" straight after the code had been added.
+        private var hasDeliveredCode = false
+        /// Where the session is started and stopped. `startRunning` and
+        /// `stopRunning` block, so neither runs on the main thread — and one
+        /// serial queue for both means a stop can never overtake the start it is
+        /// meant to undo, as it could when the sheet closed before the camera had
+        /// started.
+        let sessionQueue = DispatchQueue(label: "com.eddingtontech.autheris.scanner", qos: .userInitiated)
         
         init(parent: QRScannerView) {
             self.parent = parent
@@ -22,13 +33,17 @@ struct QRScannerView: UIViewControllerRepresentable {
         func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
             guard let metadataObject = metadataObjects.first,
                   let readableObject = metadataObject as? AVMetadataMachineReadableCodeObject,
-                  let stringValue = readableObject.stringValue else {
+                  let stringValue = readableObject.stringValue,
+                  !hasDeliveredCode else {
                 return
             }
-            
+            hasDeliveredCode = true
+
             // Found a QR code
             Haptics.vibrate()
-            captureSession?.stopRunning()
+            if let captureSession {
+                sessionQueue.async { captureSession.stopRunning() }
+            }
             
             DispatchQueue.main.async {
                 self.parent.onCodeScanned(stringValue)
@@ -94,6 +109,18 @@ struct QRScannerView: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         // Update view if needed
+    }
+
+    /// Stops the camera when the sheet goes, however it goes — including a swipe
+    /// down, which reaches neither the cancel button nor a scan.
+    ///
+    /// Not gated on `isRunning`: the start may still be queued, and the stop has
+    /// to follow it rather than see "not running" and do nothing.
+    static func dismantleUIViewController(_ uiViewController: UIViewController, coordinator: Coordinator) {
+        guard let session = coordinator.captureSession else { return }
+        coordinator.sessionQueue.async {
+            session.stopRunning()
+        }
     }
     
     private func setupCameraSession(viewController: UIViewController, context: Context) {
@@ -164,7 +191,7 @@ struct QRScannerView: UIViewControllerRepresentable {
             context.coordinator.captureSession = captureSession
             
             // startRunning is blocking; keep it off the main thread so the UI stays responsive.
-            DispatchQueue.global(qos: .userInitiated).async {
+            context.coordinator.sessionQueue.async {
                 if !captureSession.isRunning {
                     captureSession.startRunning()
                 }
@@ -651,6 +678,21 @@ private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDele
     let session = AVCaptureSession()
     private let output = AVCaptureMetadataOutput()
     private let onCode: (String) -> Void
+    /// Set by the first code read, and cleared by `start()`. `stop()` hands the
+    /// session to a background queue, so codes keep arriving for a moment after
+    /// the first, and each used to be delivered.
+    private var hasDeliveredCode = false
+    /// Where the session is started and stopped: off the main thread, because
+    /// both block, and on one serial queue, so a stop always follows the start
+    /// before it rather than racing it.
+    private let sessionQueue = DispatchQueue(label: "com.eddingtontech.autheris.scanner", qos: .userInitiated)
+    /// The `didStartRunningNotification` observer, held so it goes with the
+    /// session. Its token used to be dropped, so each scanner opened left one
+    /// more observer registered for the rest of the launch.
+    ///
+    /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
+    /// can read it. It is written once in `init` and read once in `deinit`.
+    nonisolated(unsafe) private var startObserver: NSObjectProtocol?
 
     init?(onCode: @escaping (String) -> Void) {
         self.onCode = onCode
@@ -682,7 +724,7 @@ private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDele
 
         // On macOS the available set is only reliably published once the session is
         // actually running, so this is the second attempt.
-        NotificationCenter.default.addObserver(
+        startObserver = NotificationCenter.default.addObserver(
             forName: AVCaptureSession.didStartRunningNotification,
             object: session,
             queue: .main
@@ -692,6 +734,12 @@ private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDele
             MainActor.assumeIsolated {
                 _ = self?.enableQRDetectionIfAvailable()
             }
+        }
+    }
+
+    deinit {
+        if let startObserver {
+            NotificationCenter.default.removeObserver(startObserver)
         }
     }
 
@@ -728,22 +776,25 @@ private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDele
     }
 
     func start() {
-        guard !session.isRunning else { return }
+        hasDeliveredCode = false
+        // Queued even when the session reports running: a stop may be queued
+        // ahead of it, and `startRunning` on a running session does nothing.
         // A second scan in the same launch finds the session already running, and
         // then `didStartRunningNotification` will not fire again.
         enableQRDetectionIfAvailable()
         // startRunning blocks; keep it off the main thread so the window stays
         // responsive.
         let session = self.session
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             session.startRunning()
         }
     }
 
+    /// Not gated on `isRunning`: a start may still be queued, and the stop has to
+    /// follow it rather than find the session "not running" and do nothing.
     func stop() {
-        guard session.isRunning else { return }
         let session = self.session
-        DispatchQueue.global(qos: .userInitiated).async {
+        sessionQueue.async {
             session.stopRunning()
         }
     }
@@ -755,6 +806,8 @@ private final class ScannerSession: NSObject, AVCaptureMetadataOutputObjectsDele
               let value = object.stringValue else { return }
 
         MainActor.assumeIsolated {
+            guard !hasDeliveredCode else { return }
+            hasDeliveredCode = true
             stop()
             onCode(value)
         }
