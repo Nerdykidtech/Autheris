@@ -134,6 +134,10 @@ struct TokenSecretView: View {
         switch dataStore.saveEdit(from: code, to: code.edited(secret: secret, modifiedAt: code.modifiedAt)) {
         case .saved:
             break
+        case .unchanged:
+            // The same key as before.
+            dismiss()
+            return
         case .nameTaken:
             // Only reachable if sync brought in a code with this one's name while
             // the screen was open; the secret alone can't cause it.

@@ -70,6 +70,11 @@ final class OTPDataStore: ObservableObject {
     @Published private(set) var isDeletingCloudData = false
     /// The delete under way, so a second call waits for it and gets its result.
     private var cloudDeletion: Task<Void, Error>?
+    /// How long "Delete from iCloud" waits for a sync already running before it
+    /// gives up. Without a limit, a CloudKit call that never returned left the
+    /// delete — and the Settings controls it disables — stuck until the app was
+    /// quit. Settable so tests don't have to wait this long.
+    var cloudDeletionSyncTimeout: Duration = .seconds(30)
     /// Hands the token list to the paired Apple Watch. Inert on the Mac, which has
     /// no watch to talk to.
     private let watchRelay: WatchTokenRelayService
@@ -560,6 +565,8 @@ final class OTPDataStore: ObservableObject {
     /// What became of an edit handed to `saveEdit(from:to:)`.
     enum EditOutcome: Equatable {
         case saved
+        /// The screen changed nothing, so nothing was written or synced.
+        case unchanged
         /// Another code already has the new name; nothing was changed.
         case nameTaken
         /// The code was deleted — on another device, say — while it was being
@@ -577,9 +584,14 @@ final class OTPDataStore: ObservableObject {
     /// its counter while the screen is open, and saving `edited` whole would undo
     /// all of that — for a counter, bringing back a code the service has already
     /// accepted. For the same reason a changed counter is only ever raised.
+    ///
+    /// An edit that changed nothing writes nothing. Saving it would still stamp
+    /// the code as edited now, and that newer stamp would beat a rename made on
+    /// another device that hasn't arrived here yet.
     @discardableResult
     func saveEdit(from original: OTPCode, to edited: OTPCode) -> EditOutcome {
         guard isVaultLoaded else { return .vaultUnavailable }
+        guard edited.edited(modifiedAt: original.modifiedAt) != original else { return .unchanged }
         guard let index = codes.firstIndex(where: { $0.id == original.id }) else { return .deleted }
 
         func changed<Value: Equatable>(_ field: KeyPath<OTPCode, Value>) -> Value? {
@@ -748,7 +760,9 @@ final class OTPDataStore: ObservableObject {
         syncTask?.cancel()
         syncTask = nil
         do {
+            let deadline = ContinuousClock.now + cloudDeletionSyncTimeout
             while isSyncInFlight {
+                guard ContinuousClock.now < deadline else { throw CloudDeletionError.syncStillRunning }
                 try await Task.sleep(for: .milliseconds(50))
             }
             try await syncService.deleteRemoteRecords()
@@ -762,6 +776,19 @@ final class OTPDataStore: ObservableObject {
         tombstones.removeAll()
         persistTombstones()
         setSyncEnabled(false)
+    }
+
+    /// Why "Delete from iCloud" stopped before deleting anything.
+    enum CloudDeletionError: LocalizedError {
+        /// The sync it waits for didn't finish in `cloudDeletionSyncTimeout`.
+        case syncStillRunning
+
+        var errorDescription: String? {
+            switch self {
+            case .syncStillRunning:
+                return String(localized: "A sync is still running, so nothing was deleted from iCloud. Try again in a moment.")
+            }
+        }
     }
 
     /// Re-reads whether iCloud can be used, for when Settings appears.
@@ -1092,7 +1119,6 @@ final class OTPDataStore: ObservableObject {
         // Sync would raise it again anyway; this makes a restore with sync off do
         // the same.
         let liveByID = Dictionary(codes.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        //
         // Repeated ids are dropped first, keeping the first, as loading does: a
         // backup edited by hand or written by another tool can repeat one, and a
         // repeated id in `codes` is what crashed the next sync's merge.

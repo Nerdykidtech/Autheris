@@ -448,6 +448,22 @@ final class OTPDataStoreSyncTests: XCTestCase {
                        "a counter that goes back is a code already used")
     }
 
+    func testAnEditThatChangedNothingWritesNothing() async {
+        let opened = token("GitHub")
+        store.addCode(opened)
+        await waitUntil { self.sync.syncCallCount > 1 }
+        let callsBefore = sync.syncCallCount
+        let stored = store.codes.first { $0.id == opened.id }
+
+        // What the edit screen hands over when Save is tapped with nothing changed.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(modifiedAt: opened.modifiedAt)), .unchanged)
+
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.modifiedAt, stored?.modifiedAt,
+                       "a newer stamp would beat a rename from another device not yet here")
+        try? await Task.sleep(for: .milliseconds(800))
+        XCTAssertEqual(sync.syncCallCount, callsBefore, "and nothing is synced")
+    }
+
     func testAnEditToACodeDeletedMeanwhileIsReportedAndNotSaved() {
         let opened = token("GitHub")
         store.addCode(opened)
@@ -544,6 +560,29 @@ final class OTPDataStoreSyncTests: XCTestCase {
             sync!.events.append("sync finished")
             return nil
         }
+    }
+
+    func testDeletingFromICloudGivesUpOnASyncThatNeverFinishes() async {
+        store.cloudDeletionSyncTimeout = .milliseconds(200)
+        let gate = Gate()
+        holdSyncs(until: gate)
+
+        let syncing = Task { await store.syncNow() }
+        await waitUntil { self.sync.events.contains("sync started") }
+        var thrown: Error?
+        do {
+            try await store.disableSync(deleteCloudData: true)
+        } catch {
+            thrown = error
+        }
+
+        XCTAssertEqual(thrown as? OTPDataStore.CloudDeletionError, .syncStillRunning)
+        XCTAssertFalse(sync.events.contains("deleted"), "nothing is deleted under a running sync")
+        XCTAssertFalse(store.isDeletingCloudData, "Settings is usable again")
+        XCTAssertTrue(store.isSyncEnabled, "and sync stays on, so the delete can be retried")
+
+        gate.isOpen = true
+        await syncing.value
     }
 
     func testASecondDeleteFromICloudWaitsForTheFirst() async throws {

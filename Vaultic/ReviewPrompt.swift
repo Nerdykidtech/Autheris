@@ -78,6 +78,10 @@ enum ReviewPrompt {
     }
 
     /// `date`'s day in the user's calendar, as a number that changes once a day.
+    ///
+    /// In the calendar's current time zone, so a copy either side of a change
+    /// of time zone can land on different days and count twice. Left so: the bar
+    /// is a few days of use, and one extra day is not worth tracking zones for.
     private static func dayNumber(of date: Date) -> Int {
         let calendar = Calendar.current
         let reference = calendar.startOfDay(for: Date(timeIntervalSinceReferenceDate: 0))

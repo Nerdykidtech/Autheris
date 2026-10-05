@@ -67,6 +67,8 @@ nonisolated enum GoogleMigrationParser {
         var digits: Int = 6
         var type: Int = 2 // TOTP
         var counter: UInt64 = 0
+        /// Cleared by a counter no `int64` can hold; see field 7.
+        var counterIsValid = true
         
         var offset = 0
         let bytes = [UInt8](data)
@@ -108,7 +110,12 @@ nonisolated enum GoogleMigrationParser {
                     // made a larger counter fail part-way through its bytes and
                     // threw off everything read after it. Past `Int64.max` the
                     // bits are a negative `int64`, which is not a counter at all.
-                    counter = v <= OTPCode.maximumCounter ? v : 0
+                    if v <= OTPCode.maximumCounter {
+                        counter = v
+                    } else {
+                        counter = 0
+                        counterIsValid = false
+                    }
                 } else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
             default:
                 skipField(bytes, tag: tag, wireType: wireType, offset: &offset)
@@ -145,6 +152,11 @@ nonisolated enum GoogleMigrationParser {
         // (the protobuf's "unspecified") is what an unset field decodes to, which
         // for a field Google itself always writes means the TOTP default.
         let kind: OTPKind = (type == 1) ? .hotp : .totp
+        // A counter-based entry with a negative counter is dropped, like one with
+        // a key that won't decode. Reading it as 0 instead gave a token whose
+        // codes the service had moved past long ago, with nothing on screen to
+        // say so. A time-based entry never uses its counter, so it stays.
+        guard kind == .totp || counterIsValid else { return nil }
 
         return OTPCode(
             label: label,

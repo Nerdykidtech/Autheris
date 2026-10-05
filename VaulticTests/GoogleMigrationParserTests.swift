@@ -20,8 +20,10 @@ final class GoogleMigrationParserTests: XCTestCase {
 
     // MARK: - A minimal protobuf writer
 
+    /// A negative value is written as its 64-bit two's complement, ten bytes
+    /// long, as protobuf writes a negative `int64`.
     private func varint(_ value: Int) -> [UInt8] {
-        var remaining = value
+        var remaining = UInt64(bitPattern: Int64(value))
         var bytes: [UInt8] = []
         repeat {
             var byte = UInt8(remaining & 0x7F)
@@ -91,6 +93,21 @@ final class GoogleMigrationParserTests: XCTestCase {
                                       issuer: "Example", type: 1, counter: large))
 
         XCTAssertEqual(tokens.first?.counter, UInt64(large))
+    }
+
+    func testACounterBasedEntryWithANegativeCounterIsNotImported() {
+        // Read as 0, it would have been a token whose codes the service had moved
+        // past long ago.
+        XCTAssertNil(GoogleMigrationParser.parseMigrationURL(
+            export(secret: rawSecret, name: "alice@example.com", issuer: "Example", type: 1, counter: -1)))
+    }
+
+    func testATimeBasedEntryWithANegativeCounterIsStillImported() throws {
+        let tokens = try parse(export(secret: rawSecret, name: "alice@example.com",
+                                      issuer: "Example", type: 2, counter: -1))
+
+        XCTAssertEqual(tokens.first?.kind, .totp)
+        XCTAssertEqual(tokens.first?.counter, 0)
     }
 
     func testTheImportedHotpEntryGeneratesTheRfc4226CodeForItsCounter() throws {

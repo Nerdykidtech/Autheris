@@ -767,6 +767,11 @@ struct EditTokenView: View {
     @State private var label: String
     @State private var account: String
     @State private var ringColor: Color
+    /// The ring color the screen opened with. The color only counts as changed
+    /// when the picker has moved away from this: converting it to a hex and back
+    /// doesn't always give the stored hex exactly, and comparing that hex made
+    /// every save rewrite the color — over one set on another device meanwhile.
+    private let openedRingColor: Color
     /// Seeded from the *effective* values, so opening this screen on a token whose
     /// stored digits or period is malformed shows the values its codes are really
     /// generated with. `OTPGenerator` decides what "effective" means.
@@ -791,7 +796,11 @@ struct EditTokenView: View {
         digits != code.effectiveDigits ||
         period != code.effectivePeriod ||
         counter != Int(clamping: code.counter) ||
-        ringHexForSave() != code.timerRingHex
+        ringColorChanged
+    }
+
+    private var ringColorChanged: Bool {
+        ringColor != openedRingColor
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
@@ -808,11 +817,14 @@ struct EditTokenView: View {
         _period = State(initialValue: code.effectivePeriod)
         _counter = State(initialValue: Int(clamping: code.counter))
         let branding = IssuerBranding.forLabel(code.label)
+        let opened: Color
         if let hex = code.timerRingHex, let c = Color(hex: hex) {
-            _ringColor = State(initialValue: c)
+            opened = c
         } else {
-            _ringColor = State(initialValue: branding.color)
+            opened = branding.color
         }
+        openedRingColor = opened
+        _ringColor = State(initialValue: opened)
     }
     
     var body: some View {
@@ -1060,7 +1072,6 @@ struct EditTokenView: View {
         // user changed — digits and period against the values the code is really
         // generated with, which is what the steppers started from. The store
         // applies those changes to the code as it is now; see `saveEdit`.
-        let ringHex = ringHexForSave()
         let edited = code.edited(
             label: label,
             account: account,
@@ -1068,13 +1079,17 @@ struct EditTokenView: View {
             digits: digits != code.effectiveDigits ? digits : nil,
             period: period != code.effectivePeriod ? period : nil,
             counter: counter != Int(clamping: code.counter) ? UInt64(max(0, counter)) : nil,
-            timerRingHex: .some(ringHex),
+            timerRingHex: ringColorChanged ? .some(ringHexForSave()) : nil,
             modifiedAt: code.modifiedAt
         )
 
         switch dataStore.saveEdit(from: code, to: edited) {
         case .saved:
             break
+        case .unchanged:
+            // Nothing to save, so nothing to celebrate or ask a review for.
+            dismiss()
+            return
         case .nameTaken:
             alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
             showingAlert = true

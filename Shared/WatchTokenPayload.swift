@@ -113,6 +113,12 @@ nonisolated enum WatchTokenPayload {
     /// not trusted. It came from a phone whose clock was wrong — set by hand, or
     /// off after a restore — and trusting it froze the watch's list until the
     /// phone's clock caught up, deleted codes and their secrets included.
+    ///
+    /// Once `appliedAt` is that far ahead, *any* list is accepted, an older one
+    /// included. That is safe only because the list travels by
+    /// `updateApplicationContext`, which keeps just the latest: nothing older can
+    /// arrive late. A transport that queues — `transferUserInfo` — would need
+    /// this rethought.
     static func isNewer(_ candidate: Decoded, than appliedAt: Date, now: Date = Date()) -> Bool {
         candidate.sentAt >= appliedAt || appliedAt > now.addingTimeInterval(futureTolerance)
     }

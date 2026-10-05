@@ -715,6 +715,46 @@
         }
       }
     },
+    "A sync is still running, so nothing was deleted from iCloud. Try again in a moment.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine Synchronisierung läuft noch, daher wurde nichts aus iCloud gelöscht. Versuche es gleich noch einmal."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía hay una sincronización en curso, así que no se ha eliminado nada de iCloud. Vuelve a intentarlo en un momento."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une synchronisation est toujours en cours ; rien n’a donc été supprimé d’iCloud. Réessayez dans un instant."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同期がまだ実行中のため、iCloudからは何も削除されませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma sincronização ainda está em andamento, então nada foi excluído do iCloud. Tente novamente em instantes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同步仍在进行，因此未从 iCloud 删除任何内容。请稍后再试。"
+          }
+        }
+      }
+    },
     "A token with this service name and account is already on this device.": {
       "localizations": {
         "de-DE": {
