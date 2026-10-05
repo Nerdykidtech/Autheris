@@ -741,6 +741,7 @@ struct OTPCardView: View {
         Haptics.impact(.light)
         
         ClipboardHelper.copy(code.currentCode)
+        ReviewPrompt.codeCopied()
         withAnimation {
             isCopied = true
         }
@@ -1090,6 +1091,7 @@ struct EditTokenView: View {
         }
         Haptics.notify(.success)
         dismiss()
+        ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
     }
 }
 

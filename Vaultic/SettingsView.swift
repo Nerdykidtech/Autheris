@@ -55,6 +55,9 @@ struct SettingsView: View {
     @State private var transferSheet: TransferSheet?
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
+    /// Whether the import behind `importMessage` earns a review ask once its
+    /// alert is dismissed. See `ReviewPromptPolicy.importEarnsAsk`.
+    @State private var importEarnedReviewAsk = false
     @State private var showingChangelog = false
     @State private var showingRecentlyDeleted = false
     @State private var showingSupportMail = false
@@ -82,6 +85,9 @@ struct SettingsView: View {
                 if newValue {
                     isICloudSyncEnabled = true
                     dataStore.setSyncEnabled(true)
+                    // Only here, where the user turned it on: the app can flip
+                    // the stored value itself, which must not count.
+                    ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
                 } else {
                     showingTeardownDialog = true
                 }
@@ -228,11 +234,11 @@ struct SettingsView: View {
             Text(importMessage?.title ?? "Import"),
             isPresented: Binding(
                 get: { importMessage != nil },
-                set: { if !$0 { importMessage = nil } }
+                set: { if !$0 { dismissImportMessage() } }
             ),
             presenting: importMessage
         ) { _ in
-            Button("OK") { importMessage = nil }
+            Button("OK") { dismissImportMessage() }
         } message: { message in
             Text(message.body)
         }
@@ -253,7 +259,7 @@ struct SettingsView: View {
             #endif
         }
         // A change to any setting on this screen is what earns the review ask —
-        // see `ReviewPrompt.settingsChanged`.
+        // see `ReviewPrompt.momentFinished`.
         //
         // `onChange` does not fire for the values already present when the screen
         // appears, so opening Settings is never itself "doing something", and
@@ -356,6 +362,7 @@ struct SettingsView: View {
                     return
                 }
 
+                importEarnedReviewAsk = ReviewPromptPolicy.importEarnsAsk(added: added)
                 importMessage = (
                     String(localized: "Import Complete"),
                     String(localized: "Added \(added) tokens to Autheris.")
@@ -372,9 +379,19 @@ struct SettingsView: View {
     /// Called by any change to a setting on this screen.
     ///
     /// `ReviewPrompt` owns the rules and records the ask; this only reports that
-    /// something changed, which is the one moment that earns an ask.
+    /// something changed, which is one of the moments that earns an ask.
     private func settingsDidChange() {
-        ReviewPrompt.settingsChanged(codeCount: dataStore.codes.count)
+        ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+    }
+
+    /// Clears the import result, asking for a review if the import earned it —
+    /// now, as the alert goes, rather than on top of it.
+    private func dismissImportMessage() {
+        importMessage = nil
+        if importEarnedReviewAsk {
+            importEarnedReviewAsk = false
+            ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+        }
     }
 
     private func presentSupportEmail() {

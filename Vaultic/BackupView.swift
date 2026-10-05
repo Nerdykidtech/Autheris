@@ -126,7 +126,11 @@ struct BackupView: View {
                         showingShareSheet = true
                     }
                 }
-                Button("OK", role: .cancel) { }
+                // Share leads on to the share sheet, so only OK — the end of the
+                // task — earns a review ask.
+                Button("OK", role: .cancel) {
+                    ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+                }
             } message: {
                 Text("Your tokens have been backed up successfully.")
             }
