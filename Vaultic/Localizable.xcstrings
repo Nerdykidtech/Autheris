@@ -595,46 +595,6 @@
         }
       }
     },
-    "100% local storage": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "100 % lokal gespeichert"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Almacenamiento 100 % local"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stockage 100 % local"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "100% 端末内保存"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Armazenamento 100% local"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "100% 本地存储"
-          }
-        }
-      }
-    },
     "A code called \"%@\" with the same account already exists. Delete that one first, then restore this.": {
       "localizations": {
         "de-DE": {
@@ -915,6 +875,46 @@
         }
       }
     },
+    "Add Accounts in Seconds": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Konten in Sekunden hinzufügen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade cuentas en segundos"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des comptes en quelques secondes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "数秒でアカウントを追加"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicione contas em segundos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "几秒钟添加账户"
+          }
+        }
+      }
+    },
     "Add Token": {
       "localizations": {
         "de-DE": {
@@ -955,42 +955,42 @@
         }
       }
     },
-    "Add accounts in seconds by scanning the same QR code you'd use with Google Authenticator.": {
+    "Add your first account to start generating codes.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fügen Sie Konten in Sekunden hinzu, indem Sie denselben QR-Code scannen, den Sie mit Google Authenticator verwenden würden."
+            "value": "Füge dein erstes Konto hinzu, um Codes zu erzeugen."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Añade cuentas en segundos escaneando el mismo código QR que usarías con Google Authenticator."
+            "value": "Añade tu primera cuenta para empezar a generar códigos."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ajoutez des comptes en quelques secondes en scannant le même QR code que celui utilisé avec Google Authenticator."
+            "value": "Ajoutez votre premier compte pour commencer à générer des codes."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Google Authenticator で使うのと同じ QR コードを読み取るだけで、数秒でアカウントを追加できます。"
+            "value": "最初のアカウントを追加して、コードの生成を始めましょう。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Adicione contas em segundos escaneando o mesmo QR code que você usaria no Google Authenticator."
+            "value": "Adicione sua primeira conta para começar a gerar códigos."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "扫描与 Google Authenticator 相同的二维码，几秒内即可添加账户。"
+            "value": "添加你的第一个账户，开始生成验证码。"
           }
         }
       }
@@ -1631,6 +1631,46 @@
         }
       }
     },
+    "App Lock": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App-Sperre"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueo de la app"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouillage de l'app"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appロック"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueio do app"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 锁"
+          }
+        }
+      }
+    },
     "App Lock Unavailable": {
       "localizations": {
         "de-DE": {
@@ -2074,6 +2114,46 @@
         }
       }
     },
+    "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and nothing leaves it unless you turn it on here or in Settings.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris hat kein Konto, keine Werbung, keine Analysen und keinen eigenen Server. Deine Einrichtungsschlüssel liegen im Schlüsselbund dieses Geräts, und nichts verlässt es, solange du es nicht hier oder in den Einstellungen einschaltest."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris no tiene cuentas, anuncios, analíticas ni servidor propio. Tus claves de configuración se guardan en el llavero de este dispositivo, y nada sale de él a menos que lo actives aquí o en Ajustes."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris n'a ni compte, ni publicité, ni statistiques, ni serveur. Vos clés de configuration sont conservées dans le trousseau de cet appareil, et rien n'en sort sauf si vous l'activez ici ou dans les Réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisにはアカウントも広告も分析もなく、独自のサーバもありません。セットアップキーはこのデバイスのキーチェーンに保管され、ここまたは設定でオンにしない限り、何もデバイスの外に出ません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Autheris não tem conta, anúncios, análises nem servidor próprio. Suas chaves de configuração ficam nas Chaves deste dispositivo, e nada sai dele a menos que você ative aqui ou nos Ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 没有账户、广告、分析，也没有自己的服务器。你的设置密钥保存在本设备的钥匙串中，除非你在此处或“设置”中开启，否则任何内容都不会离开设备。"
+          }
+        }
+      }
+    },
     "Automatic (service color)": {
       "localizations": {
         "de-DE": {
@@ -2390,6 +2470,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "备份已恢复"
+          }
+        }
+      }
+    },
+    "Backups You Control": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups unter deiner Kontrolle"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copias de seguridad bajo tu control"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des sauvegardes que vous maîtrisez"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自分で管理できるバックアップ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups sob seu controle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "由你掌控的备份"
           }
         }
       }
@@ -3234,6 +3354,46 @@
         }
       }
     },
+    "Continue": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        }
+      }
+    },
     "Copied": {
       "localizations": {
         "de-DE": {
@@ -3310,6 +3470,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "复制"
+          }
+        }
+      }
+    },
+    "Copy with One Tap": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit einem Tippen kopieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia con un toque"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiez d'un toucher"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ワンタップでコピー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copie com um toque"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻点即可拷贝"
           }
         }
       }
@@ -5152,86 +5352,6 @@
         }
       }
     },
-    "Encrypted Backups": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verschlüsselte Sicherungen"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copias cifradas"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sauvegardes chiffrées"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暗号化バックアップ"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Backups criptografados"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密备份"
-          }
-        }
-      }
-    },
-    "Encrypted backups": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verschlüsselte Sicherungen"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copias cifradas"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sauvegardes chiffrées"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暗号化バックアップ"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Backups criptografados"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "加密备份"
-          }
-        }
-      }
-    },
     "Encrypted backups (.autheris) are protected with your password using AES-GCM. Unencrypted backups are plain JSON.": {
       "localizations": {
         "de-DE": {
@@ -5432,6 +5552,86 @@
         }
       }
     },
+    "Every code shows how long it has left, so you never paste one that's about to change.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeder Code zeigt, wie lange er noch gilt, damit du nie einen einfügst, der gleich wechselt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada código muestra cuánto tiempo le queda, para que nunca pegues uno que está a punto de cambiar."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chaque code indique le temps qu'il lui reste, pour ne jamais coller un code sur le point de changer."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "各コードに残り時間が表示されるので、切り替わる直前のコードを貼り付けることはありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cada código mostra quanto tempo ainda resta, para você nunca colar um que está prestes a mudar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个验证码都会显示剩余时间，你不会粘贴一个即将过期的验证码。"
+          }
+        }
+      }
+    },
+    "Everything you need for two-factor sign-in, and nothing you don't.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles, was du für die Zwei-Faktor-Anmeldung brauchst – und nichts, was du nicht brauchst."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo lo que necesitas para iniciar sesión con dos factores, y nada que no necesites."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout ce qu'il faut pour la connexion à deux facteurs, et rien de superflu."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2要素認証でのサインインに必要なものだけを。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tudo o que você precisa para entrar com dois fatores, e nada além disso."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双重验证登录所需的一切，别无冗余。"
+          }
+        }
+      }
+    },
     "Expand release notes": {
       "localizations": {
         "de-DE": {
@@ -5512,86 +5712,6 @@
         }
       }
     },
-    "Export password-encrypted backups you control, stored right on your device.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportieren Sie passwortverschlüsselte Sicherungen, die Sie kontrollieren — direkt auf Ihrem Gerät gespeichert."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporta copias cifradas con contraseña que tú controlas, guardadas en tu propio dispositivo."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportez des sauvegardes chiffrées par mot de passe que vous contrôlez, stockées sur votre appareil."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "自分で管理できるパスワード暗号化バックアップを、端末内に保存したまま書き出せます。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exporte backups criptografados com senha que você controla, salvos no seu próprio dispositivo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "导出由你掌控的密码加密备份，就保存在你的设备上。"
-          }
-        }
-      }
-    },
-    "Face ID / Touch ID lock": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sperre per Face ID / Touch ID"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bloqueo con Face ID / Touch ID"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verrouillage par Face ID / Touch ID"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Face ID / Touch ID ロック"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bloqueio com Face ID / Touch ID"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Face ID / Touch ID 锁定"
-          }
-        }
-      }
-    },
     "Fetch service logos": {
       "localizations": {
         "de-DE": {
@@ -5628,46 +5748,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "获取服务图标"
-          }
-        }
-      }
-    },
-    "Find the right token instantly, with a clean list built for fast scanning.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Finden Sie den richtigen Code sofort — mit einer klaren Liste für schnelles Erfassen."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Encuentra la cuenta que buscas al instante, con una lista limpia pensada para leerla de un vistazo."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trouvez le bon compte instantanément, avec une liste claire conçue pour aller vite."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "目的のコードをすぐに見つけられます。すばやく確認できるすっきりとした一覧です。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Encontre a conta certa na hora, com uma lista limpa feita para leitura rápida."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "干净利落的列表，让你一眼扫过就能找到想要的账户。"
           }
         }
       }
@@ -6550,46 +6630,6 @@
         }
       }
     },
-    "Instant QR Import": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sofortiger QR-Import"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importación QR al instante"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import QR instantané"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "すぐに QR 取り込み"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importação por QR na hora"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "扫码即刻导入"
-          }
-        }
-      }
-    },
     "Invalid secret key in QR code. Please enter manually.": {
       "localizations": {
         "de-DE": {
@@ -6750,42 +6790,82 @@
         }
       }
     },
-    "Live Codes & Timers": {
+    "Leaves your device only if you allow it": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Live-Codes & Timer"
+            "value": "Verlässt dein Gerät nur mit deiner Erlaubnis"
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Códigos y cuenta atrás en directo"
+            "value": "Solo sale de tu dispositivo si lo permites"
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Codes et comptes à rebours en direct"
+            "value": "Ne quitte votre appareil que si vous l'autorisez"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ライブコードとタイマー"
+            "value": "許可した場合のみデバイスの外へ"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Códigos e contagem regressiva ao vivo"
+            "value": "Só sai do seu dispositivo se você permitir"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "实时验证码与倒计时"
+            "value": "仅在你允许时离开设备"
+          }
+        }
+      }
+    },
+    "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sucht das Symbol jedes Dienstes anhand seines Namens bei logo.dev – dadurch erfährt logo.dev, welche Dienste du nutzt. Codes und Einrichtungsschlüssel werden nie gesendet. Ausgeschaltet zeigt jeder Dienst seinen Anfangsbuchstaben."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busca el icono de cada servicio por su nombre en logo.dev, lo que le indica a logo.dev qué servicios usas. Tus códigos y claves de configuración nunca se envían. Desactivado, cada servicio muestra su inicial."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recherche l'icône de chaque service par son nom sur logo.dev, ce qui indique à logo.dev quels services vous utilisez. Vos codes et clés de configuration ne sont jamais envoyés. Désactivé, chaque service affiche son initiale."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "各サービスのアイコンを名前でlogo.devに問い合わせます。そのため、logo.devには利用しているサービスが伝わります。コードやセットアップキーが送信されることはありません。オフにすると、各サービスは頭文字で表示されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busca o ícone de cada serviço pelo nome no logo.dev, o que informa ao logo.dev quais serviços você usa. Seus códigos e chaves de configuração nunca são enviados. Desativado, cada serviço mostra sua inicial."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按名称在 logo.dev 查找每个服务的图标，这会让 logo.dev 知道你使用哪些服务。验证码和设置密钥绝不会被发送。关闭后，每个服务显示其首字母。"
           }
         }
       }
@@ -6990,46 +7070,6 @@
         }
       }
     },
-    "No Account Required": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kein Konto nötig"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin cuenta"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aucun compte requis"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アカウント不要"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sem conta"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无需账户"
-          }
-        }
-      }
-    },
     "No Backups Yet": {
       "localizations": {
         "de-DE": {
@@ -7230,6 +7270,46 @@
         }
       }
     },
+    "No account": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Konto"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin cuenta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans compte"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウント不要"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem conta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无需账户"
+          }
+        }
+      }
+    },
     "No compatible one-time-password tokens were found in this file.": {
       "localizations": {
         "de-DE": {
@@ -7310,46 +7390,6 @@
         }
       }
     },
-    "No sign-up, no tracking, no ads. Just a focused 2FA manager that respects your privacy.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keine Anmeldung, kein Tracking, keine Werbung. Nur ein fokussierter 2FA-Manager, der Ihre Privatsphäre respektiert."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sin registro, sin rastreo y sin anuncios. Solo un gestor 2FA centrado en respetar tu privacidad."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sans inscription, sans suivi, sans publicité. Juste un gestionnaire 2FA concentré sur le respect de votre vie privée."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登録も、追跡も、広告もありません。プライバシーを大切にする、シンプルな 2FA アプリです。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sem cadastro, sem rastreamento, sem anúncios. Apenas um gerenciador 2FA focado em respeitar sua privacidade."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无需注册，不做追踪，没有广告。只有一个尊重你隐私的专注 2FA 工具。"
-          }
-        }
-      }
-    },
     "No tokens match \"%@\"": {
       "localizations": {
         "de-DE": {
@@ -7386,6 +7426,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有匹配“%@”的账户"
+          }
+        }
+      }
+    },
+    "No tracking": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kein Tracking"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin rastreo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sans pistage"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トラッキングなし"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem rastreamento"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无跟踪"
           }
         }
       }
@@ -7550,42 +7630,122 @@
         }
       }
     },
-    "One-tap copy with a clear countdown, so you always know when the next code is ready.": {
+    "Off": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kopieren mit einem Tipp und klarem Countdown — Sie wissen immer, wann der nächste Code bereit ist."
+            "value": "Aus"
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copia con un toque y una cuenta atrás clara, para que siempre sepas cuándo estará listo el siguiente código."
+            "value": "Desactivado"
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Copie en un geste avec un compte à rebours clair, pour toujours savoir quand le prochain code sera prêt."
+            "value": "Désactivé"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ワンタップでコピーでき、カウントダウンもはっきり見えるので、次のコードがいつ使えるかすぐ分かります。"
+            "value": "オフ"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cópia com um toque e contagem regressiva clara, para você sempre saber quando o próximo código estará pronto."
+            "value": "Desativado"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "一键复制，倒计时清晰可见，下一个验证码什么时候就绪一目了然。"
+            "value": "关"
+          }
+        }
+      }
+    },
+    "On": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activado"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オン"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开"
+          }
+        }
+      }
+    },
+    "On Your Devices": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf deinen Geräten"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En tus dispositivos"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur vos appareils"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべてのデバイスで"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nos seus dispositivos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在你的设备上"
           }
         }
       }
@@ -7666,6 +7826,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "打开系统设置"
+          }
+        }
+      }
+    },
+    "Open source": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Source"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código abierto"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open source"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オープンソース"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Código aberto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开源"
+          }
+        }
+      }
+    },
+    "Page %lld of %lld": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seite %1$lld von %2$lld"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página %1$lld de %2$lld"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %1$lld sur %2$lld"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$lldページ中%1$lldページ目"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Página %1$lld de %2$lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %1$lld 页，共 %2$lld 页"
           }
         }
       }
@@ -7990,42 +8230,122 @@
         }
       }
     },
-    "Private, simple, and reliable two-factor authentication.": {
+    "Privacy screen": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Private, einfache und zuverlässige Zwei-Faktor-Authentifizierung."
+            "value": "Datenschutzbildschirm"
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verificación en dos pasos privada, sencilla y fiable."
+            "value": "Pantalla de privacidad"
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Une double authentification privée, simple et fiable."
+            "value": "Écran de confidentialité"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プライベートで、シンプルで、信頼できる二段階認証。"
+            "value": "プライバシー画面"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Verificação em duas etapas privada, simples e confiável."
+            "value": "Tela de privacidade"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "私密、简单、可靠的双重认证。"
+            "value": "隐私屏幕"
+          }
+        }
+      }
+    },
+    "Private by Design": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privatsphäre von Grund auf"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privado desde el diseño"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confidentiel par conception"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設計からプライバシー重視"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privado desde a concepção"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私源于设计"
+          }
+        }
+      }
+    },
+    "Protect your codes": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schütze deine Codes"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protege tus códigos"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protégez vos codes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを保護"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proteja seus códigos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保护你的验证码"
           }
         }
       }
@@ -8146,46 +8466,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "正在读取二维码…"
-          }
-        }
-      }
-    },
-    "Ready to Begin": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bereit zum Start"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Todo listo para empezar"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prêt à commencer"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "準備ができました"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pronto para começar"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "准备就绪"
           }
         }
       }
@@ -8790,6 +9070,46 @@
         }
       }
     },
+    "Save a password-encrypted backup file, and restore it whenever you need to.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sichere eine passwortverschlüsselte Backup-Datei und stelle sie bei Bedarf wieder her."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda un archivo de copia de seguridad cifrado con contraseña y restáuralo cuando lo necesites."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrez un fichier de sauvegarde chiffré par mot de passe et restaurez-le quand vous en avez besoin."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パスワードで暗号化したバックアップファイルを保存し、必要なときに復元できます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salve um arquivo de backup criptografado com senha e restaure quando precisar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存一个用密码加密的备份文件，需要时随时恢复。"
+          }
+        }
+      }
+    },
     "Scan": {
       "localizations": {
         "de-DE": {
@@ -8866,6 +9186,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "扫描二维码"
+          }
+        }
+      }
+    },
+    "Scan a QR code, open a setup link, or bring your codes over from Google Authenticator and other apps.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanne einen QR-Code, öffne einen Einrichtungslink oder übernimm deine Codes aus Google Authenticator und anderen Apps."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escanea un código QR, abre un enlace de configuración o trae tus códigos desde Google Authenticator y otras apps."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scannez un code QR, ouvrez un lien de configuration ou importez vos codes depuis Google Authenticator et d'autres apps."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QRコードをスキャンしたり、設定リンクを開いたり、Google Authenticatorなどのアプリからコードを移行したりできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escaneie um código QR, abra um link de configuração ou traga seus códigos do Google Authenticator e de outros apps."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "扫描二维码、打开设置链接，或从 Google Authenticator 等应用迁移验证码。"
           }
         }
       }
@@ -8950,46 +9310,6 @@
         }
       }
     },
-    "Search & Organize": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suchen & ordnen"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscar y organizar"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rechercher et organiser"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "検索と整理"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Buscar e organizar"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索与整理"
-          }
-        }
-      }
-    },
     "Search tokens": {
       "localizations": {
         "de-DE": {
@@ -9030,42 +9350,42 @@
         }
       }
     },
-    "Secure 2FA token manager": {
+    "Service logos": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sicherer 2FA-Code-Manager"
+            "value": "Dienstlogos"
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gestor de códigos 2FA seguro"
+            "value": "Logotipos de servicios"
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gestionnaire de codes 2FA sécurisé"
+            "value": "Logos des services"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "安全な 2FA コード管理アプリ"
+            "value": "サービスのロゴ"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Gerenciador de códigos 2FA seguro"
+            "value": "Logotipos dos serviços"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "安全的 2FA 验证器"
+            "value": "服务标志"
           }
         }
       }
@@ -9706,86 +10026,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "要重新开始吗？"
-          }
-        }
-      }
-    },
-    "Start securing your accounts. Your codes stay on your device.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sichern Sie jetzt Ihre Konten. Ihre Codes bleiben auf Ihrem Gerät."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Empieza a proteger tus cuentas. Tus códigos se quedan en tu dispositivo."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Commencez à protéger vos comptes. Vos codes restent sur votre appareil."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アカウントを守りましょう。コードは端末内に保存されます。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Comece a proteger suas contas. Seus códigos ficam no seu dispositivo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始保护你的账户吧。验证码始终留在你的设备上。"
-          }
-        }
-      }
-    },
-    "Stored in Your Keychain": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Im Schlüsselbund gespeichert"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardado en tu llavero"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stocké dans votre trousseau"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "キーチェーンに保存"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Guardado no seu Keychain"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存在钥匙串中"
           }
         }
       }
@@ -11190,46 +11430,6 @@
         }
       }
     },
-    "Tokens live in the device Keychain, protected by your passcode and Face ID / Touch ID.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Codes liegen im Schlüsselbund des Geräts, geschützt durch Ihren Gerätecode und Face ID / Touch ID."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los códigos viven en el llavero del dispositivo, protegidos por tu código de acceso y Face ID / Touch ID."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les codes résident dans le trousseau de l'appareil, protégés par votre code et Face ID / Touch ID."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "コードは端末のキーチェーンに保存され、パスコードと Face ID / Touch ID で保護されます。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Os códigos ficam no Keychain do dispositivo, protegidos pelo seu código de acesso e por Face ID / Touch ID."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "账户保存在设备的钥匙串中，由你的密码和 Face ID / Touch ID 保护。"
-          }
-        }
-      }
-    },
     "Tokens stay on this device either way. Before deleting from iCloud, turn off iCloud Sync on your other devices — any device that still has it on will upload its tokens again.": {
       "localizations": {
         "de-DE": {
@@ -11390,6 +11590,46 @@
         }
       }
     },
+    "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schalte sie in den Einstellungen ein, um über deine private iCloud-Datenbank zu synchronisieren. Einrichtungsschlüssel sind durchgehend verschlüsselt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actívala en Ajustes para sincronizar a través de tu base de datos privada de iCloud. Las claves de configuración tienen cifrado de extremo a extremo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez-la dans les Réglages pour synchroniser via votre base de données iCloud privée. Les clés de configuration sont chiffrées de bout en bout."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定でオンにすると、プライベートなiCloudデータベースを通じて同期します。セットアップキーはエンドツーエンドで暗号化されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative nos Ajustes para sincronizar pelo seu banco de dados privado do iCloud. As chaves de configuração são criptografadas de ponta a ponta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“设置”中开启后，将通过你的私有 iCloud 数据库同步。设置密钥采用端到端加密。"
+          }
+        }
+      }
+    },
     "Turn off iCloud Sync?": {
       "localizations": {
         "de-DE": {
@@ -11426,6 +11666,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "关闭 iCloud 同步？"
+          }
+        }
+      }
+    },
+    "Two-factor codes that stay yours.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwei-Faktor-Codes, die dir gehören."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos de dos factores que siguen siendo tuyos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Des codes à deux facteurs qui restent les vôtres."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなただけの2要素認証コード。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Códigos de dois fatores que continuam seus."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只属于你的双重验证码。"
           }
         }
       }
@@ -12350,42 +12630,82 @@
         }
       }
     },
-    "Why Autheris": {
+    "Welcome to": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Warum Autheris"
+            "value": "Willkommen bei"
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Por qué Autheris"
+            "value": "Te damos la bienvenida a"
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pourquoi Autheris"
+            "value": "Bienvenue dans"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autheris の特長"
+            "value": "ようこそ"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Por que o Autheris"
+            "value": "Boas-vindas ao"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "为什么选择 Autheris"
+            "value": "欢迎使用"
+          }
+        }
+      }
+    },
+    "What Autheris Does": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was Autheris kann"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué hace Autheris"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que fait Autheris"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisでできること"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O que o Autheris faz"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autheris 能做什么"
           }
         }
       }
@@ -12430,6 +12750,86 @@
         }
       }
     },
+    "You can change any of these later in Settings › Privacy.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du kannst all das später unter Einstellungen › Datenschutz ändern."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes cambiar cualquiera de estas opciones más tarde en Ajustes › Privacidad."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pourrez modifier ces options plus tard dans Réglages › Confidentialité."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これらはあとから「設定」›「プライバシー」で変更できます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode alterar qualquer uma dessas opções depois em Ajustes › Privacidade."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你之后可以在“设置”›“隐私”中更改这些选项。"
+          }
+        }
+      }
+    },
+    "You're All Set": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles bereit"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo listo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout est prêt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備完了"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tudo pronto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一切就绪"
+          }
+        }
+      }
+    },
     "You've scanned a QR code with authentication tokens. Would you like to import them?": {
       "localizations": {
         "de-DE": {
@@ -12466,46 +12866,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你扫描的二维码中包含验证码，要导入吗？"
-          }
-        }
-      }
-    },
-    "Your accounts, protected on device.": {
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ihre Konten, geschützt auf Ihrem Gerät."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tus cuentas, protegidas en tu dispositivo."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vos comptes, protégés sur votre appareil."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "あなたのアカウントを、端末内で守ります。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Suas contas, protegidas no seu dispositivo."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "你的账户，在设备上得到保护。"
           }
         }
       }
@@ -12790,6 +13150,46 @@
         }
       }
     },
+    "iCloud Sync is off": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud-Synchronisierung ist aus"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronización con iCloud está desactivada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation iCloud est désactivée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud同期はオフです"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A sincronização do iCloud está desativada"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud 同步已关闭"
+          }
+        }
+      }
+    },
     "iCloud error %lld: %@": {
       "localizations": {
         "de-DE": {
@@ -12866,6 +13266,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "目前无法连接 iCloud。你仍可开启同步，等 iCloud 可用后会自动连接。"
+          }
+        }
+      }
+    },
+    "iPhone, iPad, Mac and Apple Watch, kept in step by iCloud Sync if you turn it on.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone, iPad, Mac und Apple Watch – abgeglichen über iCloud-Synchronisierung, wenn du sie einschaltest."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone, iPad, Mac y Apple Watch, sincronizados con iCloud si lo activas."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone, iPad, Mac et Apple Watch, synchronisés par iCloud si vous l'activez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone、iPad、Mac、Apple Watchで。iCloud同期をオンにすれば常に最新の状態に保たれます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone, iPad, Mac e Apple Watch, sincronizados pelo iCloud se você ativar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone、iPad、Mac 和 Apple Watch，开启 iCloud 同步后保持一致。"
           }
         }
       }

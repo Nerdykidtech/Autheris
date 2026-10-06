@@ -31,6 +31,11 @@ struct AppPreferences: Codable, Equatable {
 
     /// What each preference is before the user has touched it. The `@AppStorage`
     /// defaults in the views must match these.
+    ///
+    /// `fetchIssuerLogos` is the one exception to "before the user has touched
+    /// it": `true` is what an install from before 3.1 reads, because it never
+    /// wrote the key. A new install writes `false` when it finishes onboarding
+    /// (`OnboardingChoices`), so it never falls back to this.
     static let defaults = AppPreferences(hasCompletedOnboarding: false,
                                          enablePrivacyBlur: true,
                                          hideCodesInAppSwitcher: true,
@@ -102,9 +107,9 @@ struct AppPreferences: Codable, Equatable {
         accentTheme = try container.decodeIfPresent(String.self, forKey: .accentTheme) ?? defaults.accentTheme
         enableAppLock = try container.decodeIfPresent(Bool.self, forKey: .enableAppLock) ?? defaults.enableAppLock
         isICloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .isICloudSyncEnabled) ?? defaults.isICloudSyncEnabled
-        // On by default, because that is what the app has always done and what most
-        // people expect an authenticator's list to look like. The switch is there for
-        // the ones who would rather the lookup never happened; see `SettingsView`.
+        // A missing key reads as on: a blob without it was written by a release
+        // that always looked icons up. A new install is asked during onboarding
+        // instead, and starts with it off; see `OnboardingChoices`.
         fetchIssuerLogos = try container.decodeIfPresent(Bool.self, forKey: .fetchIssuerLogos) ?? defaults.fetchIssuerLogos
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
     }

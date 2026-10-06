@@ -48,7 +48,9 @@ class LogoCacheManager {
     /// the callers are not views. `true` when the key has never been written, which
     /// is the default the Settings switch and `AppPreferences` both declare — a
     /// plain `bool(forKey:)` would read as `false` and silently turn the feature off
-    /// for everyone who has never opened Settings.
+    /// for everyone who has never opened Settings. A new install never reaches
+    /// that fallback: onboarding writes its answer, off unless the user turned it
+    /// on (`OnboardingChoices`).
     static var isFetchingEnabled: Bool {
         UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
     }

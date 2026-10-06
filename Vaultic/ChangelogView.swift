@@ -59,6 +59,8 @@ struct ChangelogRelease: Identifiable, Sendable {
             version: "3.1",
             date: "October 2026",
             changes: [
+                "A redesigned welcome walks you through Autheris and how it treats your privacy, with the privacy settings right there to choose before you add your first code.",
+                "On a new install, service logos are off until you turn them on, because looking one up tells logo.dev which services you use. If you're updating, nothing changes.",
                 "A counter-based code never goes back to a code you've already used — not when syncing, editing or restoring a backup.",
                 "An edit made while iCloud sync is running is no longer undone, and editing a code changes only what you changed, so a rename made on another device isn't overwritten.",
                 "Delete Tokens from iCloud now waits for any sync in progress, so your codes can't be uploaded again straight afterwards, and shows that it's working. It also reminds you to turn off iCloud Sync on your other devices first.",

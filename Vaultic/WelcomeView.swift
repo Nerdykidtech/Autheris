@@ -1,100 +1,65 @@
 import SwiftUI
 
-private struct OnboardingFeature: Identifiable {
-    let id = UUID()
-    let icon: String
-    /// `LocalizedStringKey` rather than `String`: these are literals at the call
-    /// site, and a `String` property would carry them past the point where
-    /// `Text` could look them up, leaving them English in every language.
-    let title: LocalizedStringKey
-    let description: LocalizedStringKey
-}
-
+/// The first thing a new install shows: what Autheris is, what it does, how it
+/// treats your privacy — with the switches that decide it — and a recap.
+///
+/// The privacy page is the reason for the order. It comes before the first code
+/// is added, because one of its switches, service logos, decides whether
+/// anything about that code leaves the device. See `OnboardingChoices`.
+///
+/// Every animation here is decoration, so each one checks Reduce Motion and
+/// settles into its final state without moving when it is on.
 struct WelcomeView: View {
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var currentPage = 0
+    /// Pages whose content has played its entrance, so going back to one
+    /// doesn't play it again.
+    @State private var revealedPages: Set<Int> = []
+    @State private var choices = OnboardingChoices()
+    @State private var showingAppLockUnavailable = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let totalPages = 3
+    // Bound straight to Settings' keys: their defaults don't change for a new
+    // install, so the page shows and edits exactly what Settings would.
+    @AppStorage("enablePrivacyBlur") private var enablePrivacyBlur = true
+    @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
+    @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
+    @AppStorage(AppLockEnabledKey) private var enableAppLock = false
+
+    private enum Page: Int, CaseIterable {
+        case welcome, features, privacy, ready
+    }
+
+    private var isLastPage: Bool { currentPage == Page.allCases.count - 1 }
 
     /// Typed explicitly: a ternary of two literals infers as `String`, which
     /// `Text` renders verbatim and never looks up.
     private var advanceTitle: LocalizedStringKey {
-        currentPage < totalPages - 1 ? "Next" : "Get Started"
+        isLastPage ? "Get Started" : "Continue"
     }
-
-    private let features: [OnboardingFeature] = [
-        OnboardingFeature(
-            icon: "qrcode.viewfinder",
-            title: "Instant QR Import",
-            description: "Add accounts in seconds by scanning the same QR code you'd use with Google Authenticator."
-        ),
-        OnboardingFeature(
-            icon: "lock.shield.fill",
-            title: "Stored in Your Keychain",
-            description: "Tokens live in the device Keychain, protected by your passcode and Face ID / Touch ID."
-        ),
-        OnboardingFeature(
-            icon: "timer",
-            title: "Live Codes & Timers",
-            description: "One-tap copy with a clear countdown, so you always know when the next code is ready."
-        ),
-        OnboardingFeature(
-            icon: "magnifyingglass",
-            title: "Search & Organize",
-            description: "Find the right token instantly, with a clean list built for fast scanning."
-        ),
-        OnboardingFeature(
-            icon: "lock.doc.fill",
-            title: "Encrypted Backups",
-            description: "Export password-encrypted backups you control, stored right on your device."
-        ),
-        OnboardingFeature(
-            icon: "hand.raised.fill",
-            title: "No Account Required",
-            description: "No sign-up, no tracking, no ads. Just a focused 2FA manager that respects your privacy."
-        )
-    ]
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(.systemBackground),
-                    Color.accentColor.opacity(0.08)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            OnboardingBackground()
 
             VStack(spacing: 0) {
                 #if os(iOS)
                 TabView(selection: $currentPage) {
-                    welcomePage.tag(0)
-                    featuresPage.tag(1)
-                    getStartedPage.tag(2)
+                    ForEach(Page.allCases, id: \.rawValue) { page in
+                        content(for: page).tag(page.rawValue)
+                    }
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .frame(maxHeight: .infinity)
                 #else
                 // macOS has no paging container — `.page` is iOS-only, and a
-                // plain `TabView` there draws a tab bar, which is not what three
-                // onboarding screens should look like. The Back and Next buttons
-                // already drive `currentPage`, so the Mac simply shows the
+                // plain `TabView` there draws a tab bar. The Back and Continue
+                // buttons already drive `currentPage`, so the Mac shows the
                 // selected page and cross-fades between them.
-                Group {
-                    switch currentPage {
-                    case 0: welcomePage
-                    case 1: featuresPage
-                    default: getStartedPage
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .animation(
-                    reduceMotion ? nil : .easeInOut(duration: 0.25),
-                    value: currentPage
-                )
+                content(for: Page(rawValue: currentPage) ?? .welcome)
+                    .id(currentPage)
+                    .transition(.opacity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: currentPage)
                 #endif
 
                 VStack(spacing: 20) {
@@ -103,232 +68,623 @@ struct WelcomeView: View {
                 }
                 .readableWidth(ReadableWidth.prose)
                 .padding(.horizontal, 24)
-                .padding(.bottom, 40)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
             }
         }
+        .onAppear { revealedPages.insert(currentPage) }
+        .onChange(of: currentPage) { _, page in revealedPages.insert(page) }
+        .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
+        }
+    }
+
+    @ViewBuilder
+    private func content(for page: Page) -> some View {
+        switch page {
+        case .welcome: welcomePage
+        case .features: featuresPage
+        case .privacy: privacyPage
+        case .ready: readyPage
+        }
+    }
+
+    private func isRevealed(_ page: Page) -> Bool {
+        revealedPages.contains(page.rawValue)
+    }
+
+    /// Fades and lifts one piece of a page into place, `step` beats after the
+    /// page first shows.
+    private func reveal(_ page: Page, step: Int) -> RevealModifier {
+        RevealModifier(isRevealed: isRevealed(page),
+                       delay: 0.15 + 0.08 * Double(step),
+                       reduceMotion: reduceMotion)
     }
 
     // MARK: - Pages
 
     private var welcomePage: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        VStack(spacing: 0) {
+            Spacer(minLength: 12)
 
-            Image("Logo")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 120, height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .shadow(color: Color.accentColor.opacity(0.25), radius: 16, x: 0, y: 8)
+            OrbitHero(isShown: isRevealed(.welcome),
+                      animated: !reduceMotion,
+                      satellites: ["lock.fill", "key.fill", "faceid"]) {
+                Image("Logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 112, height: 112)
+                    .clipShape(RoundedRectangle(cornerRadius: 27, style: .continuous))
+                    .shadow(color: Color.accentColor.opacity(0.3), radius: 22, y: 12)
+            }
 
-            Text("Autheris")
-                .font(.system(size: 46, weight: .heavy, design: .rounded))
+            Spacer(minLength: 12)
 
-            Text("Secure 2FA token manager")
-                .font(.title3.weight(.medium))
-                .foregroundColor(.secondary)
+            VStack(spacing: 12) {
+                Text("Welcome to")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .modifier(reveal(.welcome, step: 2))
 
-            Text("Your accounts, protected on device.")
-                .font(.subheadline)
-                .foregroundColor(.secondary.opacity(0.9))
-                .multilineTextAlignment(.center)
+                Text("Autheris")
+                    .font(.system(size: 46, weight: .bold, design: .rounded))
+                    .modifier(reveal(.welcome, step: 3))
 
-            Spacer()
-            Spacer()
+                Text("Two-factor codes that stay yours.")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .modifier(reveal(.welcome, step: 4))
+
+                promises
+                    .padding(.top, 10)
+                    .modifier(reveal(.welcome, step: 5))
+            }
+
+            Spacer(minLength: 12)
         }
         .readableWidth(ReadableWidth.prose)
-        .padding(.horizontal, 32)
+        .padding(.horizontal, 24)
+    }
+
+    /// The three promises in one quiet line rather than three buttons-that-
+    /// aren't.
+    private var promises: some View {
+        HStack(spacing: 14) {
+            promise("No account", systemImage: "person.crop.circle.badge.xmark")
+            promise("No tracking", systemImage: "eye.slash")
+            promise("Open source", systemImage: "chevron.left.forwardslash.chevron.right")
+        }
+        .font(.footnote.weight(.medium))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+    }
+
+    private func promise(_ text: LocalizedStringKey, systemImage: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: systemImage)
+                .foregroundStyle(Color.accentColor)
+                .imageScale(.small)
+            Text(text)
+        }
     }
 
     private var featuresPage: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("Why Autheris")
-                    .font(.largeTitle.weight(.bold))
-
-                Text("Private, simple, and reliable two-factor authentication.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 6)
-
-                ForEach(features) { feature in
-                    FeatureRow(feature: feature)
-                }
+        page(
+            .features,
+            icon: "sparkles",
+            title: "What Autheris Does",
+            subtitle: "Everything you need for two-factor sign-in, and nothing you don't."
+        ) {
+            card {
+                featureRow(
+                    icon: "qrcode.viewfinder",
+                    title: "Add Accounts in Seconds",
+                    detail: "Scan a QR code, open a setup link, or bring your codes over from Google Authenticator and other apps."
+                )
+                cardDivider
+                featureRow(
+                    icon: "doc.on.doc",
+                    title: "Copy with One Tap",
+                    detail: "Every code shows how long it has left, so you never paste one that's about to change."
+                )
+                cardDivider
+                featureRow(
+                    icon: "macbook.and.iphone",
+                    title: "On Your Devices",
+                    detail: "iPhone, iPad, Mac and Apple Watch, kept in step by iCloud Sync if you turn it on."
+                )
+                cardDivider
+                featureRow(
+                    icon: "lock.doc",
+                    title: "Backups You Control",
+                    detail: "Save a password-encrypted backup file, and restore it whenever you need to."
+                )
             }
-            .readableWidth(ReadableWidth.prose)
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .padding(.bottom, 24)
+            .modifier(reveal(.features, step: 3))
         }
     }
 
-    private var getStartedPage: some View {
-        VStack(spacing: 24) {
-            Spacer()
+    private var privacyPage: some View {
+        page(
+            .privacy,
+            icon: "hand.raised.fill",
+            title: "Private by Design",
+            subtitle: "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and nothing leaves it unless you turn it on here or in Settings."
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                sectionHeader("Leaves your device only if you allow it")
+                card {
+                    switchRow(
+                        "Fetch service logos",
+                        icon: "photo",
+                        detail: "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.",
+                        isOn: $choices.fetchIssuerLogos
+                    )
+                    cardDivider
+                    featureRow(
+                        icon: "icloud",
+                        title: "iCloud Sync is off",
+                        detail: "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted."
+                    )
+                }
+            }
+            .modifier(reveal(.privacy, step: 3))
 
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.12))
-                    .frame(width: 140, height: 140)
+            VStack(alignment: .leading, spacing: 10) {
+                sectionHeader("Protect your codes")
+                card {
+                    switchRow(appLockLabel, icon: "faceid", isOn: appLockBinding)
+                    cardDivider
+                    switchRow("Hide codes in app switcher", icon: "square.on.square", isOn: $hideCodesInAppSwitcher)
+                    cardDivider
+                    switchRow("Hide codes while recording or mirroring", icon: "record.circle", isOn: $hideCodesWhenScreenCaptured)
+                    cardDivider
+                    switchRow("Blur when backgrounded", icon: "drop", isOn: $enablePrivacyBlur)
+                }
 
-                Circle()
-                    .stroke(Color.accentColor.opacity(0.25), lineWidth: 1)
-                    .frame(width: 140, height: 140)
+                Text("You can change any of these later in Settings › Privacy.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+            }
+            .padding(.top, 8)
+            .modifier(reveal(.privacy, step: 4))
+        }
+    }
 
-                Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: 56))
-                    .foregroundColor(.accentColor)
-                    .symbolRenderingMode(.hierarchical)
+    private var readyPage: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 12)
+
+            OrbitHero(isShown: isRevealed(.ready), animated: !reduceMotion, satellites: [], size: 230) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [Color.accentColor.opacity(0.85), Color.accentColor],
+                                             startPoint: .top, endPoint: .bottom))
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 44, weight: .bold))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.bounce, value: isRevealed(.ready) && !reduceMotion)
+                }
+                .frame(width: 104, height: 104)
+                .shadow(color: Color.accentColor.opacity(0.35), radius: 20, y: 10)
             }
 
-            Text("Ready to Begin")
-                .font(.largeTitle.weight(.bold))
-                .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                Text("You're All Set")
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .multilineTextAlignment(.center)
+                    .modifier(reveal(.ready, step: 2))
 
-            Text("Start securing your accounts. Your codes stay on your device.")
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            VStack(spacing: 12) {
-                highlight("100% local storage")
-                highlight("Face ID / Touch ID lock")
-                highlight("Encrypted backups")
+                Text("Add your first account to start generating codes.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .modifier(reveal(.ready, step: 3))
             }
-            .padding(.horizontal, 32)
+            .padding(.top, 8)
 
-            Spacer()
+            card {
+                recapRow("Service logos", icon: "photo", isOn: choices.fetchIssuerLogos)
+                cardDivider
+                recapRow("App Lock", icon: "faceid", isOn: enableAppLock)
+                cardDivider
+                recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured)
+                cardDivider
+                recapRow("iCloud Sync", icon: "icloud", isOn: false)
+            }
+            .padding(.top, 28)
+            .modifier(reveal(.ready, step: 4))
+
+            Spacer(minLength: 12)
         }
         .readableWidth(ReadableWidth.prose)
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Building blocks
+
+    /// A scrolling page with a header, for the pages with more than fits.
+    private func page<Content: View>(_ page: Page,
+                                     icon: String,
+                                     title: LocalizedStringKey,
+                                     subtitle: LocalizedStringKey,
+                                     @ViewBuilder content: () -> Content) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Image(systemName: icon)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 56, height: 56)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(LinearGradient(colors: [Color.accentColor.opacity(0.85), Color.accentColor],
+                                                 startPoint: .top, endPoint: .bottom))
+                    )
+                    .shadow(color: Color.accentColor.opacity(0.3), radius: 12, y: 6)
+                    .accessibilityHidden(true)
+                    .modifier(reveal(page, step: 0))
+
+                Text(title)
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 20)
+                    .modifier(reveal(page, step: 1))
+
+                Text(subtitle)
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
+                    .modifier(reveal(page, step: 2))
+
+                content()
+            }
+            .readableWidth(ReadableWidth.prose)
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
+            .padding(.bottom, 16)
+            .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            content()
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+        )
+    }
+
+    private var cardDivider: some View {
+        Divider().padding(.leading, 62)
+    }
+
+    private func sectionHeader(_ text: LocalizedStringKey) -> some View {
+        Text(text)
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .textCase(.uppercase)
+            .padding(.horizontal, 4)
+    }
+
+    private func rowIcon(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Color.accentColor)
+            .frame(width: 34, height: 34)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.accentColor.opacity(0.12))
+            )
+            .accessibilityHidden(true)
+    }
+
+    private func featureRow(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            rowIcon(icon)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func switchRow(_ title: LocalizedStringKey,
+                           icon: String,
+                           detail: LocalizedStringKey? = nil,
+                           isOn: Binding<Bool>) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            rowIcon(icon)
+            VStack(alignment: .leading, spacing: 3) {
+                Toggle(isOn: isOn) {
+                    Text(title)
+                        .font(.headline)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .toggleStyle(.switch)
+                .tint(.accentColor)
+                .frame(minHeight: 34)
+
+                if let detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(14)
+    }
+
+    private func recapRow(_ title: LocalizedStringKey, icon: String, isOn: Bool) -> some View {
+        HStack(spacing: 14) {
+            rowIcon(icon)
+            Text(title)
+                .font(.body)
+            Spacer()
+            Text(isOn ? "On" : "Off")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(isOn ? Color.accentColor : .secondary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - App Lock
+
+    /// The App Lock switch's label: a Mac has no Face ID, and without Touch ID
+    /// it falls back to the login password. Same strings as Settings.
+    private var appLockLabel: LocalizedStringKey {
+        #if os(macOS)
+        return "Require Touch ID or password"
+        #else
+        return "Require Face ID / Touch ID"
+        #endif
+    }
+
+    /// Turns on only when the device can authenticate its owner, as in
+    /// Settings. Turning it off asks for nothing here: there are no codes yet to
+    /// protect, and Settings asks once there are.
+    private var appLockBinding: Binding<Bool> {
+        Binding(
+            get: { enableAppLock },
+            set: { newValue in
+                if newValue && !AppLockManager.canLock() {
+                    showingAppLockUnavailable = true
+                } else {
+                    enableAppLock = newValue
+                }
+            }
+        )
     }
 
     // MARK: - Bottom controls
 
     private var pageDots: some View {
-        HStack(spacing: 10) {
-            ForEach(0..<totalPages, id: \.self) { index in
+        HStack(spacing: 7) {
+            ForEach(Page.allCases, id: \.rawValue) { page in
                 Capsule()
-                    .fill(index == currentPage ? Color.accentColor : Color.secondary.opacity(0.3))
-                    .frame(width: index == currentPage ? 24 : 8, height: 8)
-                    .animation(
-                        reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7),
-                        value: currentPage
-                    )
+                    .fill(page.rawValue == currentPage ? Color.accentColor : Color.secondary.opacity(0.25))
+                    .frame(width: page.rawValue == currentPage ? 22 : 7, height: 7)
             }
         }
+        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.8), value: currentPage)
+        .accessibilityElement()
+        .accessibilityLabel(Text("Page \(currentPage + 1) of \(Page.allCases.count)"))
     }
 
     private var navigationButtons: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             if currentPage > 0 {
                 Button {
                     Haptics.impact(.light)
                     currentPage -= 1
                 } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "chevron.left")
-                            .font(.caption.weight(.semibold))
-                        Text("Back")
-                            .font(.headline)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 14)
-                    .frame(maxWidth: .infinity)
-                    .background(Capsule().fill(Color(.secondarySystemBackground)))
-                    .foregroundColor(.primary)
+                    Image(systemName: "chevron.left")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .frame(width: 54, height: 54)
+                        .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
+                .onboardingGlass()
+                .accessibilityLabel(Text("Back"))
+                .transition(.scale(scale: 0.6).combined(with: .opacity))
             }
 
             Button {
-                Haptics.impact(.medium)
-                if currentPage < totalPages - 1 {
-                    currentPage += 1
-                } else {
+                if isLastPage {
                     Haptics.notify(.success)
-                    hasCompletedOnboarding = true
+                    choices.complete()
+                } else {
+                    Haptics.impact(.medium)
+                    currentPage += 1
                 }
             } label: {
-                HStack(spacing: 8) {
-                    Text(advanceTitle)
-                        .font(.headline)
-                    if currentPage < totalPages - 1 {
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                    }
-                }
-                .padding(.horizontal, 32)
-                .padding(.vertical, 14)
-                .frame(maxWidth: currentPage > 0 ? .infinity : nil)
-                .background(Capsule().fill(Color.accentColor))
-                .foregroundColor(.white)
+                Text(advanceTitle)
+                    .font(.headline)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Capsule().fill(Color.accentColor))
+                    .contentShape(Capsule())
             }
+            .buttonStyle(PressableButtonStyle(reduceMotion: reduceMotion))
+            .keyboardShortcut(.defaultAction)
         }
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: currentPage)
-    }
-
-    private func highlight(_ text: LocalizedStringKey) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.subheadline)
-                .foregroundColor(.accentColor)
-
-            Text(text)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
+        .animation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.85), value: currentPage)
     }
 }
 
-private struct FeatureRow: View {
-    let feature: OnboardingFeature
+// MARK: - Pieces
+
+/// One page element's entrance: it fades in and rises into place.
+private struct RevealModifier: ViewModifier {
+    let isRevealed: Bool
+    let delay: Double
+    let reduceMotion: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isRevealed ? 1 : 0)
+            .offset(y: isRevealed || reduceMotion ? 0 : 14)
+            .animation(
+                reduceMotion
+                    ? .easeOut(duration: 0.2)
+                    : .spring(response: 0.6, dampingFraction: 0.9).delay(delay),
+                value: isRevealed
+            )
+    }
+}
+
+/// Shrinks a little while held, which a plain button style doesn't do.
+private struct PressableButtonStyle: ButtonStyle {
+    let reduceMotion: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.88 : 1)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
+private extension View {
+    /// Liquid Glass where the system has it, a material where it doesn't (the
+    /// Mac app still runs on macOS 14).
+    @ViewBuilder
+    func onboardingGlass() -> some View {
+        if #available(iOS 26, macOS 26, *) {
+            self.glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            self.background(.regularMaterial, in: Circle())
+        }
+    }
+}
+
+/// A calm grouped background with one soft glow from the top, so every page
+/// sits on the same light.
+private struct OnboardingBackground: View {
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                Color(.systemGroupedBackground)
+                RadialGradient(
+                    colors: [Color.accentColor.opacity(0.16), Color.accentColor.opacity(0)],
+                    center: .init(x: 0.5, y: 0.1),
+                    startRadius: 0,
+                    endRadius: max(proxy.size.width, proxy.size.height) * 0.55
+                )
+            }
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+    }
+}
+
+/// A centrepiece inside two orbit rings, with small symbols travelling round
+/// the outer one.
+///
+/// It assembles itself the first time its page shows: the rings draw in, the
+/// centre springs up, and the satellites pop on one after another. After
+/// that, the satellites drift slowly round and stay upright as they go.
+private struct OrbitHero<Center: View>: View {
+    let isShown: Bool
+    let animated: Bool
+    let satellites: [String]
+    var size: CGFloat = 290
+    @ViewBuilder let center: () -> Center
+
+    @State private var spin = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: feature.icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.accentColor)
-                .frame(width: 40, height: 40)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.accentColor.opacity(0.12))
-                )
+        ZStack {
+            Circle()
+                .fill(RadialGradient(colors: [Color.accentColor.opacity(0.22), Color.accentColor.opacity(0)],
+                                     center: .center, startRadius: 0, endRadius: size * 0.5))
+                .scaleEffect(isShown ? 1 : 0.6)
+                .opacity(isShown ? 1 : 0)
+                .animation(.easeOut(duration: 1.0), value: isShown)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(feature.title)
-                    .font(.headline)
+            ring(diameter: size * 0.62, dashed: false, delay: 0.05)
+            ring(diameter: size * 0.94, dashed: true, delay: 0.15)
 
-                Text(feature.description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            ForEach(Array(satellites.enumerated()), id: \.offset) { index, symbol in
+                let angle = Double(index) / Double(satellites.count) * 360 - 90 + (spin ? 360 : 0)
+                Image(systemName: symbol)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(Color(.secondarySystemGroupedBackground)))
+                    .overlay(Circle().strokeBorder(Color.accentColor.opacity(0.15)))
+                    .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+                    .scaleEffect(isShown ? 1 : 0.2)
+                    .opacity(isShown ? 1 : 0)
+                    .animation(
+                        animated
+                            ? .spring(response: 0.5, dampingFraction: 0.6).delay(0.5 + 0.12 * Double(index))
+                            : .easeOut(duration: 0.2),
+                        value: isShown
+                    )
+                    // Counter-rotated, so the symbol stays upright on its way round.
+                    .rotationEffect(.degrees(-angle))
+                    .offset(x: size * 0.47)
+                    .rotationEffect(.degrees(angle))
+            }
+
+            center()
+                .scaleEffect(isShown || !animated ? 1 : 0.7)
+                .opacity(isShown ? 1 : 0)
+                .animation(animated ? .spring(response: 0.6, dampingFraction: 0.65).delay(0.1) : .easeOut(duration: 0.2),
+                           value: isShown)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
+        .onAppear {
+            guard animated, !satellites.isEmpty else { return }
+            withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
+                spin = true
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-        )
+    }
+
+    private func ring(diameter: CGFloat, dashed: Bool, delay: Double) -> some View {
+        Circle()
+            .trim(from: 0, to: isShown ? 1 : 0)
+            .stroke(Color.accentColor.opacity(dashed ? 0.22 : 0.16),
+                    style: StrokeStyle(lineWidth: 1, lineCap: .round, dash: dashed ? [2, 6] : []))
+            .rotationEffect(.degrees(-90))
+            .frame(width: diameter, height: diameter)
+            .animation(animated ? .easeInOut(duration: 1.1).delay(delay) : .easeOut(duration: 0.2), value: isShown)
     }
 }
 
-struct WelcomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        Group {
-            WelcomeView()
-                .preferredColorScheme(.light)
+#Preview("Light") {
+    WelcomeView()
+        .preferredColorScheme(.light)
+}
 
-            WelcomeView()
-                .preferredColorScheme(.dark)
-        }
-    }
+#Preview("Dark") {
+    WelcomeView()
+        .preferredColorScheme(.dark)
 }

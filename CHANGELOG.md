@@ -19,6 +19,14 @@ A version number lives in four places, and a release is not finished until they 
 
 A reliability release, mostly for iCloud sync and counter-based codes.
 
+### Added
+
+- A redesigned welcome for new installs. It explains what Autheris does and how it treats your privacy, and has a privacy page with the switches that decide it: service logos, App Lock, and the privacy screen. A last page sums up what you chose.
+
+### Changed
+
+- On a new install, service logos are off until you turn them on, on the welcome's privacy page or in Settings › Privacy. Looking a logo up sends the service's name to logo.dev, which tells it which services you use. If you're updating from an earlier version, logos stay as they were.
+
 ### Security
 
 - Delete Tokens from iCloud now waits for any sync already running and lets no new one start until it's done. A sync that had read your codes just before the delete could upload them all again straight afterwards, while the delete reported success. Tapping it twice now runs one delete, and Settings shows "Deleting from iCloud…" while it works. A record another device had already deleted no longer makes the delete report a failure, and records that failed to load are deleted too. If the sync it is waiting for hasn't finished after 30 seconds, it stops without deleting anything and says to try again.

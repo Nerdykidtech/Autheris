@@ -20,6 +20,9 @@ extension NSColor {
     /// A surface *inside* the window — a card, a code field, an input row.
     static var secondarySystemBackground: NSColor { .controlBackgroundColor }
 
+    /// Behind a grouped list's cards, which on the Mac is the window itself.
+    static var systemGroupedBackground: NSColor { .windowBackgroundColor }
+
     /// The card background in a grouped list, which on the Mac is the same
     /// surface as `secondarySystemBackground`.
     static var secondarySystemGroupedBackground: NSColor { .controlBackgroundColor }
