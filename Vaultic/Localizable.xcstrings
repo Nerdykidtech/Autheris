@@ -9590,6 +9590,46 @@
         }
       }
     },
+    "Sending codes to Apple Watch is off. You can turn it on in Settings.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Senden von Codes an die Apple Watch ist ausgeschaltet. Du kannst es in den Einstellungen einschalten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El envío de códigos al Apple Watch está desactivado. Puedes activarlo en Ajustes."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'envoi des codes à l'Apple Watch est désactivé. Vous pouvez l'activer dans les Réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watchへのコード送信はオフです。設定でオンにできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O envio de códigos ao Apple Watch está desativado. Você pode ativá-lo nos Ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向 Apple Watch 发送验证码已关闭。你可以在“设置”中打开。"
+          }
+        }
+      }
+    },
     "Service logos": {
       "localizations": {
         "de-DE": {

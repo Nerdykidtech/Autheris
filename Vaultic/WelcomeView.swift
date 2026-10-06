@@ -33,6 +33,7 @@ struct WelcomeView: View {
     /// without one they would ask about something the user doesn't have.
     /// Settings keeps the switch either way.
     @State private var hasPairedWatch = WatchTokenRelay.hasPairedWatch
+    @State private var isPairingKnown = WatchTokenRelay.isPairingKnown
 
     private enum Page: Int, CaseIterable {
         case welcome, features, privacy, ready
@@ -93,6 +94,7 @@ struct WelcomeView: View {
         .onChange(of: currentPage) { _, page in revealedPages.insert(page) }
         .onReceive(NotificationCenter.default.publisher(for: WatchTokenRelay.pairedWatchDidChange)) { _ in
             hasPairedWatch = WatchTokenRelay.hasPairedWatch
+            isPairingKnown = WatchTokenRelay.isPairingKnown
         }
         .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
             Button("OK", role: .cancel) { }
@@ -255,15 +257,24 @@ struct WelcomeView: View {
                             detail: "If Autheris is on your Apple Watch, this iPhone copies your codes to it, setup keys included, so the watch can show them. Off, they are removed from the watch.",
                             isOn: $sendCodesToWatch
                         )
-                    } else if WatchTokenRelay.deviceCanPairWatch {
+                    } else if isPairingKnown && WatchTokenRelay.deviceCanPairWatch {
                         // No watch yet, but one paired later would be sent the
-                        // codes, so the page still names it.
+                        // codes, so the page still names it — saying what will
+                        // happen, which a restored setting can have turned off.
                         cardDivider
-                        featureRow(
-                            icon: "applewatch",
-                            title: "Apple Watch",
-                            detail: "If you add Autheris to an Apple Watch later, this iPhone sends your codes to it. You can turn that off in Settings."
-                        )
+                        if sendCodesToWatch {
+                            featureRow(
+                                icon: "applewatch",
+                                title: "Apple Watch",
+                                detail: "If you add Autheris to an Apple Watch later, this iPhone sends your codes to it. You can turn that off in Settings."
+                            )
+                        } else {
+                            featureRow(
+                                icon: "applewatch",
+                                title: "Apple Watch",
+                                detail: "Sending codes to Apple Watch is off. You can turn it on in Settings."
+                            )
+                        }
                     }
                     cardDivider
                     if isICloudSyncEnabled {

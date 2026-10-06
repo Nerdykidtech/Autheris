@@ -39,15 +39,22 @@ enum WatchTokenRelay {
     }
 
     /// Whether a watch is paired with this iPhone, as the relay last saw it.
-    /// `false` until WatchConnectivity has started. Onboarding shows its watch
-    /// switch only when this is true, and listens for `pairedWatchDidChange`.
+    /// Meaningless until `isPairingKnown`. Onboarding shows its watch switch
+    /// only when this is true, and listens for `pairedWatchDidChange`.
     private(set) static var hasPairedWatch = false
 
-    /// Posted on the main actor when `hasPairedWatch` changes.
+    /// Whether WatchConnectivity has said yet. Until it has, onboarding shows
+    /// no watch row at all, rather than the "no watch" row and then a switch
+    /// in its place.
+    private(set) static var isPairingKnown = false
+
+    /// Posted on the main actor when `hasPairedWatch` or `isPairingKnown`
+    /// changes.
     static let pairedWatchDidChange = Notification.Name("WatchTokenRelay.pairedWatchDidChange")
 
     static func notePairedWatch(_ paired: Bool) {
-        guard paired != hasPairedWatch else { return }
+        guard !isPairingKnown || paired != hasPairedWatch else { return }
+        isPairingKnown = true
         hasPairedWatch = paired
         NotificationCenter.default.post(name: pairedWatchDidChange, object: nil)
     }
