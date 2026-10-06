@@ -21,7 +21,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 
 ### Added
 
-- A redesigned welcome for new installs. It explains what Autheris does and how it treats your privacy, and has a privacy page with the switches that decide it: service logos, sending codes to Apple Watch, App Lock, and the privacy screen. A last page sums up what you chose.
+- A redesigned welcome for new installs. It explains what Autheris does and how it treats your privacy, and has a privacy page with the switches that decide it: service logos, sending codes to Apple Watch (when a watch is paired), App Lock, and the privacy screen. It also names every way your setup keys can leave the device — iCloud Sync, Apple Watch, backups and the Transfer QR code. A last page sums up what you chose.
 
 - Settings › Privacy has a new switch, Send codes to Apple Watch. Your codes, setup keys included, go to the Autheris watch app only while it's on, and turning it off removes them from the watch, which then says so. It's on unless you turn it off, so your watch keeps working after the update. It's also on the welcome's privacy page when a watch is paired.
 
