@@ -794,6 +794,26 @@ struct EditTokenView: View {
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
     }
+
+    /// The token as it is stored now, which sync may have moved on from `code`.
+    /// Only for what the screen *shows* about fields it doesn't control — the
+    /// counter's floor, the setup key behind the preview. Every comparison is
+    /// against `code`.
+    private var live: OTPCode {
+        dataStore.codes.first { $0.id == code.id } ?? code
+    }
+
+    /// The counter on screen: the user's choice, or the stored counter if that
+    /// has since moved past it — which is what `saveEdit` would save anyway, so
+    /// the screen says so rather than showing a counter that won't be kept.
+    /// Stepping writes to `counter`, so a counter raised by sync alone doesn't
+    /// count as an edit.
+    private var displayedCounter: Binding<Int> {
+        Binding(
+            get: { max(counter, Int(clamping: live.counter)) },
+            set: { counter = $0 }
+        )
+    }
     
     private var isDirty: Bool {
         label != code.label ||
@@ -959,8 +979,10 @@ struct EditTokenView: View {
             if code.isTimeBased {
                 PeriodStepper(period: $period, range: periodRange)
             } else {
-                // From the current counter up; see `OTPCode.editableCounterRange`.
-                Stepper("Counter: \(counter)", value: $counter, in: code.editableCounterRange)
+                // From the stored counter up — as it is now, not as the screen
+                // opened it; see `OTPCode.editableCounterRange`.
+                Stepper("Counter: \(displayedCounter.wrappedValue)", value: displayedCounter,
+                        in: live.editableCounterRange)
             }
         } header: {
             Text("Code")
@@ -1030,13 +1052,14 @@ struct EditTokenView: View {
     }
 
     /// What the code would be with the values currently on screen, rather than the
-    /// stored ones.
+    /// stored ones. The setup key is the stored one as it is now: this screen
+    /// doesn't edit it, so that is the key the saved token will have.
     private var previewCode: String {
         guard code.isTimeBased else {
-            return OTPGenerator.generateHOTP(secret: code.secret, algorithm: algorithm,
-                                             digits: digits, counter: UInt64(max(0, counter)))
+            return OTPGenerator.generateHOTP(secret: live.secret, algorithm: algorithm, digits: digits,
+                                             counter: UInt64(max(0, displayedCounter.wrappedValue)))
         }
-        return OTPGenerator.generateOTP(secret: code.secret, algorithm: algorithm,
+        return OTPGenerator.generateOTP(secret: live.secret, algorithm: algorithm,
                                          digits: digits, period: period)
     }
 

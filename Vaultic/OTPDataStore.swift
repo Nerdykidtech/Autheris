@@ -613,6 +613,10 @@ final class OTPDataStore: ObservableObject {
             isPinned: changed(\.isPinned)
         )
 
+        // The screen changed something, but nothing the code doesn't already
+        // have: a counter it raised that sync has since raised as far, say.
+        guard updated.edited(modifiedAt: codes[index].modifiedAt) != codes[index] else { return .unchanged }
+
         // A rename onto a name another code already has would leave two codes
         // the user can't tell apart.
         guard !nameIsTaken(by: updated) else { return .nameTaken }

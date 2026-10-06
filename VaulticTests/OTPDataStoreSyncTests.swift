@@ -441,11 +441,27 @@ final class OTPDataStoreSyncTests: XCTestCase {
         // Codes spent while the screen was open: 3 → 12.
         for _ in 0..<9 { store.advanceCounter(for: opened) }
 
-        // The user nudged the stepper up from the 3 the screen opened with.
-        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(counter: 5)), .saved)
+        // The user nudged the stepper up from the 3 the screen opened with, and
+        // renamed it.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(label: "Bank (personal)", counter: 5)), .saved)
 
-        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.counter, 12,
-                       "a counter that goes back is a code already used")
+        let saved = store.codes.first { $0.id == opened.id }
+        XCTAssertEqual(saved?.label, "Bank (personal)")
+        XCTAssertEqual(saved?.counter, 12, "a counter that goes back is a code already used")
+    }
+
+    func testAnEditThatSyncHasAlreadyOvertakenWritesNothing() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 3)
+        store.addCode(opened)
+        for _ in 0..<9 { store.advanceCounter(for: opened) }
+        let stamp = store.codes.first { $0.id == opened.id }?.modifiedAt
+
+        // Only the counter, raised to 5 — and it is already at 12.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(counter: 5)), .unchanged)
+
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.modifiedAt, stamp,
+                       "a save that changes nothing must not stamp the code as edited")
     }
 
     func testAnEditThatChangedNothingWritesNothing() async {
