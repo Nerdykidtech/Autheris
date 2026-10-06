@@ -760,7 +760,12 @@ struct OTPCardView: View {
 }
 
 struct EditTokenView: View {
-    let code: OTPCode
+    /// The token as this screen opened it, and what every change is measured
+    /// against. `@State` so it stays put: the card passes in the token as the list
+    /// has it now, which sync can change while the screen is open — and measured
+    /// against that, a rename from another device looked like the user renaming
+    /// it back, which Save then wrote.
+    @State private var code: OTPCode
     @ObservedObject var dataStore: OTPDataStore
     @Environment(\.dismiss) private var dismiss
     
@@ -771,7 +776,8 @@ struct EditTokenView: View {
     /// when the picker has moved away from this: converting it to a hex and back
     /// doesn't always give the stored hex exactly, and comparing that hex made
     /// every save rewrite the color — over one set on another device meanwhile.
-    private let openedRingColor: Color
+    /// `@State` for the same reason as `code`.
+    @State private var openedRingColor: Color
     /// Seeded from the *effective* values, so opening this screen on a token whose
     /// stored digits or period is malformed shows the values its codes are really
     /// generated with. `OTPGenerator` decides what "effective" means.
@@ -804,7 +810,7 @@ struct EditTokenView: View {
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
-        self.code = code
+        _code = State(initialValue: code)
         self.dataStore = dataStore
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
@@ -823,7 +829,7 @@ struct EditTokenView: View {
         } else {
             opened = branding.color
         }
-        openedRingColor = opened
+        _openedRingColor = State(initialValue: opened)
         _ringColor = State(initialValue: opened)
     }
     

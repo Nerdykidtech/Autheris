@@ -110,8 +110,11 @@ nonisolated enum GoogleMigrationParser {
                     // made a larger counter fail part-way through its bytes and
                     // threw off everything read after it. Past `Int64.max` the
                     // bits are a negative `int64`, which is not a counter at all.
+                    // The last counter written is the one that counts, as for
+                    // any protobuf field, so a valid one clears an earlier one.
                     if v <= OTPCode.maximumCounter {
                         counter = v
+                        counterIsValid = true
                     } else {
                         counter = 0
                         counterIsValid = false

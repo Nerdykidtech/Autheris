@@ -102,6 +102,22 @@ final class GoogleMigrationParserTests: XCTestCase {
             export(secret: rawSecret, name: "alice@example.com", issuer: "Example", type: 1, counter: -1)))
     }
 
+    func testALaterValidCounterReplacesAnEarlierNegativeOne() throws {
+        // A field written twice keeps its last value, as protobuf has it.
+        var parameters: [UInt8] = []
+        parameters += field(1, bytes: Array(rawSecret.utf8))
+        parameters += field(2, bytes: Array("Example".utf8))
+        parameters += field(6, varint: 1)
+        parameters += field(7, varint: -1)
+        parameters += field(7, varint: 5)
+        let base64 = Data(field(1, bytes: parameters)).base64EncodedString()
+        let encoded = base64.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? base64
+
+        let tokens = try parse("otpauth-migration://offline?data=\(encoded)")
+
+        XCTAssertEqual(tokens.first?.counter, 5)
+    }
+
     func testATimeBasedEntryWithANegativeCounterIsStillImported() throws {
         let tokens = try parse(export(secret: rawSecret, name: "alice@example.com",
                                       issuer: "Example", type: 2, counter: -1))

@@ -3,7 +3,9 @@ import SwiftUI
 /// Focused sheet to view, copy, or edit one token's setup key.
 /// Editing requires an explicit Save; dismissing with unsaved changes asks for confirmation.
 struct TokenSecretView: View {
-    let code: OTPCode
+    /// The token as this screen opened it. `@State` so it stays put while sync
+    /// changes the one the card passes in; see `EditTokenView.code`.
+    @State private var code: OTPCode
     @ObservedObject var dataStore: OTPDataStore
     @Environment(\.dismiss) private var dismiss
     
@@ -21,7 +23,7 @@ struct TokenSecretView: View {
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
-        self.code = code
+        _code = State(initialValue: code)
         self.dataStore = dataStore
         _secret = State(initialValue: code.secret)
     }

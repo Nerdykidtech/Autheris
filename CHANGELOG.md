@@ -21,7 +21,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 
 ### Security
 
-- Delete Tokens from iCloud now waits for any sync already running and lets no new one start until it's done. A sync that had read your codes just before the delete could upload them all again straight afterwards, while the delete reported success. Tapping it twice now runs one delete, and Settings shows "Deleting from iCloud…" while it works. A record another device had already deleted no longer makes the delete report a failure, and records that failed to load are deleted too.
+- Delete Tokens from iCloud now waits for any sync already running and lets no new one start until it's done. A sync that had read your codes just before the delete could upload them all again straight afterwards, while the delete reported success. Tapping it twice now runs one delete, and Settings shows "Deleting from iCloud…" while it works. A record another device had already deleted no longer makes the delete report a failure, and records that failed to load are deleted too. If the sync it is waiting for hasn't finished after 30 seconds, it stops without deleting anything and says to try again.
 - The dialog for deleting from iCloud now says to turn off iCloud Sync on your other devices first. Deleting from iCloud doesn't reach into them, and any device that still has sync on uploads its codes again.
 
 ### Fixed
@@ -34,7 +34,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 - Codes with unusual settings, such as a 10-second period or 5 digits, keep them when you edit the code or fix a scanned setup key by hand. They used to be changed to fit the steppers, which changed every code. The period now steps through multiples of 15 seconds from any value, and the steppers stop at their ends instead of overflowing.
 - iOS no longer offers to save a setup key as a password.
 - An encrypted backup whose password has accented letters now opens however those letters were typed.
-- An import file with no codes in it now says so. Google Authenticator exports with very large counters import correctly.
+- An import file with no codes in it now says so. Google Authenticator exports with very large counters import correctly, and a counter-based account whose counter is negative is left out rather than imported at 0, where its codes would all be rejected.
 - The lock screen only offers Face ID or Touch ID when it's available, and says "Unlock" otherwise.
 - iCloud sync status, and several messages that were English everywhere, now appear in your language.
 - iCloud sync status no longer reads "not configured for iCloud" for ordinary errors, and recognises CloudKit's messages in any language.
