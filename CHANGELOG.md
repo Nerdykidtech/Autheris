@@ -28,7 +28,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 
 - A counter-based (HOTP) code never goes back to a counter you've already used. Syncing, editing, restoring a backup, and a sync that had to retry because another device wrote first all keep the higher counter. Each lower one is a code that has been shown and may already have been accepted.
 - An edit made while a sync is running is no longer undone when the sync finishes.
-- Editing a code, or its setup key, now changes only what you changed, applied to the code as it is now. A rename, pin or counter change from another device while the screen was open is no longer overwritten.
+- Editing a code, or its setup key, now changes only what you changed, applied to the code as it is now. A rename, pin or counter change from another device while the screen was open is no longer overwritten, and on iPhone it no longer closes the screen and loses what you'd typed.
 - Restoring a backup that lists the same code twice no longer makes Autheris quit at the next sync. Repeats are dropped, and backups are written without them.
 - Apple Watch no longer stops updating after your iPhone's clock was set ahead. It used to ignore every list sent after the clock was corrected, so deleted codes stayed on the watch.
 - Codes with unusual settings, such as a 10-second period or 5 digits, keep them when you edit the code or fix a scanned setup key by hand. They used to be changed to fit the steppers, which changed every code. The period now steps through multiples of 15 seconds from any value, and the steppers stop at their ends instead of overflowing.
