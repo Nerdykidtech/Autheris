@@ -416,31 +416,57 @@ struct WelcomeView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// A switch whose whole row is a button.
+    ///
+    /// A plain `Toggle` here only responded to a press held a moment: the page
+    /// sits in a `ScrollView` inside the paging `TabView`, and between them they
+    /// delay a touch long enough for a quick click to be lost. A button gets the
+    /// click, so the row flips the value and the switch only draws it.
     private func switchRow(_ title: LocalizedStringKey,
                            icon: String,
                            detail: LocalizedStringKey? = nil,
                            isOn: Binding<Bool>) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            rowIcon(icon)
-            VStack(alignment: .leading, spacing: 3) {
-                Toggle(isOn: isOn) {
-                    Text(title)
-                        .font(.headline)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .toggleStyle(.switch)
-                .tint(.accentColor)
-                .frame(minHeight: 34)
+        Button {
+            Haptics.impact(.light)
+            withAnimation(reduceMotion ? nil : .snappy) {
+                isOn.wrappedValue.toggle()
+            }
+        } label: {
+            HStack(alignment: .top, spacing: 14) {
+                rowIcon(icon)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 10) {
+                        Text(title)
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Toggle(isOn: .constant(isOn.wrappedValue)) { EmptyView() }
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .tint(.accentColor)
+                            .allowsHitTesting(false)
+                    }
+                    .frame(minHeight: 34)
 
-                if let detail {
-                    Text(detail)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let detail {
+                        Text(detail)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
+            .padding(14)
+            .contentShape(Rectangle())
         }
-        .padding(14)
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(isOn.wrappedValue ? "On" : "Off"))
+        .accessibilityHint(detail.map { Text($0) } ?? Text(verbatim: ""))
+        .accessibilityAddTraits(.isToggle)
     }
 
     private func recapRow(_ title: LocalizedStringKey, icon: String, isOn: Bool) -> some View {
