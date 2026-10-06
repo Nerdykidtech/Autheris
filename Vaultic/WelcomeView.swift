@@ -29,6 +29,10 @@ struct WelcomeView: View {
     /// Read only: turning sync on needs the account checks Settings makes. It is
     /// shown as it is, because a reinstall can restore it already on.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
+    /// The watch switch and its summary row show only with a paired watch;
+    /// without one they would ask about something the user doesn't have.
+    /// Settings keeps the switch either way.
+    @State private var hasPairedWatch = WatchTokenRelay.hasPairedWatch
 
     private enum Page: Int, CaseIterable {
         case welcome, features, privacy, ready
@@ -87,6 +91,9 @@ struct WelcomeView: View {
             revealedPages.insert(currentPage)
         }
         .onChange(of: currentPage) { _, page in revealedPages.insert(page) }
+        .onReceive(NotificationCenter.default.publisher(for: WatchTokenRelay.pairedWatchDidChange)) { _ in
+            hasPairedWatch = WatchTokenRelay.hasPairedWatch
+        }
         .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -240,7 +247,7 @@ struct WelcomeView: View {
                         detail: "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.",
                         isOn: $choices.fetchIssuerLogos
                     )
-                    if WatchTokenRelay.deviceCanPairWatch {
+                    if hasPairedWatch {
                         cardDivider
                         switchRow(
                             "Send codes to Apple Watch",
@@ -329,7 +336,7 @@ struct WelcomeView: View {
                 cardDivider
                 recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured)
                 cardDivider
-                if WatchTokenRelay.deviceCanPairWatch {
+                if hasPairedWatch {
                     cardDivider
                     recapRow("Apple Watch", icon: "applewatch", isOn: sendCodesToWatch)
                 }

@@ -158,7 +158,7 @@ It is a **viewer and nothing else**. There is no add, no edit, no delete, no sea
 
 Over **`WatchConnectivity` from the iPhone app** — deliberately *not* over iCloud. That choice is what makes the watch work for every user rather than only for the ones who turned iCloud Sync on, since iCloud Sync is off by default and the two features are otherwise unrelated. The iPhone stays the single source of truth; the watch never writes anything back.
 
-The phone sends only to a watch it reports as paired *with the app installed* (`WCSession.isPaired && isWatchAppInstalled`), and only while **Settings → Privacy → Send codes to Apple Watch** is on. Until 3.1 installing the watch app was the only opt-in, but watchOS can install it automatically, so it was no real choice; the switch is also on the onboarding privacy page. It reads as on when it has never been written (`AppPreferences.sendCodesToWatchDefault`), so an update doesn't empty anyone's watch.
+The phone sends only to a watch it reports as paired *with the app installed* (`WCSession.isPaired && isWatchAppInstalled`), and only while **Settings → Privacy → Send codes to Apple Watch** is on. Until 3.1 installing the watch app was the only opt-in, but watchOS can install it automatically, so it was no real choice; the switch is also on the onboarding privacy page when a watch is paired (`WatchTokenRelay.hasPairedWatch`). It reads as on when it has never been written (`AppPreferences.sendCodesToWatchDefault`), so an update doesn't empty anyone's watch.
 
 Turning it off sends an empty list marked `sendingStopped` (`WatchRelayOutgoing`, `WatchTokenPayload`). The empty list removes the codes from the watch and its Keychain cache; the mark makes the watch say "Turned Off" instead of "No Codes". The mark is optional on the wire, so a watch on an older build still applies the empty list.
 
@@ -192,6 +192,8 @@ Two things about the send are easy to get wrong, and both were caught by running
 The system re-delivers the last application context on activation, so the obvious design is to render `receivedApplicationContext` and be done. That is not good enough for a credential app: the redelivery is framework behaviour rather than a documented guarantee, and the failure mode if it changes is a user reaching for their watch and seeing **no codes**, with no explanation. The last list received is therefore written to the watch's own Keychain with the same `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` protection the phone uses, so the app opens on the real codes from the first frame whether or not the phone is anywhere near.
 
 The consequence worth being explicit about: **the codes are on the watch**, because a code cannot be shown without its secret. A paired, unlocked watch is now another place a token exists.
+
+The Keychain copy outlives deleting the watch app, while the app's `UserDefaults` don't. Each install therefore keeps an ID in `UserDefaults` and stamps it into the copy, and a copy carrying another install's ID is deleted unread (`WatchTokenPayload.cacheBelongsToThisInstall`). Before 3.1, reinstalling the watch app showed the codes from before, even if sending had been turned off since.
 
 ## Deliberate differences from the phone
 

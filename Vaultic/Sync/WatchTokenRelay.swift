@@ -28,6 +28,30 @@ final class DisabledWatchTokenRelay: WatchTokenRelayService {
 /// Builds the relay this platform actually has.
 @MainActor
 enum WatchTokenRelay {
+    /// Whether this device can have an Apple Watch at all — an iPhone. Decides
+    /// whether Settings shows the "Send codes to Apple Watch" switch.
+    static var deviceCanPairWatch: Bool {
+        #if os(iOS)
+        WCSession.isSupported()
+        #else
+        false
+        #endif
+    }
+
+    /// Whether a watch is paired with this iPhone, as the relay last saw it.
+    /// `false` until WatchConnectivity has started. Onboarding shows its watch
+    /// switch only when this is true, and listens for `pairedWatchDidChange`.
+    private(set) static var hasPairedWatch = false
+
+    /// Posted on the main actor when `hasPairedWatch` changes.
+    static let pairedWatchDidChange = Notification.Name("WatchTokenRelay.pairedWatchDidChange")
+
+    static func notePairedWatch(_ paired: Bool) {
+        guard paired != hasPairedWatch else { return }
+        hasPairedWatch = paired
+        NotificationCenter.default.post(name: pairedWatchDidChange, object: nil)
+    }
+
     /// The real relay on iPhone, an inert one everywhere else.
     ///
     /// Only iOS has a watch to talk to, but `OTPDataStore` is built on every
@@ -37,19 +61,9 @@ enum WatchTokenRelay {
     /// Only when the watch app is installed on a paired watch (`isPaired` &&
     /// `isWatchAppInstalled`) *and* "Send codes to Apple Watch" is on. Installing
     /// the app used to be the only opt-in, but watchOS can install it
-    /// automatically, so it was no real choice. The switch is in Settings and on
-    /// the onboarding privacy page. Turning it off sends an empty list, which
+    /// automatically, so it was no real choice. The switch is in Settings, and on
+    /// the onboarding privacy page when a watch is paired. Turning it off sends an empty list, which
     /// removes the codes from the watch.
-    /// Whether this device can have an Apple Watch at all — an iPhone. Decides
-    /// whether the "Send codes to Apple Watch" switch is shown.
-    static var deviceCanPairWatch: Bool {
-        #if os(iOS)
-        WCSession.isSupported()
-        #else
-        false
-        #endif
-    }
-
     static func make() -> WatchTokenRelayService {
         #if os(iOS)
         return WatchConnectivityTokenRelay()
@@ -71,6 +85,19 @@ nonisolated struct WatchRelayOutgoing: Equatable, Sendable {
     init(tokens: [OTPCode], sendingEnabled: Bool) {
         self.tokens = sendingEnabled ? tokens : []
         sendingStopped = !sendingEnabled
+    }
+}
+
+/// Remembers the "Send codes to Apple Watch" switch, so a settings change
+/// re-sends only when it was this switch that changed. `UserDefaults` reports
+/// every key, and the launch alone restores nine of them.
+nonisolated struct WatchSendingSwitch: Sendable {
+    private(set) var lastSeen: Bool
+
+    /// Records `value`, and says whether it differs from the last one seen.
+    mutating func update(to value: Bool) -> Bool {
+        defer { lastSeen = value }
+        return value != lastSeen
     }
 }
 
@@ -161,6 +188,7 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// Re-offers the list when the switch changes, so turning it off clears the
     /// watch straight away rather than at the next edit.
     private var settingObserver: NSObjectProtocol?
+    private var sendingSwitch = WatchSendingSwitch(lastSeen: WatchConnectivityTokenRelay.isSendingEnabled)
 
     /// Where an oversized payload is staged for `transferFile`.
     private var stagingDirectory: URL { FileManager.default.temporaryDirectory.appendingPathComponent("WatchRelay", isDirectory: true) }
@@ -199,14 +227,17 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
             }
         }
 
-        // Fires for every key; `sendIfPossible` returns early when nothing it
-        // would send has changed, so the rest cost a comparison.
+        // Fires for every key, so it acts only when the watch switch changed.
         settingObserver = NotificationCenter.default.addObserver(
             forName: UserDefaults.didChangeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.sendIfPossible() }
+            Task { @MainActor in
+                guard let self,
+                      self.sendingSwitch.update(to: Self.isSendingEnabled) else { return }
+                self.sendIfPossible()
+            }
         }
     }
 
@@ -230,8 +261,10 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
             return
         }
 
+        WatchTokenRelay.notePairedWatch(session.isPaired)
+
         // Nothing to send to until a watch is paired *and* the watch app is
-        // installed. This is what makes installing the watch app the opt-in.
+        // installed. Whether codes go to it is the user's switch, checked below.
         guard session.isPaired, session.isWatchAppInstalled else { return }
 
         // Sending turned off sends an empty list: that is what removes the
@@ -318,7 +351,9 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
     nonisolated func session(_ session: WCSession,
                              activationDidCompleteWith activationState: WCSessionActivationState,
                              error: Error?) {
+        let paired = session.isPaired
         Task { @MainActor in
+            WatchTokenRelay.notePairedWatch(paired)
             self.sendIfPossible()
         }
     }
@@ -330,7 +365,9 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
     /// who installs the watch app *after* the phone has already pushed would see
     /// an empty watch until they happened to edit a token.
     nonisolated func sessionWatchStateDidChange(_ session: WCSession) {
+        let paired = session.isPaired
         Task { @MainActor in
+            WatchTokenRelay.notePairedWatch(paired)
             self.lastSent = nil
             self.sendIfPossible()
         }

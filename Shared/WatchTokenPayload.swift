@@ -141,6 +141,23 @@ nonisolated enum WatchTokenPayload {
     /// keeps its time from the phone, so honest stamps are seconds apart at most.
     static let futureTolerance: TimeInterval = 5 * 60
 
+    /// Whether the watch's saved copy of the codes belongs to this install of the
+    /// watch app.
+    ///
+    /// The copy is in the Keychain, which outlives deleting the app; the app's
+    /// own `UserDefaults` don't. So each install gets an ID kept in both places,
+    /// and a copy whose ID doesn't match was left by an earlier install. Without
+    /// this, reinstalling the watch app showed the old codes — even with "Send
+    /// codes to Apple Watch" turned off on the iPhone since — until the iPhone
+    /// app next ran.
+    ///
+    /// A copy with no ID was saved by a build from before 3.1 and is kept, so an
+    /// update doesn't empty the watch; it is given the ID on its next save.
+    static func cacheBelongsToThisInstall(cacheInstallID: String?, currentInstallID: String?) -> Bool {
+        guard let cacheInstallID else { return true }
+        return cacheInstallID == currentInstallID
+    }
+
     /// The wire form. A separate type from its contents so the version and stamp
     /// cannot be forgotten at a call site.
     private struct Envelope: Codable {

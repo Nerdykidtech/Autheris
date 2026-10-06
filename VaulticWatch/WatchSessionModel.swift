@@ -63,6 +63,7 @@ final class WatchSessionModel: NSObject, ObservableObject {
         appliedAt = cache?.appliedAt ?? .distantPast
         hasReceivedPayload = cache != nil
         sendingStopped = cache?.sendingStopped ?? false
+        let needsInstallID = cache != nil && cache?.installID == nil
 
         session = WCSession.isSupported() ? WCSession.default : nil
 
@@ -70,6 +71,10 @@ final class WatchSessionModel: NSObject, ObservableObject {
 
         session?.delegate = self
         session?.activate()
+
+        // A copy saved by an earlier build has no install ID. Stamp it now, so
+        // a reinstall before the next payload still recognises it as old.
+        if needsInstallID { saveCache() }
 
         // Activation is asynchronous — `activationDidComplete` will arrive shortly —
         // but a context the system already holds can be applied right now, which
@@ -109,16 +114,41 @@ final class WatchSessionModel: NSObject, ObservableObject {
         let tokens: [OTPCode]
         /// Optional: a cache written before this field existed has none.
         let sendingStopped: Bool?
+        /// Which install saved it; see `WatchTokenPayload.cacheBelongsToThisInstall`.
+        /// Optional for the same reason.
+        let installID: String?
+    }
+
+    /// This install's ID, made on first use. In `UserDefaults` because those go
+    /// when the app is deleted, which the Keychain copy doesn't.
+    private static let installIDKey = "watchInstallID"
+
+    private static var installID: String {
+        if let id = UserDefaults.standard.string(forKey: installIDKey) { return id }
+        let id = UUID().uuidString
+        UserDefaults.standard.set(id, forKey: installIDKey)
+        return id
     }
 
     private static func loadCache() -> Cache? {
+        // Read before `installID` makes one, so a reinstall still has none.
+        let currentID = UserDefaults.standard.string(forKey: installIDKey)
         guard let data = KeychainStore.load(account: cacheAccount),
               let cache = try? JSONDecoder().decode(Cache.self, from: data) else { return nil }
+        guard WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: cache.installID,
+                                                          currentInstallID: currentID) else {
+            // Left by an earlier install: secrets the iPhone may since have
+            // stopped sending. Gone, rather than shown.
+            KeychainStore.delete(account: cacheAccount)
+            return nil
+        }
         return cache
     }
 
     private func saveCache() {
-        guard let data = try? JSONEncoder().encode(Cache(appliedAt: appliedAt, tokens: tokens, sendingStopped: sendingStopped)) else { return }
+        let cache = Cache(appliedAt: appliedAt, tokens: tokens,
+                          sendingStopped: sendingStopped, installID: Self.installID)
+        guard let data = try? JSONEncoder().encode(cache) else { return }
         // A failed write costs the next launch its instant first frame, and
         // nothing else: the list in memory is already correct, and the phone will
         // send again. Crashing or clearing the screen over it would be worse.

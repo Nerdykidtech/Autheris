@@ -46,6 +46,36 @@ final class WatchTokenPayloadTests: XCTestCase {
         XCTAssertFalse(outgoing.sendingStopped)
     }
 
+    // MARK: - The watch's saved copy
+
+    func testASavedCopyFromThisInstallIsKept() {
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: "A"))
+    }
+
+    /// Deleting the watch app erases its install ID but not its Keychain copy.
+    func testASavedCopyLeftByAnEarlierInstallIsDropped() {
+        XCTAssertFalse(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: nil))
+        XCTAssertFalse(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: "B"))
+    }
+
+    /// Saved by a build from before install IDs: kept, so an update doesn't
+    /// empty the watch.
+    func testASavedCopyFromAnEarlierBuildIsKept() {
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: nil, currentInstallID: nil))
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: nil, currentInstallID: "A"))
+    }
+
+    /// Every settings change reaches the relay; only the watch switch's should
+    /// make it send.
+    func testTheRelayActsOnlyWhenTheWatchSwitchChanges() {
+        var sendingSwitch = WatchSendingSwitch(lastSeen: true)
+
+        XCTAssertFalse(sendingSwitch.update(to: true))  // another setting changed
+        XCTAssertTrue(sendingSwitch.update(to: false))  // turned off
+        XCTAssertFalse(sendingSwitch.update(to: false))
+        XCTAssertTrue(sendingSwitch.update(to: true))   // turned back on
+    }
+
     func testTheStoppedMarkSurvivesBothTransports() throws {
         let sentAt = Date(timeIntervalSince1970: 1_800_000_000)
 
