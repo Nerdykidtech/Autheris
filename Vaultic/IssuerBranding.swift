@@ -264,6 +264,12 @@ struct IssuerIconView: View {
     @State private var logo: PlatformImage?
     @State private var isLoading = false
 
+    /// Watched so turning "Fetch service logos" on loads the missing logos
+    /// straight away. The icon used to check it only when it first appeared,
+    /// so the switch seemed to do nothing until Autheris was reopened.
+    /// Default as in `LogoCacheManager.isFetchingEnabled`.
+    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchesLogos = true
+
     /// How long a name has to stay put before it is looked up, so a list that
     /// scrolls past, or a label that is still changing, doesn't send a request
     /// for each step on the way.
@@ -300,13 +306,20 @@ struct IssuerIconView: View {
                 .stroke(branding.color.opacity(0.18), lineWidth: 1)
         )
         .accessibilityLabel(Text("\(branding.displayName) icon"))
-        // Keyed on the cache key, so a rename loads the new name's logo and a
-        // change that doesn't affect it (a colour, say) doesn't reload anything.
+        // Keyed on the cache key and the logo switch, so a rename loads the new
+        // name's logo, turning logos on loads the missing ones, and a change
+        // that doesn't affect it (a colour, say) doesn't reload anything.
         // Nothing is ever deleted from here: two tokens can share one cached
         // logo, and the one being renamed is not the only one using it.
-        .task(id: branding.cacheKey) {
+        .task(id: LogoRequest(cacheKey: branding.cacheKey, fetchesLogos: fetchesLogos)) {
             await loadLogo()
         }
+    }
+
+    /// What the logo depends on: a rename, or the logo switch being turned on.
+    private struct LogoRequest: Equatable {
+        let cacheKey: String
+        let fetchesLogos: Bool
     }
 
     private func loadLogo() async {

@@ -53,6 +53,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 - Setup keys that end in `=` padding, as some services write them, are now accepted.
 - An Autheris backup or transfer that includes a code with an empty or broken setup key imports the rest and leaves that one out. A transfer QR code with a code whose period is unusually long no longer fails to import altogether.
 - Service icons are kept in memory and fetched only for codes on screen.
+- Turning on Fetch service logos now shows the logos straight away. It used to take effect only after Autheris was reopened.
 
 - Your codes, iCloud sync and settings are exactly where you left them.
 
