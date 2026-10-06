@@ -72,7 +72,15 @@ struct WelcomeView: View {
                 .padding(.bottom, 24)
             }
         }
-        .onAppear { revealedPages.insert(currentPage) }
+        .task {
+            // A beat after the view appears, not as it does: the first frames
+            // of a launch are often dropped while the app loads, and the
+            // welcome's entrance used to play out unseen behind them.
+            if !reduceMotion {
+                try? await Task.sleep(for: .milliseconds(450))
+            }
+            revealedPages.insert(currentPage)
+        }
         .onChange(of: currentPage) { _, page in revealedPages.insert(page) }
         .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
             Button("OK", role: .cancel) { }
