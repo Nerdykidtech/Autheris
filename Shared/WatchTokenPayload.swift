@@ -115,10 +115,12 @@ nonisolated enum WatchTokenPayload {
     /// phone's clock caught up, deleted codes and their secrets included.
     ///
     /// Once `appliedAt` is that far ahead, *any* list is accepted, an older one
-    /// included. That is safe only because the list travels by
-    /// `updateApplicationContext`, which keeps just the latest: nothing older can
-    /// arrive late. A transport that queues — `transferUserInfo` — would need
-    /// this rethought.
+    /// included. Most lists travel by `updateApplicationContext`, which keeps
+    /// just the latest, but a list too big for that goes by `transferFile`,
+    /// which queues — so an older file could land late. The phone withdraws
+    /// every queued file whenever it sends a newer list
+    /// (`WatchConnectivityTokenRelay.sendIfPossible`), which is what keeps a
+    /// stale one from arriving after this has stopped trusting the stamps.
     static func isNewer(_ candidate: Decoded, than appliedAt: Date, now: Date = Date()) -> Bool {
         candidate.sentAt >= appliedAt || appliedAt > now.addingTimeInterval(futureTolerance)
     }

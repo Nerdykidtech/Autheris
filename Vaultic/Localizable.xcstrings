@@ -4114,6 +4114,46 @@
         }
       }
     },
+    "Create an Unencrypted Backup?": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unverschlüsseltes Backup erstellen?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Crear una copia de seguridad sin cifrar?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une sauvegarde non chiffrée ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗号化されていないバックアップを作成しますか？"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Criar um backup sem criptografia?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要创建未加密的备份吗？"
+          }
+        }
+      }
+    },
     "Create your first backup to save all your tokens": {
       "localizations": {
         "de-DE": {
@@ -10746,6 +10786,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "这个导出内容太大，一个二维码装不下。请改用菜单里的“备份”，以文件方式转移账户。"
+          }
+        }
+      }
+    },
+    "This file holds every setup key as plain text. Anyone who gets a copy can generate your codes. An encrypted backup is safer.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Datei enthält alle Einrichtungsschlüssel als Klartext. Wer eine Kopie erhält, kann deine Codes erzeugen. Ein verschlüsseltes Backup ist sicherer."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo contiene todas las claves de configuración como texto sin cifrar. Cualquiera que obtenga una copia puede generar tus códigos. Una copia de seguridad cifrada es más segura."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce fichier contient toutes les clés de configuration en clair. Toute personne qui en obtient une copie peut générer vos codes. Une sauvegarde chiffrée est plus sûre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルにはすべてのセットアップキーが平文で含まれます。コピーを入手した人は誰でもあなたのコードを生成できます。暗号化されたバックアップの方が安全です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este arquivo guarda todas as chaves de configuração em texto simples. Qualquer pessoa que tiver uma cópia pode gerar seus códigos. Um backup criptografado é mais seguro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件以明文形式保存所有设置密钥。任何获得副本的人都能生成你的验证码。加密备份更安全。"
           }
         }
       }

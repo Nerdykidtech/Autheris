@@ -191,6 +191,13 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
 
         let sentAt = Date()
 
+        // Whatever list is still queued as a file is older than this one. File
+        // transfers are queued and can land after a later context, and the watch
+        // can't always tell them apart by stamp — after the phone's clock was
+        // set back, an older list carries the later time. So the old ones are
+        // withdrawn rather than left to arrive. See `WatchTokenPayload.isNewer`.
+        session.outstandingFileTransfers.forEach { $0.cancel() }
+
         if let context = WatchTokenPayload.applicationContext(for: tokens, sentAt: sentAt) {
             do {
                 try session.updateApplicationContext(context)

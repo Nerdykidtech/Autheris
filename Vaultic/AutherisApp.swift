@@ -249,6 +249,9 @@ struct AutherisApp: App {
             // Update privacy overlay when setting changes
             updatePrivacyOverlay()
         }
+        .onChange(of: enablePrivacyBlur) { _, _ in
+            updatePrivacyOverlay()
+        }
         .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
             // Update privacy overlay when setting changes, and on the Mac
             // apply the setting to the windows themselves — there is no
@@ -316,6 +319,12 @@ struct AutherisApp: App {
 
     private func updatePrivacyOverlay() {
         showPrivacyOverlay = PrivacyShield.shouldShowOverlay(privacyConditions, privacyPreferences)
+        #if os(iOS)
+        // The overlay and blur above only reach this window's root view, and a
+        // sheet is presented over that — so on iOS the same decision is drawn
+        // again in a window above everything. See `PrivacyShieldWindow`.
+        PrivacyShieldWindow.show(showPrivacyOverlay ? .cover : shouldBlurContent ? .blur : .hidden)
+        #endif
         #if DEBUG
         print("Privacy overlay: \(showPrivacyOverlay), appIsActive: \(isAppActive), screenIsCaptured: \(isScreenCaptured), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher), hideCodesWhenScreenCaptured: \(hideCodesWhenScreenCaptured)")
         #endif

@@ -44,6 +44,39 @@ final class IncomingLinkTests: XCTestCase {
         XCTAssertEqual(try tokens("autheris://import?data=\(encoded)").map(\.label), ["Example"])
     }
 
+    func testAnImportedCodeWithoutAUsableSetupKeyIsLeftOut() throws {
+        let good = OTPCode(label: "Good", account: "a", secret: "JBSWY3DPEHPK3PXP")
+        let empty = OTPCode(label: "Empty", account: "b", secret: "")
+        let broken = OTPCode(label: "Broken", account: "c", secret: "not base32 at all!")
+        let data = try JSONEncoder().encode([good, empty, broken])
+        let encoded = data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+
+        XCTAssertEqual(try tokens("autheris://import?data=\(encoded)").map(\.label), ["Good"])
+    }
+
+    func testAnImportWithNoUsableSetupKeyIsAFailure() throws {
+        let data = try JSONEncoder().encode([OTPCode(label: "Empty", account: "b", secret: "")])
+        let encoded = data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+
+        guard case .failure = try parse("autheris://import?data=\(encoded)") else {
+            return XCTFail("nothing usable to import is a failure, not an empty import")
+        }
+    }
+
+    func testAPaddedSetupKeyInALinkIsAccepted() throws {
+        // Base32 padding, as some services write their keys.
+        let decoded = try tokens("otpauth://totp/Example:me@example.com?secret=JBSWY3DPEHPK3PXP%3D%3D%3D%3D%3D%3D&issuer=Example")
+
+        XCTAssertEqual(decoded.count, 1)
+        let unpadded = OTPCode(label: "Example", account: "me@example.com", secret: "JBSWY3DPEHPK3PXP")
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertEqual(decoded.first?.code(at: now), unpadded.code(at: now), "the padding carries no bits")
+    }
+
     func testAnUnreadableImportIsAFailureNotAnEmptyImport() throws {
         guard case .failure = try parse("autheris://import?data=bm90IGpzb24") else {
             return XCTFail("garbage should be reported, not imported")

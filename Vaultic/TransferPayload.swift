@@ -165,8 +165,11 @@ nonisolated enum TransferPayload {
             }
             var period = 30
             if flags.contains(.period) {
-                guard let value = reader.varint(), value <= UInt64(Int32.max) else { return nil }
-                period = Int(value)
+                // Any period the encoder can write. Nothing caps a period from
+                // above, and refusing one large value used to refuse the whole
+                // transfer — every code in it — as corrupted.
+                guard let value = reader.varint() else { return nil }
+                period = Int(clamping: value)
             }
             var counter: UInt64 = 0
             if flags.contains(.counter) {

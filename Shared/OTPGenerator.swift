@@ -150,7 +150,12 @@ nonisolated struct OTPGenerator {
     }
     
     static func isValidSecret(_ secret: String) -> Bool {
-        let cleaned = secret.uppercased().replacingOccurrences(of: " ", with: "")
+        // Trailing `=` is Base32 padding (RFC 4648), which some services include
+        // in their setup keys. It carries no bits — `decodeBase32` skips it — so a
+        // padded key is the same key, and refusing it refused a working code.
+        let cleaned = secret.uppercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "=+$", with: "", options: .regularExpression)
         let base32Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
         
         // Check if all characters are valid Base32

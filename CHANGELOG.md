@@ -23,6 +23,9 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 
 - Delete Tokens from iCloud now waits for any sync already running and lets no new one start until it's done. A sync that had read your codes just before the delete could upload them all again straight afterwards, while the delete reported success. Tapping it twice now runs one delete, and Settings shows "Deleting from iCloud…" while it works. A record another device had already deleted no longer makes the delete report a failure, and records that failed to load are deleted too. If the sync it is waiting for hasn't finished after 30 seconds, it stops without deleting anything and says to try again.
 - The dialog for deleting from iCloud now says to turn off iCloud Sync on your other devices first. Deleting from iCloud doesn't reach into them, and any device that still has sync on uploads its codes again.
+- The privacy screen now covers everything Autheris shows. It used to cover only the code list, so the app switcher, or a screen recording, could show an open setup key, the Transfer QR code, or a code being edited.
+- Creating an unencrypted backup now asks first, and says that the file holds every setup key as plain text.
+- On Mac, every window — including a sheet such as the Transfer QR code — is kept out of screen recordings when that setting is on, not only the main window.
 
 ### Fixed
 
@@ -39,6 +42,8 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 - iCloud sync status, and several messages that were English everywhere, now appear in your language.
 - iCloud sync status no longer reads "not configured for iCloud" for ordinary errors, and recognises CloudKit's messages in any language.
 - Setup links keep a literal percent sign in the issuer's name.
+- Setup keys that end in `=` padding, as some services write them, are now accepted.
+- An Autheris backup or transfer that includes a code with an empty or broken setup key imports the rest and leaves that one out. A transfer QR code with a code whose period is unusually long no longer fails to import altogether.
 - Service icons are kept in memory and fetched only for codes on screen.
 
 - Your codes, iCloud sync and settings are exactly where you left them.
