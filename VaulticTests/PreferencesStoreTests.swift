@@ -19,7 +19,8 @@ final class PreferencesStoreTests: XCTestCase {
     /// values can be put back afterwards.
     private var restoredKeys: [String] {
         privacyKeys + ["hasCompletedOnboarding", "accentTheme", AppLockEnabledKey,
-                       OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey]
+                       OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey,
+                       AppPreferences.sendCodesToWatchKey]
     }
     private var savedKeychain: Data?
     private var savedDefaults: [String: Any] = [:]
@@ -84,6 +85,14 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertFalse(prefs.hideCodesInAppSwitcher)
         XCTAssertTrue(prefs.enablePrivacyBlur)
         XCTAssertTrue(prefs.hideCodesWhenScreenCaptured)
+    }
+
+    func testSnapshotKeepsTheWatchSwitchTurnedOff() {
+        XCTAssertTrue(PreferencesStore.snapshot(of: emptyDefaults).sendCodesToWatch)
+
+        emptyDefaults.set(false, forKey: AppPreferences.sendCodesToWatchKey)
+
+        XCTAssertFalse(PreferencesStore.snapshot(of: emptyDefaults).sendCodesToWatch)
     }
 
     func testPersistWritesTheCurrentSchemaVersion() throws {
@@ -174,6 +183,8 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.string(forKey: "accentTheme"), "teal")
         XCTAssertEqual(UserDefaults.standard.object(forKey: AppLockEnabledKey) as? Bool, true)
         XCTAssertEqual(UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool, false)
+        // Not in the blob, so it comes back as its default rather than off.
+        XCTAssertEqual(UserDefaults.standard.object(forKey: AppPreferences.sendCodesToWatchKey) as? Bool, true)
 
         // And it is re-saved, so a switch turned off from now on stays off.
         let repaired = try storedPreferences()

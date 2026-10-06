@@ -52,7 +52,8 @@ class LogoCacheManager {
     /// that fallback: onboarding writes its answer, off unless the user turned it
     /// on (`OnboardingChoices`).
     static var isFetchingEnabled: Bool {
-        UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool ?? true
+        UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool
+            ?? AppPreferences.fetchIssuerLogosDefault
     }
 
     /// Set once the hash-suffixed files from before `cacheKey` was made stable
@@ -267,8 +268,8 @@ struct IssuerIconView: View {
     /// Watched so turning "Fetch service logos" on loads the missing logos
     /// straight away. The icon used to check it only when it first appeared,
     /// so the switch seemed to do nothing until Autheris was reopened.
-    /// Default as in `LogoCacheManager.isFetchingEnabled`.
-    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchesLogos = true
+    @AppStorage(AppPreferences.fetchIssuerLogosKey)
+    private var fetchesLogos = AppPreferences.fetchIssuerLogosDefault
 
     /// How long a name has to stay put before it is looked up, so a list that
     /// scrolls past, or a label that is still changing, doesn't send a request

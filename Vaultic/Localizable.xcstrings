@@ -595,6 +595,46 @@
         }
       }
     },
+    "**Send codes to Apple Watch** copies your codes, setup keys included, to Autheris on your paired Apple Watch so it can show them. Turned off, they are removed from the watch.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Codes an Apple Watch senden** kopiert deine Codes samt Einrichtungsschlüsseln in Autheris auf deiner gekoppelten Apple Watch, damit sie sie anzeigen kann. Ausgeschaltet werden sie von der Watch entfernt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Enviar códigos al Apple Watch** copia tus códigos, incluidas las claves de configuración, a Autheris en tu Apple Watch enlazado para que pueda mostrarlos. Desactivado, se eliminan del reloj."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Envoyer les codes à l'Apple Watch** copie vos codes, clés de configuration comprises, dans Autheris sur votre Apple Watch jumelée pour qu'elle puisse les afficher. Désactivé, ils sont supprimés de la montre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Apple Watchにコードを送信**は、セットアップキーを含むコードを、ペアリングされたApple WatchのAutherisにコピーして表示できるようにします。オフにすると、Watchから削除されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**Enviar códigos ao Apple Watch** copia seus códigos, incluindo as chaves de configuração, para o Autheris no seu Apple Watch emparelhado para que ele possa mostrá-los. Desativado, eles são removidos do relógio."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "**将验证码发送到 Apple Watch** 会把你的验证码（包括设置密钥）拷贝到已配对 Apple Watch 上的 Autheris，以便手表显示。关闭后，验证码会从手表上移除。"
+          }
+        }
+      }
+    },
     "A code called \"%@\" with the same account already exists. Delete that one first, then restore this.": {
       "localizations": {
         "de-DE": {
@@ -1791,6 +1831,46 @@
         }
       }
     },
+    "Apple Watch": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watch"
+          }
+        }
+      }
+    },
     "Are you sure you want to delete this backup?": {
       "localizations": {
         "de-DE": {
@@ -2114,42 +2194,42 @@
         }
       }
     },
-    "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and nothing leaves it unless you turn it on here or in Settings.": {
+    "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and leave it only in the ways listed below.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autheris hat kein Konto, keine Werbung, keine Analysen und keinen eigenen Server. Deine Einrichtungsschlüssel liegen im Schlüsselbund dieses Geräts, und nichts verlässt es, solange du es nicht hier oder in den Einstellungen einschaltest."
+            "value": "Autheris hat kein Konto, keine Werbung, keine Analysen und keinen eigenen Server. Deine Einrichtungsschlüssel liegen im Schlüsselbund dieses Geräts und verlassen es nur auf die unten aufgeführten Arten."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autheris no tiene cuentas, anuncios, analíticas ni servidor propio. Tus claves de configuración se guardan en el llavero de este dispositivo, y nada sale de él a menos que lo actives aquí o en Ajustes."
+            "value": "Autheris no tiene cuentas, anuncios, analíticas ni servidor propio. Tus claves de configuración se guardan en el llavero de este dispositivo y solo salen de él de las formas que se indican a continuación."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autheris n'a ni compte, ni publicité, ni statistiques, ni serveur. Vos clés de configuration sont conservées dans le trousseau de cet appareil, et rien n'en sort sauf si vous l'activez ici ou dans les Réglages."
+            "value": "Autheris n'a ni compte, ni publicité, ni statistiques, ni serveur. Vos clés de configuration sont conservées dans le trousseau de cet appareil et n'en sortent que des façons indiquées ci-dessous."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autherisにはアカウントも広告も分析もなく、独自のサーバもありません。セットアップキーはこのデバイスのキーチェーンに保管され、ここまたは設定でオンにしない限り、何もデバイスの外に出ません。"
+            "value": "Autherisにはアカウントも広告も分析もなく、独自のサーバもありません。セットアップキーはこのデバイスのキーチェーンに保管され、以下に記載した方法でのみデバイスの外に出ます。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "O Autheris não tem conta, anúncios, análises nem servidor próprio. Suas chaves de configuração ficam nas Chaves deste dispositivo, e nada sai dele a menos que você ative aqui ou nos Ajustes."
+            "value": "O Autheris não tem conta, anúncios, análises nem servidor próprio. Suas chaves de configuração ficam nas Chaves deste dispositivo e só saem dele das formas listadas abaixo."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Autheris 没有账户、广告、分析，也没有自己的服务器。你的设置密钥保存在本设备的钥匙串中，除非你在此处或“设置”中开启，否则任何内容都不会离开设备。"
+            "value": "Autheris 没有账户、广告、分析，也没有自己的服务器。你的设置密钥保存在本设备的钥匙串中，只会以下面列出的方式离开设备。"
           }
         }
       }
@@ -5752,6 +5832,46 @@
         }
       }
     },
+    "Finish Setting Up First": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuerst die Einrichtung abschließen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Primero termina la configuración"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminez d'abord la configuration"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先に設定を完了してください"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conclua a configuração primeiro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请先完成设置"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "de-DE": {
@@ -6068,6 +6188,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "隐藏设置密钥"
+          }
+        }
+      }
+    },
+    "If Autheris is on your Apple Watch, this iPhone copies your codes to it, setup keys included, so the watch can show them. Off, they are removed from the watch.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ist Autheris auf deiner Apple Watch, kopiert dieses iPhone deine Codes samt Einrichtungsschlüsseln dorthin, damit die Watch sie anzeigen kann. Ausgeschaltet werden sie von der Watch entfernt."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si Autheris está en tu Apple Watch, este iPhone copia tus códigos en él, incluidas las claves de configuración, para que el reloj pueda mostrarlos. Desactivado, se eliminan del reloj."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si Autheris est sur votre Apple Watch, cet iPhone y copie vos codes, clés de configuration comprises, pour que la montre puisse les afficher. Désactivé, ils sont supprimés de la montre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple WatchにAutherisがある場合、このiPhoneはセットアップキーを含むコードをWatchにコピーして表示できるようにします。オフにすると、Watchから削除されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se o Autheris estiver no seu Apple Watch, este iPhone copia seus códigos para ele, incluindo as chaves de configuração, para que o relógio possa mostrá-los. Desativado, eles são removidos do relógio."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果 Apple Watch 上装有 Autheris，这台 iPhone 会把你的验证码（包括设置密钥）拷贝过去，以便手表显示。关闭后，验证码会从手表上移除。"
           }
         }
       }
@@ -9350,6 +9510,46 @@
         }
       }
     },
+    "Send codes to Apple Watch": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes an Apple Watch senden"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar códigos al Apple Watch"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Envoyer les codes à l'Apple Watch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Watchにコードを送信"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviar códigos ao Apple Watch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将验证码发送到 Apple Watch"
+          }
+        }
+      }
+    },
     "Service logos": {
       "localizations": {
         "de-DE": {
@@ -9546,6 +9746,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "设置"
+          }
+        }
+      }
+    },
+    "Settings open once you've finished the welcome in the Autheris window.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Einstellungen öffnen sich, sobald du die Begrüßung im Autheris-Fenster abgeschlossen hast."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los ajustes se abren cuando terminas la bienvenida en la ventana de Autheris."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les réglages s'ouvrent une fois l'accueil terminé dans la fenêtre d'Autheris."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisウインドウでようこそ画面を完了すると、設定を開けます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os ajustes abrem quando você concluir as boas-vindas na janela do Autheris."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Autheris 窗口中完成欢迎流程后即可打开设置。"
           }
         }
       }
@@ -12870,6 +13110,46 @@
         }
       }
     },
+    "Your codes sync through your private iCloud database, and setup keys are end-to-end encrypted. You can turn it off in Settings.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Codes werden über deine private iCloud-Datenbank synchronisiert, und Einrichtungsschlüssel sind durchgehend verschlüsselt. Du kannst sie in den Einstellungen ausschalten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus códigos se sincronizan a través de tu base de datos privada de iCloud, y las claves de configuración tienen cifrado de extremo a extremo. Puedes desactivarla en Ajustes."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos codes se synchronisent via votre base de données iCloud privée, et les clés de configuration sont chiffrées de bout en bout. Vous pouvez la désactiver dans les Réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードはプライベートなiCloudデータベースを通じて同期され、セットアップキーはエンドツーエンドで暗号化されます。設定でオフにできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seus códigos são sincronizados pelo seu banco de dados privado do iCloud, e as chaves de configuração são criptografadas de ponta a ponta. Você pode desativá-la nos Ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你的验证码通过你的私有 iCloud 数据库同步，设置密钥采用端到端加密。你可以在“设置”中将其关闭。"
+          }
+        }
+      }
+    },
     "Your edits have not been saved.": {
       "localizations": {
         "de-DE": {
@@ -13190,6 +13470,46 @@
         }
       }
     },
+    "iCloud Sync is on": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud-Synchronisierung ist ein"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sincronización con iCloud está activada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La synchronisation iCloud est activée"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud同期はオンです"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A sincronização do iCloud está ativada"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iCloud 同步已开启"
+          }
+        }
+      }
+    },
     "iCloud error %lld: %@": {
       "localizations": {
         "de-DE": {
@@ -13270,42 +13590,42 @@
         }
       }
     },
-    "iPhone, iPad, Mac and Apple Watch, kept in step by iCloud Sync if you turn it on.": {
+    "iPhone, iPad and Mac stay in step through iCloud Sync if you turn it on. Apple Watch gets your codes from your iPhone.": {
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone, iPad, Mac und Apple Watch – abgeglichen über iCloud-Synchronisierung, wenn du sie einschaltest."
+            "value": "iPhone, iPad und Mac bleiben über die iCloud-Synchronisierung abgeglichen, wenn du sie einschaltest. Die Apple Watch erhält deine Codes vom iPhone."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone, iPad, Mac y Apple Watch, sincronizados con iCloud si lo activas."
+            "value": "El iPhone, el iPad y el Mac se mantienen sincronizados con iCloud si lo activas. El Apple Watch recibe tus códigos desde el iPhone."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone, iPad, Mac et Apple Watch, synchronisés par iCloud si vous l'activez."
+            "value": "L'iPhone, l'iPad et le Mac restent synchronisés par iCloud si vous l'activez. L'Apple Watch reçoit vos codes depuis l'iPhone."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone、iPad、Mac、Apple Watchで。iCloud同期をオンにすれば常に最新の状態に保たれます。"
+            "value": "iCloud同期をオンにすると、iPhone、iPad、Macが常に同じ状態に保たれます。Apple WatchはiPhoneからコードを受け取ります。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone, iPad, Mac e Apple Watch, sincronizados pelo iCloud se você ativar."
+            "value": "iPhone, iPad e Mac ficam sincronizados pelo iCloud se você ativar. O Apple Watch recebe seus códigos do iPhone."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhone、iPad、Mac 和 Apple Watch，开启 iCloud 同步后保持一致。"
+            "value": "开启 iCloud 同步后，iPhone、iPad 和 Mac 会保持一致。Apple Watch 从你的 iPhone 获取验证码。"
           }
         }
       }

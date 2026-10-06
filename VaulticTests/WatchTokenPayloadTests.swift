@@ -29,6 +29,44 @@ final class WatchTokenPayloadTests: XCTestCase {
                 timerRingHex: timerRingHex, isPinned: isPinned, modifiedAt: modifiedAt)
     }
 
+    // MARK: - Sending turned off
+
+    func testTurningSendingOffSendsAnEmptyListMarkedAsStopped() {
+        let outgoing = WatchRelayOutgoing(tokens: [token()], sendingEnabled: false)
+
+        XCTAssertEqual(outgoing.tokens, [])
+        XCTAssertTrue(outgoing.sendingStopped)
+    }
+
+    func testSendingOnSendsTheListUnmarked() {
+        let tokens = [token(), token(label: "AWS")]
+        let outgoing = WatchRelayOutgoing(tokens: tokens, sendingEnabled: true)
+
+        XCTAssertEqual(outgoing.tokens, tokens)
+        XCTAssertFalse(outgoing.sendingStopped)
+    }
+
+    func testTheStoppedMarkSurvivesBothTransports() throws {
+        let sentAt = Date(timeIntervalSince1970: 1_800_000_000)
+
+        let blob = try WatchTokenPayload.encode([], sentAt: sentAt, sendingStopped: true)
+        XCTAssertEqual(WatchTokenPayload.decode(blob)?.sendingStopped, true)
+
+        let context = try XCTUnwrap(WatchTokenPayload.applicationContext(for: [], sentAt: sentAt,
+                                                                         sendingStopped: true))
+        let decoded = try XCTUnwrap(WatchTokenPayload.decode(applicationContext: context))
+        XCTAssertTrue(decoded.sendingStopped)
+        XCTAssertEqual(decoded.tokens, [])
+    }
+
+    /// A phone on an earlier build sends no mark at all, and an ordinary list
+    /// leaves it out too, so a watch on an earlier build reads it as before.
+    func testAPayloadWithoutTheMarkIsAnOrdinaryList() throws {
+        let blob = try WatchTokenPayload.encode([token()])
+        XCTAssertFalse(String(decoding: blob, as: UTF8.self).contains("sendingStopped"))
+        XCTAssertEqual(WatchTokenPayload.decode(blob)?.sendingStopped, false)
+    }
+
     // MARK: - Round trip
 
     func testTokensSurviveARoundTripUnchanged() throws {

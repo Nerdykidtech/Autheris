@@ -25,7 +25,8 @@ final class AppLockManagerTests: XCTestCase {
     /// and the simulator's own settings have to be put back afterwards.
     private let restoredKeys = ["hasCompletedOnboarding", "enablePrivacyBlur", "hideCodesInAppSwitcher",
                                 "hideCodesWhenScreenCaptured", "accentTheme", AppLockEnabledKey,
-                                OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey]
+                                OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey,
+                       AppPreferences.sendCodesToWatchKey]
     private var savedDefaults: [String: Any] = [:]
 
     override func setUp() async throws {

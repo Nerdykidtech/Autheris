@@ -158,7 +158,9 @@ It is a **viewer and nothing else**. There is no add, no edit, no delete, no sea
 
 Over **`WatchConnectivity` from the iPhone app** — deliberately *not* over iCloud. That choice is what makes the watch work for every user rather than only for the ones who turned iCloud Sync on, since iCloud Sync is off by default and the two features are otherwise unrelated. The iPhone stays the single source of truth; the watch never writes anything back.
 
-There is no "send codes to my watch" setting, because **installing the watch app is the opt-in**: the phone only sends to a watch it reports as paired *with the app installed* (`WCSession.isPaired && isWatchAppInstalled`). A user who has not chosen to put Autheris on their wrist never has a secret leave the phone. That is the same spirit as iCloud Sync being off until asked for — with the request made by installing the app rather than by flipping a switch.
+The phone sends only to a watch it reports as paired *with the app installed* (`WCSession.isPaired && isWatchAppInstalled`), and only while **Settings → Privacy → Send codes to Apple Watch** is on. Until 3.1 installing the watch app was the only opt-in, but watchOS can install it automatically, so it was no real choice; the switch is also on the onboarding privacy page. It reads as on when it has never been written (`AppPreferences.sendCodesToWatchDefault`), so an update doesn't empty anyone's watch.
+
+Turning it off sends an empty list marked `sendingStopped` (`WatchRelayOutgoing`, `WatchTokenPayload`). The empty list removes the codes from the watch and its Keychain cache; the mark makes the watch say "Turned Off" instead of "No Codes". The mark is optional on the wire, so a watch on an older build still applies the empty list.
 
 ## Why an application context, and why there is a second transport
 

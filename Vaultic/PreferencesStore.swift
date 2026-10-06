@@ -112,7 +112,8 @@ enum PreferencesStore {
             accentTheme: defaults.string(forKey: "accentTheme") ?? fallback.accentTheme,
             enableAppLock: bool(AppLockEnabledKey, fallback.enableAppLock),
             isICloudSyncEnabled: bool(OTPDataStore.syncEnabledKey, fallback.isICloudSyncEnabled),
-            fetchIssuerLogos: bool(AppPreferences.fetchIssuerLogosKey, fallback.fetchIssuerLogos)
+            fetchIssuerLogos: bool(AppPreferences.fetchIssuerLogosKey, fallback.fetchIssuerLogos),
+            sendCodesToWatch: bool(AppPreferences.sendCodesToWatchKey, fallback.sendCodesToWatch)
         )
     }
 
@@ -157,6 +158,7 @@ enum PreferencesStore {
         defaults.set(prefs.enableAppLock, forKey: AppLockEnabledKey)
         defaults.set(prefs.isICloudSyncEnabled, forKey: OTPDataStore.syncEnabledKey)
         defaults.set(prefs.fetchIssuerLogos, forKey: AppPreferences.fetchIssuerLogosKey)
+        defaults.set(prefs.sendCodesToWatch, forKey: AppPreferences.sendCodesToWatchKey)
 
         if needsPrivacyRepair {
             persist()

@@ -21,7 +21,9 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 
 ### Added
 
-- A redesigned welcome for new installs. It explains what Autheris does and how it treats your privacy, and has a privacy page with the switches that decide it: service logos, App Lock, and the privacy screen. A last page sums up what you chose.
+- A redesigned welcome for new installs. It explains what Autheris does and how it treats your privacy, and has a privacy page with the switches that decide it: service logos, sending codes to Apple Watch, App Lock, and the privacy screen. A last page sums up what you chose.
+
+- Settings › Privacy has a new switch, Send codes to Apple Watch. Your codes, setup keys included, go to the Autheris watch app only while it's on, and turning it off removes them from the watch, which then says so. It's on unless you turn it off, so your watch keeps working after the update. It's also on the welcome's privacy page.
 
 ### Changed
 
@@ -54,6 +56,7 @@ A reliability release, mostly for iCloud sync and counter-based codes.
 - An Autheris backup or transfer that includes a code with an empty or broken setup key imports the rest and leaves that one out. A transfer QR code with a code whose period is unusually long no longer fails to import altogether.
 - Service icons are kept in memory and fetched only for codes on screen.
 - Turning on Fetch service logos now shows the logos straight away. It used to take effect only after Autheris was reopened.
+- On Mac, Settings waits until you've finished the welcome, so a switch changed there can't be overwritten by the welcome's choices.
 
 - Your codes, iCloud sync and settings are exactly where you left them.
 

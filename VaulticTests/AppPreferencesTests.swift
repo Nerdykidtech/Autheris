@@ -41,6 +41,9 @@ final class AppPreferencesTests: XCTestCase {
         // switch existed must not read as "off" for someone restoring after a
         // reinstall.
         XCTAssertTrue(prefs.fetchIssuerLogos)
+        // The watch switch too: before it existed every watch with the app got
+        // codes, so restoring an older blob must not empty someone's watch.
+        XCTAssertTrue(prefs.sendCodesToWatch)
     }
 
     func testDecodesAnEmptyBlobToEveryDefault() throws {
@@ -65,7 +68,8 @@ final class AppPreferencesTests: XCTestCase {
                                       accentTheme: "teal",
                                       enableAppLock: true,
                                       isICloudSyncEnabled: true,
-                                      fetchIssuerLogos: false)
+                                      fetchIssuerLogos: false,
+                                      sendCodesToWatch: false)
 
         let decoded = try JSONDecoder().decode(AppPreferences.self,
                                                from: JSONEncoder().encode(original))

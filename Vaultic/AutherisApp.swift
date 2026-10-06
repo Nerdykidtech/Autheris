@@ -79,7 +79,24 @@ struct AutherisApp: App {
         // unencrypted backups and the App Lock toggle itself.
         Settings {
             Group {
-                if appLock.isLocked {
+                // Not before onboarding is finished: the welcome's privacy page
+                // asks about service logos and saves the answer when it ends,
+                // so a switch flipped here first would show the wrong value and
+                // then be overwritten.
+                if !hasCompletedOnboarding {
+                    VStack(spacing: 10) {
+                        Image(systemName: "hand.wave")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text("Finish Setting Up First")
+                            .font(.title3.weight(.semibold))
+                        Text("Settings open once you've finished the welcome in the Autheris window.")
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(40)
+                    .frame(width: 620, height: 520)
+                } else if appLock.isLocked {
                     AppLockView(manager: appLock)
                         // The preferences window's size, so it doesn't jump on unlock.
                         .frame(width: 620, height: 520)

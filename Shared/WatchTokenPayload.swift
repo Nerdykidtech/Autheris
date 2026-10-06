@@ -56,6 +56,9 @@ nonisolated enum WatchTokenPayload {
         /// When the phone sent it. The watch applies the newest it has seen.
         let sentAt: Date
         let tokens: [OTPCode]
+        /// The iPhone has "Send codes to Apple Watch" turned off. The list is
+        /// then empty, and the watch says why rather than "No Codes".
+        var sendingStopped = false
     }
 
     // MARK: - Encoding
@@ -65,8 +68,14 @@ nonisolated enum WatchTokenPayload {
     /// JSON rather than a property list because the application context *itself*
     /// has to be a property list, so the tokens travel inside it as a single
     /// `Data` value — and JSON keeps that blob small.
-    static func encode(_ tokens: [OTPCode], sentAt: Date = Date()) throws -> Data {
-        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt, tokens: tokens))
+    ///
+    /// - Parameter sendingStopped: Set when sending is turned off, with an
+    ///   empty `tokens`. Optional on the wire and left out when `false`, so a
+    ///   watch on an older build reads the payload as an ordinary empty list —
+    ///   its codes are still removed — instead of refusing it.
+    static func encode(_ tokens: [OTPCode], sentAt: Date = Date(), sendingStopped: Bool = false) throws -> Data {
+        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt, tokens: tokens,
+                                          sendingStopped: sendingStopped ? true : nil))
     }
 
     /// The application context for a set of tokens, ready for
@@ -76,8 +85,10 @@ nonisolated enum WatchTokenPayload {
     ///   the caller knows to take the file-transfer route instead of asking
     ///   `WCSession` to reject the update. The `sentAt` is passed in rather than
     ///   taken here so both transports carry the same stamp and cannot race.
-    static func applicationContext(for tokens: [OTPCode], sentAt: Date = Date()) -> [String: Any]? {
-        guard let blob = try? encode(tokens, sentAt: sentAt), blob.count <= contextByteBudget else { return nil }
+    static func applicationContext(for tokens: [OTPCode], sentAt: Date = Date(),
+                                   sendingStopped: Bool = false) -> [String: Any]? {
+        guard let blob = try? encode(tokens, sentAt: sentAt, sendingStopped: sendingStopped),
+              blob.count <= contextByteBudget else { return nil }
         return [versionKey: version, tokensKey: blob]
     }
 
@@ -99,7 +110,8 @@ nonisolated enum WatchTokenPayload {
     static func decode(_ blob: Data) -> Decoded? {
         guard let envelope = try? JSONDecoder().decode(Envelope.self, from: blob),
               envelope.version == version else { return nil }
-        return Decoded(sentAt: envelope.sentAt, tokens: envelope.tokens)
+        return Decoded(sentAt: envelope.sentAt, tokens: envelope.tokens,
+                       sendingStopped: envelope.sendingStopped ?? false)
     }
 
     /// Whether `candidate` is worth applying over what was last applied.
@@ -135,5 +147,6 @@ nonisolated enum WatchTokenPayload {
         let version: Int
         let sentAt: Date
         let tokens: [OTPCode]
+        let sendingStopped: Bool?
     }
 }

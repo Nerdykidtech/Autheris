@@ -6,7 +6,8 @@ struct WatchRootView: View {
 
     var body: some View {
         if session.tokens.isEmpty {
-            WatchEmptyView(hasReceivedPayload: session.hasReceivedPayload)
+            WatchEmptyView(hasReceivedPayload: session.hasReceivedPayload,
+                           sendingStopped: session.sendingStopped)
         } else {
             // One code per screen, scrolling vertically between them.
             //
@@ -34,19 +35,36 @@ struct WatchRootView: View {
 /// half of them looking for a problem that is not there.
 private struct WatchEmptyView: View {
     let hasReceivedPayload: Bool
+    /// A third reason: the iPhone has stopped sending, and said so.
+    let sendingStopped: Bool
+
+    private var symbol: String {
+        sendingStopped ? "applewatch.slash" : hasReceivedPayload ? "key" : "iphone"
+    }
+
+    private var title: LocalizedStringKey {
+        sendingStopped ? "Turned Off" : hasReceivedPayload ? "No Codes" : "Not Synced Yet"
+    }
+
+    private var message: LocalizedStringKey {
+        if sendingStopped {
+            return "Turn on Send codes to Apple Watch in Autheris on your iPhone to see your codes here."
+        }
+        return hasReceivedPayload
+            ? "Add a code in Autheris on your iPhone and it will appear here."
+            : "Open Autheris on your iPhone to send your codes to this watch."
+    }
 
     var body: some View {
         VStack(spacing: 6) {
-            Image(systemName: hasReceivedPayload ? "key" : "iphone")
+            Image(systemName: symbol)
                 .font(.title3)
                 .foregroundStyle(.secondary)
 
-            Text(hasReceivedPayload ? "No Codes" : "Not Synced Yet")
+            Text(title)
                 .font(.headline)
 
-            Text(hasReceivedPayload
-                 ? "Add a code in Autheris on your iPhone and it will appear here."
-                 : "Open Autheris on your iPhone to send your codes to this watch.")
+            Text(message)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

@@ -56,7 +56,7 @@ Codes from another app's export, an `autheris://` link or a transfer QR code all
 
 ## Apple Watch
 
-The watch app is read-only and generates codes itself from a copy of the list the iPhone sends over WatchConnectivity. It stores that copy in its own Keychain, with the same protection class as the phone. A list too large for an application context is sent as a file. The phone stages that file with `.completeFileProtectionUnlessOpen`, so it is unreadable while the phone is locked but a transfer already in progress can finish, and deletes it once the transfer is done (`WatchRelayStaging` in `Vaultic/Sync/WatchTokenRelay.swift`).
+The watch app is read-only and generates codes itself from a copy of the list the iPhone sends over WatchConnectivity — only while **Settings → Privacy → Send codes to Apple Watch** is on. Turning it off removes the copy from the watch. It stores that copy in its own Keychain, with the same protection class as the phone. A list too large for an application context is sent as a file. The phone stages that file with `.completeFileProtectionUnlessOpen`, so it is unreadable while the phone is locked but a transfer already in progress can finish, and deletes it once the transfer is done (`WatchRelayStaging` in `Vaultic/Sync/WatchTokenRelay.swift`).
 
 ## What the privacy screen covers
 

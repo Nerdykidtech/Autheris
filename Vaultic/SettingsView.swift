@@ -33,7 +33,8 @@ struct SettingsView: View {
     @AppStorage(AppLockEnabledKey) private var enableAppLock = false
     /// Same key the logo lookup reads, so the switch and the network request cannot
     /// drift apart.
-    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = true
+    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = AppPreferences.fetchIssuerLogosDefault
+    @AppStorage(AppPreferences.sendCodesToWatchKey) private var sendCodesToWatch = AppPreferences.sendCodesToWatchDefault
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
@@ -545,6 +546,13 @@ struct SettingsView: View {
             // exactly what it does rather than leaving it to the label.
             Toggle("Fetch service logos", isOn: $fetchIssuerLogos)
                 .platformAccentToggle()
+
+            // Also leaves the device: to the user's own watch. Only an iPhone
+            // can pair one.
+            if WatchTokenRelay.deviceCanPairWatch {
+                Toggle("Send codes to Apple Watch", isOn: $sendCodesToWatch)
+                    .platformAccentToggle()
+            }
         } header: {
             Text("Privacy")
         } footer: {
@@ -561,6 +569,9 @@ struct SettingsView: View {
                 Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
                 #endif
                 Text("**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.")
+                if WatchTokenRelay.deviceCanPairWatch {
+                    Text("**Send codes to Apple Watch** copies your codes, setup keys included, to Autheris on your paired Apple Watch so it can show them. Turned off, they are removed from the watch.")
+                }
             }
             .font(.caption)
             .foregroundColor(.secondary)

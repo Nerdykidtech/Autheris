@@ -38,6 +38,10 @@ final class WatchSessionModel: NSObject, ObservableObject {
     /// the difference between "add one on your phone" and "wait a moment".
     @Published private(set) var hasReceivedPayload = false
 
+    /// The iPhone has "Send codes to Apple Watch" turned off, so the list is
+    /// empty on purpose and the empty screen says how to turn it back on.
+    @Published private(set) var sendingStopped = false
+
     private let session: WCSession?
 
     /// When the newest applied payload was sent.
@@ -58,6 +62,7 @@ final class WatchSessionModel: NSObject, ObservableObject {
         tokens = cache?.tokens ?? []
         appliedAt = cache?.appliedAt ?? .distantPast
         hasReceivedPayload = cache != nil
+        sendingStopped = cache?.sendingStopped ?? false
 
         session = WCSession.isSupported() ? WCSession.default : nil
 
@@ -92,6 +97,7 @@ final class WatchSessionModel: NSObject, ObservableObject {
         guard WatchTokenPayload.isNewer(decoded, than: appliedAt) else { return }
         appliedAt = decoded.sentAt
         tokens = decoded.tokens
+        sendingStopped = decoded.sendingStopped
         hasReceivedPayload = true
         saveCache()
     }
@@ -101,6 +107,8 @@ final class WatchSessionModel: NSObject, ObservableObject {
     private struct Cache: Codable {
         let appliedAt: Date
         let tokens: [OTPCode]
+        /// Optional: a cache written before this field existed has none.
+        let sendingStopped: Bool?
     }
 
     private static func loadCache() -> Cache? {
@@ -110,7 +118,7 @@ final class WatchSessionModel: NSObject, ObservableObject {
     }
 
     private func saveCache() {
-        guard let data = try? JSONEncoder().encode(Cache(appliedAt: appliedAt, tokens: tokens)) else { return }
+        guard let data = try? JSONEncoder().encode(Cache(appliedAt: appliedAt, tokens: tokens, sendingStopped: sendingStopped)) else { return }
         // A failed write costs the next launch its instant first frame, and
         // nothing else: the list in memory is already correct, and the phone will
         // send again. Crashing or clearing the screen over it would be worse.

@@ -24,6 +24,11 @@ struct WelcomeView: View {
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage(AppLockEnabledKey) private var enableAppLock = false
+    @AppStorage(AppPreferences.sendCodesToWatchKey)
+    private var sendCodesToWatch = AppPreferences.sendCodesToWatchDefault
+    /// Read only: turning sync on needs the account checks Settings makes. It is
+    /// shown as it is, because a reinstall can restore it already on.
+    @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
 
     private enum Page: Int, CaseIterable {
         case welcome, features, privacy, ready
@@ -119,6 +124,7 @@ struct WelcomeView: View {
 
             OrbitHero(isShown: isRevealed(.welcome),
                       animated: !reduceMotion,
+                      isOnScreen: currentPage == Page.welcome.rawValue,
                       satellites: ["lock.fill", "key.fill", "faceid"]) {
                 Image("Logo")
                     .resizable()
@@ -205,7 +211,7 @@ struct WelcomeView: View {
                 featureRow(
                     icon: "macbook.and.iphone",
                     title: "On Your Devices",
-                    detail: "iPhone, iPad, Mac and Apple Watch, kept in step by iCloud Sync if you turn it on."
+                    detail: "iPhone, iPad and Mac stay in step through iCloud Sync if you turn it on. Apple Watch gets your codes from your iPhone."
                 )
                 cardDivider
                 featureRow(
@@ -223,7 +229,7 @@ struct WelcomeView: View {
             .privacy,
             icon: "hand.raised.fill",
             title: "Private by Design",
-            subtitle: "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and nothing leaves it unless you turn it on here or in Settings."
+            subtitle: "Autheris has no account, no ads, no analytics and no server of its own. Your setup keys are kept in this device's Keychain, and leave it only in the ways listed below."
         ) {
             VStack(alignment: .leading, spacing: 10) {
                 sectionHeader("Leaves your device only if you allow it")
@@ -234,12 +240,29 @@ struct WelcomeView: View {
                         detail: "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.",
                         isOn: $choices.fetchIssuerLogos
                     )
+                    if WatchTokenRelay.deviceCanPairWatch {
+                        cardDivider
+                        switchRow(
+                            "Send codes to Apple Watch",
+                            icon: "applewatch",
+                            detail: "If Autheris is on your Apple Watch, this iPhone copies your codes to it, setup keys included, so the watch can show them. Off, they are removed from the watch.",
+                            isOn: $sendCodesToWatch
+                        )
+                    }
                     cardDivider
-                    featureRow(
-                        icon: "icloud",
-                        title: "iCloud Sync is off",
-                        detail: "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted."
-                    )
+                    if isICloudSyncEnabled {
+                        featureRow(
+                            icon: "icloud",
+                            title: "iCloud Sync is on",
+                            detail: "Your codes sync through your private iCloud database, and setup keys are end-to-end encrypted. You can turn it off in Settings."
+                        )
+                    } else {
+                        featureRow(
+                            icon: "icloud",
+                            title: "iCloud Sync is off",
+                            detail: "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted."
+                        )
+                    }
                 }
             }
             .modifier(reveal(.privacy, step: 3))
@@ -270,7 +293,8 @@ struct WelcomeView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 12)
 
-            OrbitHero(isShown: isRevealed(.ready), animated: !reduceMotion, satellites: [], size: 230) {
+            OrbitHero(isShown: isRevealed(.ready), animated: !reduceMotion,
+                      isOnScreen: currentPage == Page.ready.rawValue, satellites: [], size: 230) {
                 ZStack {
                     Circle()
                         .fill(LinearGradient(colors: [Color.accentColor.opacity(0.85), Color.accentColor],
@@ -305,7 +329,12 @@ struct WelcomeView: View {
                 cardDivider
                 recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured)
                 cardDivider
-                recapRow("iCloud Sync", icon: "icloud", isOn: false)
+                if WatchTokenRelay.deviceCanPairWatch {
+                    cardDivider
+                    recapRow("Apple Watch", icon: "applewatch", isOn: sendCodesToWatch)
+                }
+                cardDivider
+                recapRow("iCloud Sync", icon: "icloud", isOn: isICloudSyncEnabled)
             }
             .padding(.top, 28)
             .modifier(reveal(.ready, step: 4))
@@ -645,11 +674,28 @@ private struct OnboardingBackground: View {
 private struct OrbitHero<Center: View>: View {
     let isShown: Bool
     let animated: Bool
+    /// Whether its page is the one showing. The paging view keeps neighbouring
+    /// pages alive, and the orbit stops turning — and redrawing — while it is
+    /// off-screen, then carries on from where it stopped.
+    let isOnScreen: Bool
     let satellites: [String]
     var size: CGFloat = 290
     @ViewBuilder let center: () -> Center
 
-    @State private var spin = false
+    /// Seconds per turn.
+    private let period: TimeInterval = 120
+
+    /// The angle reached before the orbit last stopped, and when it set off
+    /// again, so a pause doesn't make it jump.
+    @State private var settledAngle: Double = 0
+    @State private var movingSince: Date?
+
+    private var turns: Bool { animated && isOnScreen && !satellites.isEmpty }
+
+    private func spin(at date: Date) -> Double {
+        guard let movingSince else { return settledAngle }
+        return settledAngle + date.timeIntervalSince(movingSince) / period * 360
+    }
 
     var body: some View {
         ZStack {
@@ -663,27 +709,13 @@ private struct OrbitHero<Center: View>: View {
             ring(diameter: size * 0.62, dashed: false, delay: 0.05)
             ring(diameter: size * 0.94, dashed: true, delay: 0.15)
 
-            ForEach(Array(satellites.enumerated()), id: \.offset) { index, symbol in
-                let angle = Double(index) / Double(satellites.count) * 360 - 90 + (spin ? 360 : 0)
-                Image(systemName: symbol)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(Color(.secondarySystemGroupedBackground)))
-                    .overlay(Circle().strokeBorder(Color.accentColor.opacity(0.15)))
-                    .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
-                    .scaleEffect(isShown ? 1 : 0.2)
-                    .opacity(isShown ? 1 : 0)
-                    .animation(
-                        animated
-                            ? .spring(response: 0.5, dampingFraction: 0.6).delay(0.5 + 0.12 * Double(index))
-                            : .easeOut(duration: 0.2),
-                        value: isShown
-                    )
-                    // Counter-rotated, so the symbol stays upright on its way round.
-                    .rotationEffect(.degrees(-angle))
-                    .offset(x: size * 0.47)
-                    .rotationEffect(.degrees(angle))
+            TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !turns)) { context in
+                let spinAngle = spin(at: context.date)
+                ZStack {
+                    ForEach(Array(satellites.enumerated()), id: \.offset) { index, symbol in
+                        satellite(symbol, index: index, spinAngle: spinAngle)
+                    }
+                }
             }
 
             center()
@@ -694,12 +726,39 @@ private struct OrbitHero<Center: View>: View {
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
-        .onAppear {
-            guard animated, !satellites.isEmpty else { return }
-            withAnimation(.linear(duration: 120).repeatForever(autoreverses: false)) {
-                spin = true
+        .onAppear { if turns { movingSince = Date() } }
+        .onChange(of: turns) { _, turning in
+            let now = Date()
+            if turning {
+                movingSince = now
+            } else {
+                settledAngle = spin(at: now)
+                movingSince = nil
             }
         }
+    }
+
+    private func satellite(_ symbol: String, index: Int, spinAngle: Double) -> some View {
+        let angle = Double(index) / Double(satellites.count) * 360 - 90 + spinAngle
+        return Image(systemName: symbol)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Color.accentColor)
+            .frame(width: 40, height: 40)
+            .background(Circle().fill(Color(.secondarySystemGroupedBackground)))
+            .overlay(Circle().strokeBorder(Color.accentColor.opacity(0.15)))
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
+            .scaleEffect(isShown ? 1 : 0.2)
+            .opacity(isShown ? 1 : 0)
+            .animation(
+                animated
+                    ? .spring(response: 0.5, dampingFraction: 0.6).delay(0.5 + 0.12 * Double(index))
+                    : .easeOut(duration: 0.2),
+                value: isShown
+            )
+            // Counter-rotated, so the symbol stays upright on its way round.
+            .rotationEffect(.degrees(-angle))
+            .offset(x: size * 0.47)
+            .rotationEffect(.degrees(angle))
     }
 
     private func ring(diameter: CGFloat, dashed: Bool, delay: Double) -> some View {
