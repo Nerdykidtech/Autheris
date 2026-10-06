@@ -62,8 +62,8 @@ enum WatchTokenRelay {
     /// `isWatchAppInstalled`) *and* "Send codes to Apple Watch" is on. Installing
     /// the app used to be the only opt-in, but watchOS can install it
     /// automatically, so it was no real choice. The switch is in Settings, and on
-    /// the onboarding privacy page when a watch is paired. Turning it off sends an empty list, which
-    /// removes the codes from the watch.
+    /// the onboarding privacy page when a watch is paired. Turning it off sends
+    /// an empty list, which removes the codes from the watch.
     static func make() -> WatchTokenRelayService {
         #if os(iOS)
         return WatchConnectivityTokenRelay()

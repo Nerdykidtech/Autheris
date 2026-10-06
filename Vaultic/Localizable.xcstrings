@@ -6232,6 +6232,46 @@
         }
       }
     },
+    "If you add Autheris to an Apple Watch later, this iPhone sends your codes to it. You can turn that off in Settings.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn du Autheris später auf eine Apple Watch bringst, sendet dieses iPhone deine Codes dorthin. Du kannst das in den Einstellungen ausschalten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si más adelante añades Autheris a un Apple Watch, este iPhone le enviará tus códigos. Puedes desactivarlo en Ajustes."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si vous ajoutez plus tard Autheris à une Apple Watch, cet iPhone y enverra vos codes. Vous pouvez désactiver cela dans les Réglages."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あとでApple WatchにAutherisを追加すると、このiPhoneからコードが送信されます。設定でオフにできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se você adicionar o Autheris a um Apple Watch depois, este iPhone enviará seus códigos para ele. Você pode desativar isso nos Ajustes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果你之后将 Autheris 添加到 Apple Watch，这台 iPhone 会把验证码发送到手表。你可以在“设置”中关闭此功能。"
+          }
+        }
+      }
+    },
     "Import": {
       "localizations": {
         "de-DE": {

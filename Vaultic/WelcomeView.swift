@@ -255,6 +255,15 @@ struct WelcomeView: View {
                             detail: "If Autheris is on your Apple Watch, this iPhone copies your codes to it, setup keys included, so the watch can show them. Off, they are removed from the watch.",
                             isOn: $sendCodesToWatch
                         )
+                    } else if WatchTokenRelay.deviceCanPairWatch {
+                        // No watch yet, but one paired later would be sent the
+                        // codes, so the page still names it.
+                        cardDivider
+                        featureRow(
+                            icon: "applewatch",
+                            title: "Apple Watch",
+                            detail: "If you add Autheris to an Apple Watch later, this iPhone sends your codes to it. You can turn that off in Settings."
+                        )
                     }
                     cardDivider
                     if isICloudSyncEnabled {
@@ -335,7 +344,6 @@ struct WelcomeView: View {
                 recapRow("App Lock", icon: "faceid", isOn: enableAppLock)
                 cardDivider
                 recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured)
-                cardDivider
                 if hasPairedWatch {
                     cardDivider
                     recapRow("Apple Watch", icon: "applewatch", isOn: sendCodesToWatch)
