@@ -24,6 +24,11 @@ struct HomeView: View {
     @State private var showingSetAsideConfirmation = false
     @State private var searchText = ""
     @State private var showingSettings = false
+    /// The Edit or setup-key sheet a card asked for. Presented here rather than by
+    /// the card: a sheet attached to a `List` row closed whenever the row was
+    /// redrawn — which any change to the codes does, a sync included — and took
+    /// the user's unsaved edits with it.
+    @State private var tokenSheet: TokenSheet?
     
     /// The codes to show, in display order.
     ///
@@ -145,7 +150,8 @@ struct HomeView: View {
     /// dragging, one card at a time.
     private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
         ScrollView {
-            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now)
+            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now,
+                          presentSheet: { tokenSheet = $0 })
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
         }
@@ -157,7 +163,8 @@ struct HomeView: View {
     private func singleColumnList(now: Date) -> some View {
         List {
             ForEach(filteredCodes) { code in
-                OTPCardView(code: code, dataStore: dataStore, now: now)
+                OTPCardView(code: code, dataStore: dataStore, now: now,
+                            presentSheet: { tokenSheet = $0 })
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -274,6 +281,16 @@ struct HomeView: View {
                     .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
             }
+            // `item:` holds the token as it was when the sheet was asked for, and
+            // the screens keep that copy to measure edits against.
+            .sheet(item: $tokenSheet) { sheet in
+                switch sheet {
+                case .edit(let code):
+                    EditTokenView(code: code, dataStore: dataStore)
+                case .secret(let code):
+                    TokenSecretView(code: code, dataStore: dataStore)
+                }
+            }
             .alert(
                 Text(importResult?.title ?? "Import"),
                 isPresented: Binding(
@@ -318,6 +335,8 @@ private struct TokenGridView: View {
     let rearranging: Bool
     /// The time every card's code and countdown are shown for.
     let now: Date
+    /// Asks `HomeView` for a card's Edit or setup-key sheet; see `TokenSheet`.
+    let presentSheet: (TokenSheet) -> Void
 
     @EnvironmentObject private var dataStore: OTPDataStore
 
@@ -353,7 +372,8 @@ private struct TokenGridView: View {
     private func cell(_ code: OTPCode) -> some View {
         let isDragged = draggedID == code.id
 
-        return OTPCardView(code: code, dataStore: dataStore, now: now, isRearranging: rearranging)
+        return OTPCardView(code: code, dataStore: dataStore, now: now,
+                           presentSheet: presentSheet, isRearranging: rearranging)
             .overlay(alignment: .trailing) {
                 if rearranging {
                     grabber(for: code)
@@ -450,12 +470,33 @@ private struct TokenGridView: View {
     }
 }
 
+/// A sheet a token card opens, presented by `HomeView`.
+///
+/// Not by the card: a sheet attached to a `List` row is closed whenever the row
+/// is redrawn, and any change to the codes redraws it — a sync arriving while
+/// the Edit screen was open closed it and lost the user's edits. Each case
+/// carries the token as it was when the sheet was asked for.
+enum TokenSheet: Identifiable {
+    case edit(OTPCode)
+    case secret(OTPCode)
+
+    var id: String {
+        switch self {
+        case .edit(let code): "edit-\(code.id)"
+        case .secret(let code): "secret-\(code.id)"
+        }
+    }
+}
+
 struct OTPCardView: View {
     let code: OTPCode
     let dataStore: OTPDataStore
     /// The time to show the code and countdown for. Handed down from the list's
     /// single `TimelineView`, so the cards don't each need a timer of their own.
     let now: Date
+    /// Asks the home screen for this card's Edit or setup-key sheet. The card
+    /// doesn't present them itself; see `TokenSheet`.
+    let presentSheet: (TokenSheet) -> Void
     /// `true` while this card is being rearranged in the iPad grid.
     ///
     /// Tapping it to copy, or holding it for its menu, would then compete with the
@@ -464,8 +505,6 @@ struct OTPCardView: View {
     var isRearranging: Bool = false
     
     @State private var isCopied = false
-    @State private var showEditSheet = false
-    @State private var showSecretSheet = false
     
     // Compute warning threshold based on period
     private var warningThreshold: Int {
@@ -514,12 +553,6 @@ struct OTPCardView: View {
 
     var body: some View {
         card
-            .sheet(isPresented: $showEditSheet) {
-                EditTokenView(code: code, dataStore: dataStore)
-            }
-            .sheet(isPresented: $showSecretSheet) {
-                TokenSecretView(code: code, dataStore: dataStore)
-            }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
             .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
@@ -567,7 +600,7 @@ struct OTPCardView: View {
                             if await AppLockManager.reauthenticate(
                                 reason: String(localized: "Authenticate to view this setup key.")
                             ) {
-                                showSecretSheet = true
+                                presentSheet(.secret(code))
                             }
                         }
                     } label: {
@@ -575,7 +608,7 @@ struct OTPCardView: View {
                     }
 
                     Button {
-                        showEditSheet = true
+                        presentSheet(.edit(code))
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
