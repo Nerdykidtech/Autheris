@@ -52,11 +52,19 @@ enum WatchTokenRelay {
     /// changes.
     static let pairedWatchDidChange = Notification.Name("WatchTokenRelay.pairedWatchDidChange")
 
+    /// Records what WatchConnectivity says, and posts `pairedWatchDidChange`
+    /// only the first time and when it changes: the relay reports on every send.
     static func notePairedWatch(_ paired: Bool) {
         guard !isPairingKnown || paired != hasPairedWatch else { return }
         isPairingKnown = true
         hasPairedWatch = paired
         NotificationCenter.default.post(name: pairedWatchDidChange, object: nil)
+    }
+
+    /// Back to "WatchConnectivity hasn't said yet", for tests.
+    static func forgetPairing() {
+        isPairingKnown = false
+        hasPairedWatch = false
     }
 
     /// The real relay on iPhone, an inert one everywhere else.

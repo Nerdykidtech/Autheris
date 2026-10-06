@@ -290,6 +290,14 @@ struct WelcomeView: View {
                             detail: "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted."
                         )
                     }
+                    // No switch, but every setup key goes with them, so the
+                    // subtitle's "only in the ways listed below" names them too.
+                    cardDivider
+                    featureRow(
+                        icon: "square.and.arrow.up",
+                        title: "Backups and Transfer",
+                        detail: "Only when you make one. A backup file holds every setup key, encrypted with your password unless you choose a plain file. A Transfer QR code holds them unencrypted, so anyone who sees it can copy them."
+                    )
                 }
             }
             .modifier(reveal(.privacy, step: 3))
@@ -354,7 +362,7 @@ struct WelcomeView: View {
                 cardDivider
                 recapRow("App Lock", icon: "faceid", isOn: enableAppLock)
                 cardDivider
-                recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured)
+                recapRow("Privacy screen", icon: "eye.slash", isOn: hideCodesInAppSwitcher || hideCodesWhenScreenCaptured || enablePrivacyBlur)
                 if hasPairedWatch {
                     cardDivider
                     recapRow("Apple Watch", icon: "applewatch", isOn: sendCodesToWatch)

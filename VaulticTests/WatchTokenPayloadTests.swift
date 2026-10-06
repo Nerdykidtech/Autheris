@@ -234,3 +234,69 @@ final class WatchTokenPayloadTests: XCTestCase {
                        "a phone a few seconds ahead is ordinary, and the order still counts")
     }
 }
+
+/// When onboarding hears that the paired watch changed. The relay reports the
+/// pairing on every send, so only the first report and a real change may post.
+@MainActor
+final class WatchPairingStateTests: XCTestCase {
+
+    private var wasKnown = false
+    private var wasPaired = false
+    private var posts = 0
+    private var observer: NSObjectProtocol?
+
+    override func setUp() async throws {
+        try await super.setUp()
+        wasKnown = WatchTokenRelay.isPairingKnown
+        wasPaired = WatchTokenRelay.hasPairedWatch
+        observer = NotificationCenter.default.addObserver(
+            forName: WatchTokenRelay.pairedWatchDidChange, object: nil, queue: nil
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.posts += 1 }
+        }
+    }
+
+    override func tearDown() async throws {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+        WatchTokenRelay.forgetPairing()
+        if wasKnown { WatchTokenRelay.notePairedWatch(wasPaired) }
+        try await super.tearDown()
+    }
+
+    /// In the test itself, not `setUp`: the app's own relay can report while
+    /// an async `setUp` waits, and a synchronous test can't be interrupted.
+    private func startUnknown() {
+        WatchTokenRelay.forgetPairing()
+        posts = 0
+    }
+
+    func testTheFirstReportOfNoWatchIsKnownAndPosted() {
+        startUnknown()
+        XCTAssertFalse(WatchTokenRelay.isPairingKnown)
+
+        WatchTokenRelay.notePairedWatch(false)
+
+        XCTAssertTrue(WatchTokenRelay.isPairingKnown)
+        XCTAssertFalse(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 1)
+    }
+
+    func testARepeatedReportPostsNothing() {
+        startUnknown()
+        WatchTokenRelay.notePairedWatch(true)
+        WatchTokenRelay.notePairedWatch(true)
+
+        XCTAssertTrue(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 1)
+    }
+
+    func testAChangePostsAgain() {
+        startUnknown()
+        WatchTokenRelay.notePairedWatch(false)
+        WatchTokenRelay.notePairedWatch(true)
+        WatchTokenRelay.notePairedWatch(false)
+
+        XCTAssertFalse(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 3)
+    }
+}

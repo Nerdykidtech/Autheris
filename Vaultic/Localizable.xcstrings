@@ -2594,6 +2594,46 @@
         }
       }
     },
+    "Backups and Transfer": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups und Übertragung"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copias y transferencia"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sauvegardes et transfert"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップと転送"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backups e transferência"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份与转移"
+          }
+        }
+      }
+    },
     "Biometric authentication is unavailable.": {
       "localizations": {
         "de-DE": {
@@ -7946,6 +7986,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "在你的设备上"
+          }
+        }
+      }
+    },
+    "Only when you make one. A backup file holds every setup key, encrypted with your password unless you choose a plain file. A Transfer QR code holds them unencrypted, so anyone who sees it can copy them.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur wenn du eines erstellst. Eine Backup-Datei enthält jeden Einrichtungsschlüssel, mit deinem Passwort verschlüsselt, sofern du keine unverschlüsselte Datei wählst. Ein Übertragungs-QR-Code enthält sie unverschlüsselt, sodass jeder, der ihn sieht, sie kopieren kann."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo cuando creas una. Un archivo de copia contiene todas las claves de configuración, cifradas con tu contraseña salvo que elijas un archivo sin cifrar. Un código QR de transferencia las contiene sin cifrar, así que cualquiera que lo vea puede copiarlas."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniquement quand vous en créez un. Un fichier de sauvegarde contient toutes les clés de configuration, chiffrées avec votre mot de passe sauf si vous choisissez un fichier non chiffré. Un QR code de transfert les contient en clair : toute personne qui le voit peut les copier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "作成したときだけです。バックアップファイルにはすべてのセットアップキーが含まれ、暗号化しないファイルを選ばない限りパスワードで暗号化されます。転送用QRコードには暗号化されずに含まれるため、見た人は誰でもコピーできます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Só quando você cria um. Um arquivo de backup contém todas as chaves de configuração, criptografadas com sua senha, a menos que você escolha um arquivo sem criptografia. Um código QR de transferência as contém sem criptografia, então qualquer pessoa que o veja pode copiá-las."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅在你创建时。备份文件包含所有设置密钥，除非你选择不加密的文件，否则会用你的密码加密。转移二维码中的密钥未加密，任何看到它的人都能复制。"
           }
         }
       }
