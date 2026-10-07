@@ -25,7 +25,8 @@ final class AppLockManagerTests: XCTestCase {
     /// and the simulator's own settings have to be put back afterwards.
     private let restoredKeys = ["hasCompletedOnboarding", "enablePrivacyBlur", "hideCodesInAppSwitcher",
                                 "hideCodesWhenScreenCaptured", "accentTheme", AppLockEnabledKey,
-                                OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey]
+                                OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey,
+                       AppPreferences.sendCodesToWatchKey]
     private var savedDefaults: [String: Any] = [:]
 
     override func setUp() async throws {
@@ -72,6 +73,18 @@ final class AppLockManagerTests: XCTestCase {
 
     private func manager(_ context: FakeAuthenticationContext) -> AppLockManager {
         AppLockManager(makeContext: { context })
+    }
+
+    // MARK: - The unlock button
+
+    func testTheUnlockButtonNamesFaceIDWhenTheAppMayUseIt() async {
+        XCTAssertEqual(manager(.faceID(allowed: true)).unlockBiometry, .faceID)
+    }
+
+    func testTheUnlockButtonDoesNotPromiseFaceIDTheAppHasBeenRefused() async {
+        // The hardware is Face ID, but the user turned it off for Autheris: the
+        // system will ask for the passcode, so the button must not say Face ID.
+        XCTAssertEqual(manager(.faceID(allowed: false)).unlockBiometry, .none)
     }
 
     // MARK: - No passcode
@@ -137,10 +150,22 @@ final class AppLockManagerTests: XCTestCase {
 private final class FakeAuthenticationContext: DeviceOwnerAuthenticating, @unchecked Sendable {
     private let unavailableReason: LAError.Code?
     private let evaluationSucceeds: Bool
+    let biometryType: LABiometryType
+    /// Whether the biometrics-only policy is refused — Face ID turned off for
+    /// the app, say — while the passcode still works.
+    private let biometricsRefused: Bool
 
-    private init(unavailableReason: LAError.Code?, evaluationSucceeds: Bool) {
+    private init(unavailableReason: LAError.Code?, evaluationSucceeds: Bool,
+                 biometryType: LABiometryType = .none, biometricsRefused: Bool = false) {
         self.unavailableReason = unavailableReason
         self.evaluationSucceeds = evaluationSucceeds
+        self.biometryType = biometryType
+        self.biometricsRefused = biometricsRefused
+    }
+
+    static func faceID(allowed: Bool) -> FakeAuthenticationContext {
+        FakeAuthenticationContext(unavailableReason: nil, evaluationSucceeds: true,
+                                  biometryType: .faceID, biometricsRefused: !allowed)
     }
 
     static let passcodeNotSet = FakeAuthenticationContext(unavailableReason: .passcodeNotSet, evaluationSucceeds: false)
@@ -152,6 +177,10 @@ private final class FakeAuthenticationContext: DeviceOwnerAuthenticating, @unche
     }
 
     func canEvaluatePolicy(_ policy: LAPolicy, error: NSErrorPointer) -> Bool {
+        if policy == .deviceOwnerAuthenticationWithBiometrics, biometricsRefused {
+            error?.pointee = NSError(domain: LAErrorDomain, code: LAError.biometryNotAvailable.rawValue)
+            return false
+        }
         guard let unavailableReason else { return true }
         error?.pointee = NSError(domain: LAErrorDomain, code: unavailableReason.rawValue)
         return false

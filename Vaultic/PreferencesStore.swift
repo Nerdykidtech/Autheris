@@ -58,17 +58,38 @@ enum PreferencesStore {
             object: nil,
             queue: .main
         ) { _ in
-            MainActor.assumeIsolated { persist() }
+            MainActor.assumeIsolated { persistIfChanged() }
         }
     }
 
-    static func persist() {
-        guard hasReadStoredPreferences else { return }
+    /// What the mirroring observer last saved, so an unchanged snapshot isn't
+    /// written again.
+    ///
+    /// `UserDefaults.didChangeNotification` fires for *every* key, including ones
+    /// that aren't preferences at all — the sync service stamps its last-synced
+    /// date after every sync — and each used to rewrite the Keychain item. Only
+    /// the observer skips; a direct `persist()` (the privacy repair) always writes.
+    private static var lastMirrored: AppPreferences?
+
+    /// Writes the current preferences to the Keychain. `false` when nothing was
+    /// written — before the stored copy has been read, or if the save failed.
+    @discardableResult
+    static func persist() -> Bool {
+        guard hasReadStoredPreferences else { return false }
         let prefs = snapshot(of: .standard)
 
-        if let data = try? JSONEncoder().encode(prefs) {
-            _ = KeychainStore.save(data, account: account)
-        }
+        guard let data = try? JSONEncoder().encode(prefs),
+              KeychainStore.save(data, account: account) else { return false }
+        lastMirrored = prefs
+        return true
+    }
+
+    /// `persist()` for the mirroring observer: skipped when no preference changed.
+    /// Internal rather than private so the skip can be tested without the
+    /// observer, which the tests switch off.
+    static func persistIfChanged() {
+        guard snapshot(of: .standard) != lastMirrored else { return }
+        persist()
     }
 
     /// The preferences as `defaults` currently holds them.
@@ -91,7 +112,8 @@ enum PreferencesStore {
             accentTheme: defaults.string(forKey: "accentTheme") ?? fallback.accentTheme,
             enableAppLock: bool(AppLockEnabledKey, fallback.enableAppLock),
             isICloudSyncEnabled: bool(OTPDataStore.syncEnabledKey, fallback.isICloudSyncEnabled),
-            fetchIssuerLogos: bool(AppPreferences.fetchIssuerLogosKey, fallback.fetchIssuerLogos)
+            fetchIssuerLogos: bool(AppPreferences.fetchIssuerLogosKey, fallback.fetchIssuerLogos),
+            sendCodesToWatch: bool(AppPreferences.sendCodesToWatchKey, fallback.sendCodesToWatch)
         )
     }
 
@@ -108,6 +130,9 @@ enum PreferencesStore {
         let stored = KeychainStore.read(account: account)
         if case .unavailable = stored { return }
         hasReadStoredPreferences = true
+        // What is in the Keychain now is what was just read, not what this
+        // process last wrote, so the next change is always saved.
+        lastMirrored = nil
 
         guard let data = stored.data,
               var prefs = try? JSONDecoder().decode(AppPreferences.self, from: data) else {
@@ -133,6 +158,7 @@ enum PreferencesStore {
         defaults.set(prefs.enableAppLock, forKey: AppLockEnabledKey)
         defaults.set(prefs.isICloudSyncEnabled, forKey: OTPDataStore.syncEnabledKey)
         defaults.set(prefs.fetchIssuerLogos, forKey: AppPreferences.fetchIssuerLogosKey)
+        defaults.set(prefs.sendCodesToWatch, forKey: AppPreferences.sendCodesToWatchKey)
 
         if needsPrivacyRepair {
             persist()

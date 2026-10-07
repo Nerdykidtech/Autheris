@@ -117,6 +117,18 @@ final class TransferPayloadTests: XCTestCase {
         }
     }
 
+    func testThePeriodAnyLinkCanSetSurvivesTheCompactFormat() throws {
+        // Nothing caps a period from above. One this large used to fail the whole
+        // transfer on the receiving side.
+        let original = OTPCode(label: "Long", account: "x", secret: "JBSWY3DPEHPK3PXP", period: Int.max)
+        let link = try XCTUnwrap(TransferPayload.compactLink(for: [original, OTPCode(label: "Other", account: "y", secret: "GEZDGNBVGY3TQOJQ")]))
+
+        let decoded = try importedTokens(link)
+
+        XCTAssertEqual(decoded.count, 2, "one large period doesn't cost the rest of the transfer")
+        XCTAssertEqual(decoded.first?.period, Int.max)
+    }
+
     // MARK: - Hostile input
 
     func testMalformedCompactPayloadsAreRefusedNotTrusted() {

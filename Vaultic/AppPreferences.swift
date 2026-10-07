@@ -16,6 +16,7 @@ struct AppPreferences: Codable, Equatable {
     var enableAppLock: Bool
     var isICloudSyncEnabled: Bool
     var fetchIssuerLogos: Bool
+    var sendCodesToWatch: Bool
     /// Which release's rules wrote this blob; see `currentSchemaVersion`.
     var schemaVersion: Int
 
@@ -31,6 +32,11 @@ struct AppPreferences: Codable, Equatable {
 
     /// What each preference is before the user has touched it. The `@AppStorage`
     /// defaults in the views must match these.
+    ///
+    /// `fetchIssuerLogos` is the one exception to "before the user has touched
+    /// it": `true` is what an install from before 3.1 reads, because it never
+    /// wrote the key. A new install writes `false` when it finishes onboarding
+    /// (`OnboardingChoices`), so it never falls back to this.
     static let defaults = AppPreferences(hasCompletedOnboarding: false,
                                          enablePrivacyBlur: true,
                                          hideCodesInAppSwitcher: true,
@@ -38,7 +44,8 @@ struct AppPreferences: Codable, Equatable {
                                          accentTheme: "",
                                          enableAppLock: false,
                                          isICloudSyncEnabled: false,
-                                         fetchIssuerLogos: true)
+                                         fetchIssuerLogos: AppPreferences.fetchIssuerLogosDefault,
+                                         sendCodesToWatch: AppPreferences.sendCodesToWatchDefault)
 
     /// The `@AppStorage` key the Settings switch and the logo lookup share, so the
     /// one that writes and the one that reads cannot drift apart.
@@ -48,6 +55,23 @@ struct AppPreferences: Codable, Equatable {
     /// `OTPDataStore.syncEnabledKey` is.
     nonisolated static let fetchIssuerLogosKey = "fetchIssuerLogos"
 
+    /// What the logo switch reads as before anything has written it: on,
+    /// because every install before 3.1 looked logos up and never wrote the
+    /// key. A new install writes its own answer in onboarding
+    /// (`OnboardingChoices`). The one place this is spelled, for every reader
+    /// of the key — `LogoCacheManager`, both views' `@AppStorage`, and the
+    /// Keychain mirror. `nonisolated` for the same reason as the key.
+    nonisolated static let fetchIssuerLogosDefault = true
+
+    /// Whether the iPhone sends codes to the Apple Watch app. Read by
+    /// `WatchConnectivityTokenRelay`; written by Settings and onboarding.
+    nonisolated static let sendCodesToWatchKey = "sendCodesToWatch"
+
+    /// On: before 3.1 there was no switch, and every watch with the app
+    /// installed received codes. Keeping that for an unwritten key means an
+    /// update doesn't empty anyone's watch.
+    nonisolated static let sendCodesToWatchDefault = true
+
     init(hasCompletedOnboarding: Bool,
          enablePrivacyBlur: Bool,
          hideCodesInAppSwitcher: Bool,
@@ -56,6 +80,7 @@ struct AppPreferences: Codable, Equatable {
          enableAppLock: Bool,
          isICloudSyncEnabled: Bool,
          fetchIssuerLogos: Bool,
+         sendCodesToWatch: Bool = AppPreferences.sendCodesToWatchDefault,
          schemaVersion: Int = AppPreferences.currentSchemaVersion) {
         self.hasCompletedOnboarding = hasCompletedOnboarding
         self.enablePrivacyBlur = enablePrivacyBlur
@@ -65,6 +90,7 @@ struct AppPreferences: Codable, Equatable {
         self.enableAppLock = enableAppLock
         self.isICloudSyncEnabled = isICloudSyncEnabled
         self.fetchIssuerLogos = fetchIssuerLogos
+        self.sendCodesToWatch = sendCodesToWatch
         self.schemaVersion = schemaVersion
     }
 
@@ -77,6 +103,7 @@ struct AppPreferences: Codable, Equatable {
         case enableAppLock
         case isICloudSyncEnabled
         case fetchIssuerLogos
+        case sendCodesToWatch
         case schemaVersion
     }
 
@@ -102,10 +129,11 @@ struct AppPreferences: Codable, Equatable {
         accentTheme = try container.decodeIfPresent(String.self, forKey: .accentTheme) ?? defaults.accentTheme
         enableAppLock = try container.decodeIfPresent(Bool.self, forKey: .enableAppLock) ?? defaults.enableAppLock
         isICloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .isICloudSyncEnabled) ?? defaults.isICloudSyncEnabled
-        // On by default, because that is what the app has always done and what most
-        // people expect an authenticator's list to look like. The switch is there for
-        // the ones who would rather the lookup never happened; see `SettingsView`.
+        // A missing key reads as on: a blob without it was written by a release
+        // that always looked icons up. A new install is asked during onboarding
+        // instead, and starts with it off; see `OnboardingChoices`.
         fetchIssuerLogos = try container.decodeIfPresent(Bool.self, forKey: .fetchIssuerLogos) ?? defaults.fetchIssuerLogos
+        sendCodesToWatch = try container.decodeIfPresent(Bool.self, forKey: .sendCodesToWatch) ?? defaults.sendCodesToWatch
         schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
     }
 

@@ -24,6 +24,11 @@ struct HomeView: View {
     @State private var showingSetAsideConfirmation = false
     @State private var searchText = ""
     @State private var showingSettings = false
+    /// The Edit or setup-key sheet a card asked for. Presented here rather than by
+    /// the card: a sheet attached to a `List` row closed whenever the row was
+    /// redrawn — which any change to the codes does, a sync included — and took
+    /// the user's unsaved edits with it.
+    @State private var tokenSheet: TokenSheet?
     
     /// The codes to show, in display order.
     ///
@@ -145,7 +150,8 @@ struct HomeView: View {
     /// dragging, one card at a time.
     private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
         ScrollView {
-            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now)
+            TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now,
+                          presentSheet: { tokenSheet = $0 })
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
         }
@@ -157,7 +163,8 @@ struct HomeView: View {
     private func singleColumnList(now: Date) -> some View {
         List {
             ForEach(filteredCodes) { code in
-                OTPCardView(code: code, dataStore: dataStore, now: now)
+                OTPCardView(code: code, dataStore: dataStore, now: now,
+                            presentSheet: { tokenSheet = $0 })
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
@@ -274,6 +281,16 @@ struct HomeView: View {
                     .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
             }
+            // `item:` holds the token as it was when the sheet was asked for, and
+            // the screens keep that copy to measure edits against.
+            .sheet(item: $tokenSheet) { sheet in
+                switch sheet {
+                case .edit(let code):
+                    EditTokenView(code: code, dataStore: dataStore)
+                case .secret(let code):
+                    TokenSecretView(code: code, dataStore: dataStore)
+                }
+            }
             .alert(
                 Text(importResult?.title ?? "Import"),
                 isPresented: Binding(
@@ -318,6 +335,8 @@ private struct TokenGridView: View {
     let rearranging: Bool
     /// The time every card's code and countdown are shown for.
     let now: Date
+    /// Asks `HomeView` for a card's Edit or setup-key sheet; see `TokenSheet`.
+    let presentSheet: (TokenSheet) -> Void
 
     @EnvironmentObject private var dataStore: OTPDataStore
 
@@ -353,7 +372,8 @@ private struct TokenGridView: View {
     private func cell(_ code: OTPCode) -> some View {
         let isDragged = draggedID == code.id
 
-        return OTPCardView(code: code, dataStore: dataStore, now: now, isRearranging: rearranging)
+        return OTPCardView(code: code, dataStore: dataStore, now: now,
+                           presentSheet: presentSheet, isRearranging: rearranging)
             .overlay(alignment: .trailing) {
                 if rearranging {
                     grabber(for: code)
@@ -450,12 +470,33 @@ private struct TokenGridView: View {
     }
 }
 
+/// A sheet a token card opens, presented by `HomeView`.
+///
+/// Not by the card: a sheet attached to a `List` row is closed whenever the row
+/// is redrawn, and any change to the codes redraws it — a sync arriving while
+/// the Edit screen was open closed it and lost the user's edits. Each case
+/// carries the token as it was when the sheet was asked for.
+enum TokenSheet: Identifiable {
+    case edit(OTPCode)
+    case secret(OTPCode)
+
+    var id: String {
+        switch self {
+        case .edit(let code): "edit-\(code.id)"
+        case .secret(let code): "secret-\(code.id)"
+        }
+    }
+}
+
 struct OTPCardView: View {
     let code: OTPCode
     let dataStore: OTPDataStore
     /// The time to show the code and countdown for. Handed down from the list's
     /// single `TimelineView`, so the cards don't each need a timer of their own.
     let now: Date
+    /// Asks the home screen for this card's Edit or setup-key sheet. The card
+    /// doesn't present them itself; see `TokenSheet`.
+    let presentSheet: (TokenSheet) -> Void
     /// `true` while this card is being rearranged in the iPad grid.
     ///
     /// Tapping it to copy, or holding it for its menu, would then compete with the
@@ -464,8 +505,6 @@ struct OTPCardView: View {
     var isRearranging: Bool = false
     
     @State private var isCopied = false
-    @State private var showEditSheet = false
-    @State private var showSecretSheet = false
     
     // Compute warning threshold based on period
     private var warningThreshold: Int {
@@ -514,12 +553,6 @@ struct OTPCardView: View {
 
     var body: some View {
         card
-            .sheet(isPresented: $showEditSheet) {
-                EditTokenView(code: code, dataStore: dataStore)
-            }
-            .sheet(isPresented: $showSecretSheet) {
-                TokenSecretView(code: code, dataStore: dataStore)
-            }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
             .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
@@ -567,7 +600,7 @@ struct OTPCardView: View {
                             if await AppLockManager.reauthenticate(
                                 reason: String(localized: "Authenticate to view this setup key.")
                             ) {
-                                showSecretSheet = true
+                                presentSheet(.secret(code))
                             }
                         }
                     } label: {
@@ -575,7 +608,7 @@ struct OTPCardView: View {
                     }
 
                     Button {
-                        showEditSheet = true
+                        presentSheet(.edit(code))
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
@@ -741,6 +774,7 @@ struct OTPCardView: View {
         Haptics.impact(.light)
         
         ClipboardHelper.copy(code.currentCode)
+        ReviewPrompt.codeCopied()
         withAnimation {
             isCopied = true
         }
@@ -759,16 +793,27 @@ struct OTPCardView: View {
 }
 
 struct EditTokenView: View {
-    let code: OTPCode
+    /// The token as this screen opened it, and what every change is measured
+    /// against. `@State` so it stays put: the card passes in the token as the list
+    /// has it now, which sync can change while the screen is open — and measured
+    /// against that, a rename from another device looked like the user renaming
+    /// it back, which Save then wrote.
+    @State private var code: OTPCode
     @ObservedObject var dataStore: OTPDataStore
     @Environment(\.dismiss) private var dismiss
     
     @State private var label: String
     @State private var account: String
     @State private var ringColor: Color
+    /// The ring color the screen opened with. The color only counts as changed
+    /// when the picker has moved away from this: converting it to a hex and back
+    /// doesn't always give the stored hex exactly, and comparing that hex made
+    /// every save rewrite the color — over one set on another device meanwhile.
+    /// `@State` for the same reason as `code`.
+    @State private var openedRingColor: Color
     /// Seeded from the *effective* values, so opening this screen on a token whose
-    /// stored digits or period is malformed shows something sane, and saving repairs
-    /// it. `OTPGenerator` decides what "effective" means.
+    /// stored digits or period is malformed shows the values its codes are really
+    /// generated with. `OTPGenerator` decides what "effective" means.
     @State private var algorithm: OTPAlgorithm
     @State private var digits: Int
     @State private var period: Int
@@ -782,6 +827,26 @@ struct EditTokenView: View {
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
     }
+
+    /// The token as it is stored now, which sync may have moved on from `code`.
+    /// Only for what the screen *shows* about fields it doesn't control — the
+    /// counter's floor, the setup key behind the preview. Every comparison is
+    /// against `code`.
+    private var live: OTPCode {
+        dataStore.codes.first { $0.id == code.id } ?? code
+    }
+
+    /// The counter on screen: the user's choice, or the stored counter if that
+    /// has since moved past it — which is what `saveEdit` would save anyway, so
+    /// the screen says so rather than showing a counter that won't be kept.
+    /// Stepping writes to `counter`, so a counter raised by sync alone doesn't
+    /// count as an edit.
+    private var displayedCounter: Binding<Int> {
+        Binding(
+            get: { max(counter, Int(clamping: live.counter)) },
+            set: { counter = $0 }
+        )
+    }
     
     private var isDirty: Bool {
         label != code.label ||
@@ -790,26 +855,35 @@ struct EditTokenView: View {
         digits != code.effectiveDigits ||
         period != code.effectivePeriod ||
         counter != Int(clamping: code.counter) ||
-        ringHexForSave() != code.timerRingHex
+        ringColorChanged
+    }
+
+    private var ringColorChanged: Bool {
+        ringColor != openedRingColor
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
-        self.code = code
+        _code = State(initialValue: code)
         self.dataStore = dataStore
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
         _algorithm = State(initialValue: code.algorithm)
-        // Clamped into the ranges the steppers offer, so a malformed stored value
-        // opens as a usable one rather than leaving a control out of range.
-        _digits = State(initialValue: min(max(code.effectiveDigits, 6), 10))
-        _period = State(initialValue: min(max(code.effectivePeriod, 15), 300))
+        // Not clamped into the steppers' usual ranges: the steppers widen to take
+        // these instead (`digitsRange`, `periodRange`). Clamping here changed a
+        // 5-digit or 10-second token's codes the moment anything else on this
+        // screen was saved, with nothing on screen to say so.
+        _digits = State(initialValue: code.effectiveDigits)
+        _period = State(initialValue: code.effectivePeriod)
         _counter = State(initialValue: Int(clamping: code.counter))
         let branding = IssuerBranding.forLabel(code.label)
+        let opened: Color
         if let hex = code.timerRingHex, let c = Color(hex: hex) {
-            _ringColor = State(initialValue: c)
+            opened = c
         } else {
-            _ringColor = State(initialValue: branding.color)
+            opened = branding.color
         }
+        _openedRingColor = State(initialValue: opened)
+        _ringColor = State(initialValue: opened)
     }
     
     var body: some View {
@@ -879,7 +953,7 @@ struct EditTokenView: View {
     private var headerSection: some View {
         Section {
             HStack(spacing: 14) {
-                IssuerIconView(branding: previewBranding, size: 44)
+                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(label.isEmpty ? code.label : label)
@@ -916,7 +990,6 @@ struct EditTokenView: View {
             TextField("Service name", text: $label)
 
             TextField("Account (optional)", text: $account)
-                .platformTextContentType(.username)
                 .platformNoAutocapitalization()
         }
     }
@@ -929,7 +1002,7 @@ struct EditTokenView: View {
                 }
             }
 
-            Stepper("Digits: \(digits)", value: $digits, in: 6...10)
+            Stepper("Digits: \(digits)", value: $digits, in: digitsRange)
 
             // A period and a counter are the two halves of "when does this code
             // change", and a token has one of them. The kind itself is not offered
@@ -937,15 +1010,29 @@ struct EditTokenView: View {
             // being accepted, with no way to check first — the kind is settled by the
             // QR the service gave you, and a mis-scanned one is better re-added.
             if code.isTimeBased {
-                Stepper("Period: \(period) seconds", value: $period, in: 15...300, step: 15)
+                PeriodStepper(period: $period, range: periodRange)
             } else {
-                Stepper("Counter: \(counter)", value: $counter, in: 0...10_000)
+                // From the stored counter up — as it is now, not as the screen
+                // opened it; see `OTPCode.editableCounterRange`.
+                Stepper("Counter: \(displayedCounter.wrappedValue)", value: displayedCounter,
+                        in: live.editableCounterRange)
             }
         } header: {
             Text("Code")
         } footer: {
             Text(codeFooter)
         }
+    }
+
+    /// The usual 6–10, widened to include what the token already has, so a token
+    /// set up with fewer or more digits keeps them unless the user moves the stepper.
+    private var digitsRange: ClosedRange<Int> {
+        min(6, code.effectiveDigits)...max(10, code.effectiveDigits)
+    }
+
+    /// The usual 15–300 seconds, widened the same way.
+    private var periodRange: ClosedRange<Int> {
+        min(15, code.effectivePeriod)...max(300, code.effectivePeriod)
     }
 
     /// Typed explicitly: a ternary of two literals infers as `String`, which `Text`
@@ -998,13 +1085,14 @@ struct EditTokenView: View {
     }
 
     /// What the code would be with the values currently on screen, rather than the
-    /// stored ones.
+    /// stored ones. The setup key is the stored one as it is now: this screen
+    /// doesn't edit it, so that is the key the saved token will have.
     private var previewCode: String {
         guard code.isTimeBased else {
-            return OTPGenerator.generateHOTP(secret: code.secret, algorithm: algorithm,
-                                             digits: digits, counter: UInt64(max(0, counter)))
+            return OTPGenerator.generateHOTP(secret: live.secret, algorithm: algorithm, digits: digits,
+                                             counter: UInt64(max(0, displayedCounter.wrappedValue)))
         }
-        return OTPGenerator.generateOTP(secret: code.secret, algorithm: algorithm,
+        return OTPGenerator.generateOTP(secret: live.secret, algorithm: algorithm,
                                          digits: digits, period: period)
     }
 
@@ -1042,34 +1130,45 @@ struct EditTokenView: View {
             return
         }
         
-        // Goes through `edited()` rather than rebuilding the token field by field,
-        // so a field added later cannot be silently reset by this screen — which is
-        // exactly what adding `isPinned` would otherwise have done.
-        let updatedCode = code.edited(
+        // Built from the copy this screen opened with, changing only what the
+        // user changed — digits and period against the values the code is really
+        // generated with, which is what the steppers started from. The store
+        // applies those changes to the code as it is now; see `saveEdit`.
+        let edited = code.edited(
             label: label,
             account: account,
             algorithm: algorithm,
-            digits: digits,
-            period: period,
-            counter: UInt64(max(0, counter)),
-            timerRingHex: .some(ringHexForSave())
+            digits: digits != code.effectiveDigits ? digits : nil,
+            period: period != code.effectivePeriod ? period : nil,
+            counter: counter != Int(clamping: code.counter) ? UInt64(max(0, counter)) : nil,
+            timerRingHex: ringColorChanged ? .some(ringHexForSave()) : nil,
+            modifiedAt: code.modifiedAt
         )
-        
-        // A rename onto a name another code already has would leave two tokens
-        // the user can't tell apart, so it is refused here rather than saved.
-        if dataStore.nameIsTaken(by: updatedCode) {
+
+        switch dataStore.saveEdit(from: code, to: edited) {
+        case .saved:
+            break
+        case .unchanged:
+            // Nothing to save, so nothing to celebrate or ask a review for.
+            dismiss()
+            return
+        case .nameTaken:
             alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
             showingAlert = true
             return
+        case .deleted:
+            alertMessage = String(localized: "This token was deleted on another device, so your changes weren't saved.")
+            showingAlert = true
+            return
+        case .vaultUnavailable:
+            // Kept open rather than closed as if it had worked.
+            alertMessage = OTPDataStore.vaultUnavailableMessage
+            showingAlert = true
+            return
         }
-
-        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }),
-           dataStore.updateCode(updatedCode, at: index) {
-            // Success haptic feedback
-            Haptics.notify(.success)
-        }
-        
+        Haptics.notify(.success)
         dismiss()
+        ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
     }
 }
 

@@ -67,6 +67,8 @@ nonisolated enum GoogleMigrationParser {
         var digits: Int = 6
         var type: Int = 2 // TOTP
         var counter: UInt64 = 0
+        /// Cleared by a counter no `int64` can hold; see field 7.
+        var counterIsValid = true
         
         var offset = 0
         let bytes = [UInt8](data)
@@ -102,8 +104,21 @@ nonisolated enum GoogleMigrationParser {
                     type = v
                 } else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
             case 7: // counter (varint/int64)
-                if wireType == 0, let v = readVarint(bytes, offset: &offset) {
-                    counter = UInt64(max(0, v))
+                if wireType == 0, let v = readVarint64(bytes, offset: &offset) {
+                    // A full 64-bit varint: the counter is an `int64`, and capping
+                    // varints at 35 bits — which is what lengths and tags need —
+                    // made a larger counter fail part-way through its bytes and
+                    // threw off everything read after it. Past `Int64.max` the
+                    // bits are a negative `int64`, which is not a counter at all.
+                    // The last counter written is the one that counts, as for
+                    // any protobuf field, so a valid one clears an earlier one.
+                    if v <= OTPCode.maximumCounter {
+                        counter = v
+                        counterIsValid = true
+                    } else {
+                        counter = 0
+                        counterIsValid = false
+                    }
                 } else { skipField(bytes, tag: tag, wireType: wireType, offset: &offset) }
             default:
                 skipField(bytes, tag: tag, wireType: wireType, offset: &offset)
@@ -140,6 +155,11 @@ nonisolated enum GoogleMigrationParser {
         // (the protobuf's "unspecified") is what an unset field decodes to, which
         // for a field Google itself always writes means the TOTP default.
         let kind: OTPKind = (type == 1) ? .hotp : .totp
+        // A counter-based entry with a negative counter is dropped, like one with
+        // a key that won't decode. Reading it as 0 instead gave a token whose
+        // codes the service had moved past long ago, with nothing on screen to
+        // say so. A time-based entry never uses its counter, so it stays.
+        guard kind == .totp || counterIsValid else { return nil }
 
         return OTPCode(
             label: label,
@@ -160,6 +180,8 @@ nonisolated enum GoogleMigrationParser {
         return (v >> 3, v & 7)
     }
     
+    /// A varint used as a tag, a small enum or a length: at most 35 bits, which
+    /// always fits an `Int` and is never negative.
     private static func readVarint(_ bytes: [UInt8], offset: inout Int) -> Int? {
         var result = 0
         var shift = 0
@@ -173,10 +195,24 @@ nonisolated enum GoogleMigrationParser {
         }
         return nil
     }
+
+    /// A varint holding a full 64-bit value, as an `int64` field does. Ten bytes
+    /// at most; the value is the field's bit pattern.
+    private static func readVarint64(_ bytes: [UInt8], offset: inout Int) -> UInt64? {
+        var result: UInt64 = 0
+        for shift in stride(from: 0, to: 70, by: 7) {
+            guard offset < bytes.count else { return nil }
+            let b = bytes[offset]
+            offset += 1
+            result |= UInt64(b & 0x7F) << UInt64(shift)
+            if (b & 0x80) == 0 { return result }
+        }
+        return nil
+    }
     
     private static func skipField(_ bytes: [UInt8], tag: Int, wireType: Int, offset: inout Int) {
         switch wireType {
-        case 0: _ = readVarint(bytes, offset: &offset)
+        case 0: _ = readVarint64(bytes, offset: &offset)
         case 1: offset += 8
         case 2:
             if let len = readVarint(bytes, offset: &offset), offset + len <= bytes.count {

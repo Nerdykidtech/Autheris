@@ -253,6 +253,12 @@ struct ImportConfirmationView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     isPresented = false
                 }
+                // A batch — a migration from another app — earns an ask as it is
+                // closed. A single code is usually a website waiting for it.
+                if case .success(_, let added, _) = importResult,
+                   ReviewPromptPolicy.importEarnsAsk(added: added) {
+                    ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+                }
             }) {
                 Text("Done")
                     .font(.headline)

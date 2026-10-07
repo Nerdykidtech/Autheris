@@ -38,7 +38,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
         store.setSyncEnabled(true)
         // Turning sync on kicks off a sync of its own. Let it finish (the fake
         // has no handler yet, so it is a no-op) so it can't overlap a test's sync.
-        while sync.syncCallCount == 0 { await Task.yield() }
+        await waitUntil { self.sync.syncCallCount > 0 }
     }
 
     override func tearDown() async throws {
@@ -60,6 +60,20 @@ final class OTPDataStoreSyncTests: XCTestCase {
 
     private func token(_ label: String) -> OTPCode {
         OTPCode(label: label, account: "user", secret: "JBSWY3DPEHPK3PXP")
+    }
+
+    /// Waits for `condition`, failing the test after `timeout` rather than
+    /// hanging until xcodebuild gives up on the whole run.
+    private func waitUntil(timeout: Duration = .seconds(5),
+                           file: StaticString = #filePath, line: UInt = #line,
+                           _ condition: () -> Bool) async {
+        let deadline = ContinuousClock.now + timeout
+        while !condition() {
+            guard ContinuousClock.now < deadline else {
+                return XCTFail("timed out waiting", file: file, line: line)
+            }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
     }
 
     /// Runs one sync and returns the snapshot the store handed to it.
@@ -152,6 +166,107 @@ final class OTPDataStoreSyncTests: XCTestCase {
         }
 
         XCTAssertEqual(Set(store.codes.map(\.id)), [existing.id, added.id, remote.id])
+    }
+
+    func testATokenEditedMidSyncKeepsTheEdit() async {
+        let counterBased = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                                   kind: .hotp, counter: 3, modifiedAt: Date().addingTimeInterval(-60))
+        let renamed = token("GitHub")
+        let remote = token("Bitbucket")
+        store.addCode(counterBased)
+        store.addCode(renamed)
+
+        await runSync { [store] local in
+            // Spent a code and renamed another while the sync was out.
+            store!.advanceCounter(for: counterBased)
+            if let index = store!.codes.firstIndex(where: { $0.id == renamed.id }) {
+                store!.updateCode(renamed.edited(label: "GitHub Work"), at: index)
+            }
+            // Remote changes came back, so the store rebuilds its list from the
+            // snapshot — which predates both edits.
+            return SyncMergeOutcome(tokens: local.tokens + [remote],
+                                    tombstones: local.tombstones,
+                                    uploads: [],
+                                    didAdoptRemoteChanges: true)
+        }
+
+        let codes = Dictionary(uniqueKeysWithValues: store.codes.map { ($0.id, $0) })
+        XCTAssertEqual(codes[counterBased.id]?.counter, 4, "a spent code must not come back")
+        XCTAssertEqual(codes[renamed.id]?.label, "GitHub Work")
+        XCTAssertNotNil(codes[remote.id], "the remote change is still applied")
+
+        let next = await runSync { _ in nil }
+        let uploaded = Dictionary(uniqueKeysWithValues: (next?.tokens ?? []).map { ($0.id, $0) })
+        XCTAssertEqual(uploaded[counterBased.id]?.counter, 4, "and the next sync offers the edit up")
+    }
+
+    func testACodeSpentMidSyncIsNotUndoneByANewerCopyWithALowerCounter() async {
+        let counterBased = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                                   kind: .hotp, counter: 3, modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(counterBased)
+
+        await runSync { [store] local in
+            // Two codes spent while the sync was out: 3 → 5.
+            store!.advanceCounter(for: counterBased)
+            store!.advanceCounter(for: counterBased)
+            // The sync comes back with a copy stamped after both taps, that a
+            // merge settled on counter 4.
+            let settled = counterBased.edited(label: "Bank (personal)", counter: 4,
+                                              modifiedAt: Date().addingTimeInterval(1))
+            return SyncMergeOutcome(tokens: [settled], tombstones: local.tombstones,
+                                    uploads: [], didAdoptRemoteChanges: true)
+        }
+
+        let code = store.codes.first { $0.id == counterBased.id }
+        XCTAssertEqual(code?.label, "Bank (personal)", "the newer copy still wins")
+        XCTAssertEqual(code?.counter, 5, "but not the counter")
+    }
+
+    func testARenameMidSyncKeepsACounterTheSyncMovedOn() async {
+        let counterBased = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                                   kind: .hotp, counter: 3, modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(counterBased)
+
+        await runSync { [store] local in
+            // Renamed here while the sync was out...
+            if let index = store!.codes.firstIndex(where: { $0.id == counterBased.id }) {
+                store!.updateCode(store!.codes[index].edited(label: "Bank (personal)"), at: index)
+            }
+            // ...and it comes back with another device's copy, which spent 3 and 4.
+            let spentElsewhere = counterBased.edited(counter: 5, modifiedAt: Date().addingTimeInterval(-30))
+            return SyncMergeOutcome(tokens: [spentElsewhere], tombstones: local.tombstones,
+                                    uploads: [], didAdoptRemoteChanges: true)
+        }
+
+        let code = store.codes.first { $0.id == counterBased.id }
+        XCTAssertEqual(code?.label, "Bank (personal)", "the edit is kept")
+        XCTAssertEqual(code?.counter, 5, "but the counter never goes back")
+
+        let next = await runSync { _ in nil }
+        let uploaded = next?.tokens.first { $0.id == counterBased.id }
+        XCTAssertEqual(uploaded?.label, "Bank (personal)", "and the next sync offers both up")
+        XCTAssertEqual(uploaded?.counter, 5)
+    }
+
+    func testARenameMidSyncSurvivesACounterConflictTheMergeSettled() async {
+        let counterBased = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                                   kind: .hotp, counter: 3, modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(counterBased)
+        // Another device spent codes earlier, but this device's copy is newer:
+        // the merge keeps ours with that device's counter, as a new write.
+        let remote = SyncRecord.live(counterBased.edited(counter: 5, modifiedAt: Date().addingTimeInterval(-120)))
+
+        await runSync { [store] local in
+            // Renamed here while the sync was still fetching, before the merge ran.
+            if let index = store!.codes.firstIndex(where: { $0.id == counterBased.id }) {
+                store!.updateCode(store!.codes[index].edited(label: "Bank (personal)"), at: index)
+            }
+            return SyncMergeEngine.merge(local: local, remote: [remote])
+        }
+
+        let code = store.codes.first { $0.id == counterBased.id }
+        XCTAssertEqual(code?.label, "Bank (personal)", "the merged copy must not undo the rename")
+        XCTAssertEqual(code?.counter, 5)
     }
 
     func testATokenRestoredMidSyncLosesItsTombstone() async throws {
@@ -290,6 +405,99 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(Set(store.trash.map(\.code.id)), [original.id, copy.id])
     }
 
+    // MARK: - Saving an edit screen
+
+    func testAnEditOnlyChangesWhatTheScreenChanged() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 3, modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(opened)
+        // While the edit screen is open: a code is spent and the code is pinned.
+        store.advanceCounter(for: opened)
+        store.setPinned(true, for: opened)
+
+        let outcome = store.saveEdit(from: opened, to: opened.edited(label: "Bank (personal)",
+                                                                      modifiedAt: opened.modifiedAt))
+
+        XCTAssertEqual(outcome, .saved)
+        let saved = store.codes.first { $0.id == opened.id }
+        XCTAssertEqual(saved?.label, "Bank (personal)")
+        XCTAssertEqual(saved?.counter, 4, "the code spent meanwhile stays spent")
+        XCTAssertEqual(saved?.isPinned, true, "and the pin made meanwhile stays")
+    }
+
+    func testAnEditCanStillSetTheCounterOnPurpose() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 3)
+        store.addCode(opened)
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(counter: 9)), .saved)
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.counter, 9)
+    }
+
+    func testAnEditNeverLowersACounterThatMovedOnMeanwhile() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 3)
+        store.addCode(opened)
+        // Codes spent while the screen was open: 3 → 12.
+        for _ in 0..<9 { store.advanceCounter(for: opened) }
+
+        // The user nudged the stepper up from the 3 the screen opened with, and
+        // renamed it.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(label: "Bank (personal)", counter: 5)), .saved)
+
+        let saved = store.codes.first { $0.id == opened.id }
+        XCTAssertEqual(saved?.label, "Bank (personal)")
+        XCTAssertEqual(saved?.counter, 12, "a counter that goes back is a code already used")
+    }
+
+    func testAnEditThatSyncHasAlreadyOvertakenWritesNothing() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             kind: .hotp, counter: 3)
+        store.addCode(opened)
+        for _ in 0..<9 { store.advanceCounter(for: opened) }
+        let stamp = store.codes.first { $0.id == opened.id }?.modifiedAt
+
+        // Only the counter, raised to 5 — and it is already at 12.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(counter: 5)), .unchanged)
+
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.modifiedAt, stamp,
+                       "a save that changes nothing must not stamp the code as edited")
+    }
+
+    func testAnEditThatChangedNothingWritesNothing() async {
+        let opened = token("GitHub")
+        store.addCode(opened)
+        await waitUntil { self.sync.syncCallCount > 1 }
+        let callsBefore = sync.syncCallCount
+        let stored = store.codes.first { $0.id == opened.id }
+
+        // What the edit screen hands over when Save is tapped with nothing changed.
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(modifiedAt: opened.modifiedAt)), .unchanged)
+
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.modifiedAt, stored?.modifiedAt,
+                       "a newer stamp would beat a rename from another device not yet here")
+        try? await Task.sleep(for: .milliseconds(800))
+        XCTAssertEqual(sync.syncCallCount, callsBefore, "and nothing is synced")
+    }
+
+    func testAnEditToACodeDeletedMeanwhileIsReportedAndNotSaved() {
+        let opened = token("GitHub")
+        store.addCode(opened)
+        store.removeCode(opened)
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(label: "GitHub Work")), .deleted)
+        XCTAssertTrue(store.codes.isEmpty)
+    }
+
+    func testAnEditOntoAnotherCodesNameIsReported() {
+        let opened = token("GitHub")
+        store.addCode(opened)
+        store.addCode(token("GitLab"))
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(label: "GitLab")), .nameTaken)
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.label, "GitHub")
+    }
+
     func testARenameOntoAnotherCodesNameIsRefused() throws {
         let work = OTPCode(label: "GitHub", account: "work", secret: "JBSWY3DPEHPK3PXP")
         let personal = OTPCode(label: "GitHub", account: "personal", secret: "JBSWY3DPEHPK3PXQ")
@@ -331,6 +539,164 @@ final class OTPDataStoreSyncTests: XCTestCase {
         let next = await runSync { _ in nil }
         XCTAssertNotNil(next?.tombstones[replaced.id.uuidString],
                         "the replaced code still has to be deleted on the other devices")
+    }
+
+    func testDeletingFromICloudWaitsForTheSyncAlreadyRunning() async throws {
+        let gate = Gate()
+        holdSyncs(until: gate)
+
+        let syncing = Task { await store.syncNow() }
+        await waitUntil { self.sync.events.contains("sync started") }
+        let deleting = Task { try await store.disableSync(deleteCloudData: true) }
+        // An edit asks for a sync of its own while the delete is waiting.
+        store.addCode(token("GitHub"))
+        try await Task.sleep(for: .milliseconds(800))
+        XCTAssertFalse(sync.events.contains("deleted"), "the delete must wait for the running sync")
+
+        gate.isOpen = true
+        await syncing.value
+        try await deleting.value
+
+        XCTAssertEqual(sync.events, ["sync started", "sync finished", "deleted"],
+                       "and no sync may start before the delete is done")
+        XCTAssertFalse(store.isSyncEnabled)
+    }
+
+    /// Holds the fake's sync open until the test lets it finish.
+    private final class Gate { var isOpen = false }
+
+    private func holdSyncs(until gate: Gate) {
+        sync.handler = { [sync] _ in
+            sync!.events.append("sync started")
+            // Bounded, so a test that never opens the gate fails instead of hanging.
+            let deadline = ContinuousClock.now + .seconds(5)
+            while !gate.isOpen, ContinuousClock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(10))
+            }
+            sync!.events.append("sync finished")
+            return nil
+        }
+    }
+
+    func testDeletingFromICloudGivesUpOnASyncThatNeverFinishes() async {
+        store.cloudDeletionSyncTimeout = .milliseconds(200)
+        let gate = Gate()
+        holdSyncs(until: gate)
+
+        let syncing = Task { await store.syncNow() }
+        await waitUntil { self.sync.events.contains("sync started") }
+        var thrown: Error?
+        do {
+            try await store.disableSync(deleteCloudData: true)
+        } catch {
+            thrown = error
+        }
+
+        XCTAssertEqual(thrown as? OTPDataStore.CloudDeletionError, .syncStillRunning)
+        XCTAssertFalse(sync.events.contains("deleted"), "nothing is deleted under a running sync")
+        XCTAssertFalse(store.isDeletingCloudData, "Settings is usable again")
+        XCTAssertTrue(store.isSyncEnabled, "and sync stays on, so the delete can be retried")
+
+        gate.isOpen = true
+        await syncing.value
+    }
+
+    func testASecondDeleteFromICloudWaitsForTheFirst() async throws {
+        let gate = Gate()
+        holdSyncs(until: gate)
+
+        let syncing = Task { await store.syncNow() }
+        await waitUntil { self.sync.events.contains("sync started") }
+        let first = Task { try await store.disableSync(deleteCloudData: true) }
+        await waitUntil { self.store.isDeletingCloudData }
+        // Tapped again while the first is still waiting.
+        var secondReturned = false
+        let second = Task {
+            try await store.disableSync(deleteCloudData: true)
+            secondReturned = true
+        }
+        try await Task.sleep(for: .milliseconds(200))
+        XCTAssertFalse(secondReturned, "the second call waits for the first rather than reporting success")
+        XCTAssertTrue(store.isDeletingCloudData)
+
+        gate.isOpen = true
+        await syncing.value
+        try await first.value
+        try await second.value
+
+        XCTAssertEqual(sync.events, ["sync started", "sync finished", "deleted"], "one delete, and no sync during it")
+        XCTAssertFalse(store.isDeletingCloudData)
+        XCTAssertFalse(store.isSyncEnabled)
+    }
+
+    func testASecondDeleteFromICloudSharesTheFirstOnesFailure() async {
+        struct Offline: Error {}
+        sync.deleteError = Offline()
+        let gate = Gate()
+        holdSyncs(until: gate)
+
+        let syncing = Task { await store.syncNow() }
+        await waitUntil { self.sync.events.contains("sync started") }
+        let first = Task { try await store.disableSync(deleteCloudData: true) }
+        await waitUntil { self.store.isDeletingCloudData }
+        let second = Task { try await store.disableSync(deleteCloudData: true) }
+        try? await Task.sleep(for: .milliseconds(50))
+
+        gate.isOpen = true
+        await syncing.value
+        let firstFailed = await (try? first.value) == nil
+        let secondFailed = await (try? second.value) == nil
+
+        XCTAssertTrue(firstFailed)
+        XCTAssertTrue(secondFailed, "the second call reports the same failure")
+        XCTAssertTrue(store.isSyncEnabled, "and sync stays on")
+    }
+
+    func testAFailedDeleteFromICloudStillSyncsTheEditItCancelled() async {
+        struct Offline: Error {}
+        sync.deleteError = Offline()
+        var uploaded: [String] = []
+        sync.handler = { local in
+            uploaded = local.tokens.map(\.label)
+            return nil
+        }
+
+        // An edit, and then — before its sync has started — a delete that fails.
+        store.addCode(token("GitHub"))
+        do {
+            try await store.disableSync(deleteCloudData: true)
+            XCTFail("the delete was meant to fail")
+        } catch {}
+
+        XCTAssertTrue(store.isSyncEnabled, "a failed delete leaves sync on")
+        await waitUntil { uploaded.contains("GitHub") }
+    }
+
+    func testRestoringABackupThatRepeatsAnIDKeepsOneAndSyncs() async {
+        let first = token("GitHub")
+        let repeated = OTPCode(id: first.id, label: "GitLab", account: "user", secret: "JBSWY3DPEHPK3PXP")
+
+        store.replaceAll(with: [first, repeated])
+
+        XCTAssertEqual(store.codes.map(\.label), ["GitHub"], "the first copy of a repeated id is kept")
+        let snapshot = await runSync { _ in nil }
+        XCTAssertEqual(snapshot?.tokens.count, 1)
+    }
+
+    func testRestoringAnOlderBackupNeverPutsACounterBack() async {
+        let counterBased = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                                   kind: .hotp, counter: 3)
+        store.addCode(counterBased)
+        // Backed up on 3 under another name, then codes 3 and 4 were spent here.
+        let backedUp = counterBased.edited(label: "Bank (old)")
+        store.advanceCounter(for: counterBased)
+        store.advanceCounter(for: counterBased)
+
+        store.replaceAll(with: [backedUp])
+
+        let code = store.codes.first { $0.id == counterBased.id }
+        XCTAssertEqual(code?.label, "Bank (old)", "the backup still wins everything else")
+        XCTAssertEqual(code?.counter, 5, "but a spent code must not come back")
     }
 
     func testReadingAnEncryptedBackupWithTheWrongPasswordChangesNothing() async throws {
@@ -544,6 +910,15 @@ private final class FakeTokenSyncService: TokenSyncService {
         return await handler?(local)
     }
 
-    func deleteRemoteRecords() async throws {}
+    /// What happened, in order, for tests of how syncing and deleting interleave.
+    var events: [String] = []
+
+    /// Thrown by `deleteRemoteRecords` when set, as a network failure would be.
+    var deleteError: Error?
+
+    func deleteRemoteRecords() async throws {
+        if let deleteError { throw deleteError }
+        events.append("deleted")
+    }
     func handleRemoteNotification(userInfo: [AnyHashable: Any]) -> Bool { false }
 }

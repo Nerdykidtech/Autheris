@@ -85,6 +85,23 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     /// one of them ends up asking the other way round.
     var isTimeBased: Bool { kind == .totp }
 
+    /// The counters an edit may set: the one this code has now, and up to 10,000
+    /// past it.
+    ///
+    /// Never lower, because a counter only moves forward — sync keeps the higher
+    /// of two (see `SyncMergeEngine.resolve`), each lower one being a code already
+    /// shown. The addition can't overflow: a counter can be as large as
+    /// `maximumCounter` — `Int.max` on a 64-bit `Int`, and past it on a 32-bit
+    /// one, as some Apple Watches have — because an `otpauth://` link may ask for
+    /// it, and a plain `+` there trapped as soon as the edit screen opened.
+    /// `Int(clamping:)` and `addingReportingOverflow` keep this right at either
+    /// width.
+    var editableCounterRange: ClosedRange<Int> {
+        let current = Int(clamping: counter)
+        let (upper, overflowed) = current.addingReportingOverflow(10_000)
+        return current...(overflowed ? Int.max : upper)
+    }
+
     var currentCode: String { code(at: Date()) }
 
     /// Whether `other` goes by the same name: label and account, ignoring case.

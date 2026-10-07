@@ -3,7 +3,9 @@ import SwiftUI
 /// Focused sheet to view, copy, or edit one token's setup key.
 /// Editing requires an explicit Save; dismissing with unsaved changes asks for confirmation.
 struct TokenSecretView: View {
-    let code: OTPCode
+    /// The token as this screen opened it. `@State` so it stays put while sync
+    /// changes the one the card passes in; see `EditTokenView.code`.
+    @State private var code: OTPCode
     @ObservedObject var dataStore: OTPDataStore
     @Environment(\.dismiss) private var dismiss
     
@@ -21,7 +23,7 @@ struct TokenSecretView: View {
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
-        self.code = code
+        _code = State(initialValue: code)
         self.dataStore = dataStore
         _secret = State(initialValue: code.secret)
     }
@@ -128,15 +130,32 @@ struct TokenSecretView: View {
             return
         }
         
-        // `edited()` keeps every field this screen does not touch — including the
-        // pin, which rebuilding the token by hand used to reset.
-        let updatedCode = code.edited(secret: secret)
-        
-        if let index = dataStore.codes.firstIndex(where: { $0.id == code.id }) {
-            dataStore.updateCode(updatedCode, at: index)
-            Haptics.notify(.success)
+        // Only the secret changes, applied to the token as it is *now*: sync may
+        // have renamed it, pinned it or moved its counter meanwhile. See
+        // `OTPDataStore.saveEdit`.
+        switch dataStore.saveEdit(from: code, to: code.edited(secret: secret, modifiedAt: code.modifiedAt)) {
+        case .saved:
+            break
+        case .unchanged:
+            // The same key as before.
+            dismiss()
+            return
+        case .nameTaken:
+            // Only reachable if sync brought in a code with this one's name while
+            // the screen was open; the secret alone can't cause it.
+            alertMessage = String(localized: "Another token already uses this service name and account. Choose a different name.")
+            showingAlert = true
+            return
+        case .deleted:
+            alertMessage = String(localized: "This token was deleted on another device, so your changes weren't saved.")
+            showingAlert = true
+            return
+        case .vaultUnavailable:
+            alertMessage = OTPDataStore.vaultUnavailableMessage
+            showingAlert = true
+            return
         }
-        
+        Haptics.notify(.success)
         dismiss()
     }
 }

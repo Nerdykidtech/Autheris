@@ -85,8 +85,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
         // `deliver` takes the iOS spelling of the payload dictionary; rebuilding
         // it is the only difference between the two platform callbacks.
+        // `String` keys can't repeat, but `uniquingKeysWith:` all the same, so
+        // no call in the app can trap on a repeated key.
         let payload = Dictionary(
-            uniqueKeysWithValues: userInfo.map { (AnyHashable($0.key), $0.value) }
+            userInfo.map { (AnyHashable($0.key), $0.value) },
+            uniquingKeysWith: { first, _ in first }
         )
         Task { @MainActor in
             _ = await SyncRemoteNotificationRouter.deliver(userInfo: payload)

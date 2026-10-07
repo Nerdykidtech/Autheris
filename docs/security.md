@@ -9,7 +9,7 @@ Autheris has no account, no analytics and no server of its own, stores nothing i
 Every service in the list shows a brand icon, and it is looked up by name at **`img.logo.dev`** with a publishable key in `Vaultic/Info.plist` (`Vaultic/IssuerBranding.swift` is the only place that talks to it). Two things are worth being precise about, because the surrounding copy says "nothing leaves your device":
 
 - The lookup sends the **service's name** — "GitHub", say — and the request's IP address. It does not send the secret, the account, or anything that identifies the user to us, and no result is stored anywhere but the device's own cache (`Caches/IssuerLogos`).
-- It is still a statement about *which services someone has accounts with*, and that belongs to the user rather than to the app. **Settings → Privacy → Fetch service logos** turns it off; with it off nothing is looked up, services whose icons are already cached keep showing them, and the rest fall back to a letter. It is **on by default**, which is what the app has always done.
+- It is still a statement about *which services someone has accounts with*, and that belongs to the user rather than to the app. **Settings → Privacy → Fetch service logos** turns it off; with it off nothing is looked up, services whose icons are already cached keep showing them, and the rest fall back to a letter. It is **off for a new install**: the onboarding's privacy page explains it and asks, before the first code is added. Installs from before 3.1, which have always looked logos up, keep it on until they turn it off — onboarding writes the new install's answer, and an install that never wrote the key still reads it as on (`Vaultic/OnboardingChoices.swift`).
 
 The honest summary: the *codes* never leave the device, and the *list of services* does unless that switch is off. A future release could bundle a small icon set or proxy the lookup so neither does — both are deliberate follow-ups rather than accidents.
 
@@ -46,7 +46,7 @@ With App Lock off, none of this applies: the user has chosen not to be asked. On
 - **Encrypted backups** (`.autheris`) use AES-256-GCM with a key from PBKDF2-HMAC-SHA256 (CommonCrypto). The envelope is versioned: version 2 records its iteration count, written as **600,000**. Version 1 files used a fixed 120,000 and still open. The stored count is bounds-checked, so a forged file can't skip the work or hang the app deriving a key. New encrypted backups need a password of at least **10 characters**. See `Vaultic/BackupCrypto.swift`.
 - **Unencrypted backups** (`.json`) are plain JSON, which is every secret in readable form. The choice is explicit in the UI, which offers the encrypted backup first.
 - **Both kinds stay on the device.** Files are written with `.completeFileProtection` and excluded from iCloud Backup and Finder/iTunes backups (`isExcludedFromBackup`, on the folder and on each file). Backups written by earlier versions get the same treatment at launch. Sharing a backup out of the app is the user's own decision.
-- **Restoring replaces everything.** Every restored code is stamped with a fresh `modifiedAt`, so the restore counts as a newer write than any tombstone a later delete left in iCloud and isn't deleted again at the next sync. A file picked from Files is read while its security scope is open and held until the restore is confirmed.
+- **Restoring replaces everything.** Every restored code is stamped with a fresh `modifiedAt`, so the restore counts as a newer write than any tombstone a later delete left in iCloud and isn't deleted again at the next sync. The one thing a restore doesn't put back is a lower counter: a counter-based code still in the vault keeps the higher of its own counter and the backup's, because each lower one is a code already shown — the same rule sync follows. A file picked from Files is read while its security scope is open and held until the restore is confirmed.
 
 ## Imports
 
@@ -56,7 +56,7 @@ Codes from another app's export, an `autheris://` link or a transfer QR code all
 
 ## Apple Watch
 
-The watch app is read-only and generates codes itself from a copy of the list the iPhone sends over WatchConnectivity. It stores that copy in its own Keychain, with the same protection class as the phone. A list too large for an application context is sent as a file. The phone stages that file with `.completeFileProtectionUnlessOpen`, so it is unreadable while the phone is locked but a transfer already in progress can finish, and deletes it once the transfer is done (`WatchRelayStaging` in `Vaultic/Sync/WatchTokenRelay.swift`).
+The watch app is read-only and generates codes itself from a copy of the list the iPhone sends over WatchConnectivity — only while **Settings → Privacy → Send codes to Apple Watch** is on. Turning it off removes the copy from the watch. It stores that copy in its own Keychain, with the same protection class as the phone. A list too large for an application context is sent as a file. The phone stages that file with `.completeFileProtectionUnlessOpen`, so it is unreadable while the phone is locked but a transfer already in progress can finish, and deletes it once the transfer is done (`WatchRelayStaging` in `Vaultic/Sync/WatchTokenRelay.swift`).
 
 ## What the privacy screen covers
 
@@ -77,7 +77,7 @@ The trash is deliberately **local to the device and never synced**. A delete sti
 
 It is stored in the Keychain under its own account, with the same protection as live codes. The trade-off is explicit: a deleted code's secret stays on the device for those 7 days instead of being gone the moment you tap delete. Use **Delete Now** (swipe a row) or **Delete All** to remove it immediately.
 
-Known gap: restoring a backup replaces the token list wholesale and does **not** route the replaced codes through the trash, so a restore is still irreversible.
+Restoring a backup goes through the trash too: every code the backup doesn't contain is tombstoned and moved to Recently Deleted, so a restore from the wrong backup can be undone within the same 7 days.
 
 ## Counter-based codes
 
@@ -94,7 +94,7 @@ What `OTPKind` and `OTPCode.counter` are for:
 - **Advancing is explicit, never automatic.** Copying a code does not spend it: a copy is not evidence the service accepted it, and a counter spent by accident is a code the user can no longer read off the screen to retype. The only paths that advance it are the card's button, its context menu, and the counter stepper in **Edit** (which exists to catch up a counter the service has moved past).
 - The counter is capped at `OTPCode.maximumCounter`, `Int64.max` — the largest value the CloudKit `counter` field carries back. `OTPAuthURLParser` and the import parsers clamp to it rather than trusting a number a stranger wrote into a QR code or a backup.
 - **The watch shows it and cannot move it.** The watch app is read-only by design and advancing is a write, so a counter-based page says which counter it is and that advancing happens on the iPhone.
-- **Sync of the counter is best effort.** Two devices that each spend a code before syncing produce two different counters and the newer `modifiedAt` wins, so one increment is lost; the service usually accepts a few counters ahead, and **Next Code** is there if it does not. This is the same last-write-wins rule the rest of sync uses, applied to a field where the "loser" is a spent code rather than an edit — worth knowing before reporting a code that "stopped working" on a second device.
+- **Sync keeps the higher counter.** Two devices that each spend codes before syncing end up on the higher of their two counters, whichever copy wins everything else — including an edit made on one device while a sync was out (see the sync rules below). It still can't stop two devices that are both offline from showing the same next code, since neither knows the other spent it; the service usually accepts a few counters ahead, and **Next Code** is there if it does not.
 
 Imports: Aegis and andOTP HOTP entries are imported with their counters, and so are Google Authenticator's (its export has carried HOTP entries all along; the parser used to drop them silently). 2FAS HOTP entries are still skipped — see the note on `ExternalImportParser`.
 
@@ -105,6 +105,8 @@ Sync is opt-in and only ever uses the **private** CloudKit database, which is sc
 - `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written exclusively through `CKRecord.encryptedValues`, so CloudKit encrypts them end to end with keys it manages on the user's behalf. They never appear as readable fields and are not visible in the CloudKit dashboard. (`isPinned` is not a secret, but it is still a statement about which accounts matter to this user, so it is encrypted alongside the label rather than left readable on Apple's servers.)
 - Only `modifiedAt`, `deleted`, `fingerprint`, `algorithm`, `digits`, `period`, `kind` and `counter` are plain fields. None of them reveal a secret: `kind` says whether the code is time- or counter-based and `counter` how many times it has been used, neither of which describes the account; `fingerprint` is a SHA-256 over the record content (including the token id, so identical secrets on two records never collide) and is a one-way hash of a high-entropy base32 secret.
 - Deleting a token replaces its record with a **tombstone** whose encrypted fields are explicitly cleared, so the secret does not linger in iCloud after a delete.
+- A counter-based code's `counter` is never merged backwards. Every other field is last-write-wins, but a counter that two devices disagree on keeps the higher value, because each lower one is a code that has already been shown and may already have been accepted.
+- **Delete Tokens from iCloud** removes every record this app owns from the private database and turns sync off on that device. It does not reach into the user's other devices: each keeps its own copy, and one that still has sync on uploads it again at its next sync. That is why the dialog asks for iCloud Sync to be turned off on the other devices first.
 
 ## Contact
 

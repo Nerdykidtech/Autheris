@@ -33,7 +33,8 @@ struct SettingsView: View {
     @AppStorage(AppLockEnabledKey) private var enableAppLock = false
     /// Same key the logo lookup reads, so the switch and the network request cannot
     /// drift apart.
-    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = true
+    @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = AppPreferences.fetchIssuerLogosDefault
+    @AppStorage(AppPreferences.sendCodesToWatchKey) private var sendCodesToWatch = AppPreferences.sendCodesToWatchDefault
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
@@ -55,6 +56,9 @@ struct SettingsView: View {
     @State private var transferSheet: TransferSheet?
     @State private var showingImporter = false
     @State private var importMessage: (title: String, body: String)?
+    /// Whether the import behind `importMessage` earns a review ask once its
+    /// alert is dismissed. See `ReviewPromptPolicy.importEarnsAsk`.
+    @State private var importEarnedReviewAsk = false
     @State private var showingChangelog = false
     @State private var showingRecentlyDeleted = false
     @State private var showingSupportMail = false
@@ -82,6 +86,9 @@ struct SettingsView: View {
                 if newValue {
                     isICloudSyncEnabled = true
                     dataStore.setSyncEnabled(true)
+                    // Only here, where the user turned it on: the app can flip
+                    // the stored value itself, which must not count.
+                    ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
                 } else {
                     showingTeardownDialog = true
                 }
@@ -120,7 +127,11 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Tokens stay on this device either way. Deleting from iCloud also removes them from your other devices.")
+            // Deleting the iCloud copy does not reach into other devices: each one
+            // with sync still on holds its own copy and uploads it again at its
+            // next sync. So the dialog says what to do first, rather than
+            // promising a removal it cannot make.
+            Text("Tokens stay on this device either way. Before deleting from iCloud, turn off iCloud Sync on your other devices — any device that still has it on will upload its tokens again.")
         }
         .confirmationDialog(
             "Delete Tokens from iCloud?",
@@ -132,7 +143,7 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Removes your tokens from iCloud and your other devices — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept.")
+            Text("Removes your tokens from iCloud — including data saved by earlier versions of Autheris — then turns sync off. Tokens on this device are kept. Turn off iCloud Sync on your other devices first: any device that still has it on will upload its tokens again.")
         }
         .alert(
             "iCloud Sync",
@@ -224,11 +235,11 @@ struct SettingsView: View {
             Text(importMessage?.title ?? "Import"),
             isPresented: Binding(
                 get: { importMessage != nil },
-                set: { if !$0 { importMessage = nil } }
+                set: { if !$0 { dismissImportMessage() } }
             ),
             presenting: importMessage
         ) { _ in
-            Button("OK") { importMessage = nil }
+            Button("OK") { dismissImportMessage() }
         } message: { message in
             Text(message.body)
         }
@@ -249,7 +260,7 @@ struct SettingsView: View {
             #endif
         }
         // A change to any setting on this screen is what earns the review ask —
-        // see `ReviewPrompt.settingsChanged`.
+        // see `ReviewPrompt.momentFinished`.
         //
         // `onChange` does not fire for the values already present when the screen
         // appears, so opening Settings is never itself "doing something", and
@@ -268,6 +279,22 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var syncStatusRow: some View {
+        // The delete can take several seconds — it waits for any sync already
+        // running — so it says so rather than leaving the screen looking idle.
+        if dataStore.isDeletingCloudData {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Deleting from iCloud…")
+                    .font(.subheadline.weight(.medium))
+            }
+        } else {
+            syncStatusDetails
+        }
+    }
+
+    @ViewBuilder
+    private var syncStatusDetails: some View {
         HStack(spacing: 10) {
             if dataStore.syncStatus.isBusy {
                 ProgressView()
@@ -336,6 +363,7 @@ struct SettingsView: View {
                     return
                 }
 
+                importEarnedReviewAsk = ReviewPromptPolicy.importEarnsAsk(added: added)
                 importMessage = (
                     String(localized: "Import Complete"),
                     String(localized: "Added \(added) tokens to Autheris.")
@@ -352,9 +380,19 @@ struct SettingsView: View {
     /// Called by any change to a setting on this screen.
     ///
     /// `ReviewPrompt` owns the rules and records the ask; this only reports that
-    /// something changed, which is the one moment that earns an ask.
+    /// something changed, which is one of the moments that earns an ask.
     private func settingsDidChange() {
-        ReviewPrompt.settingsChanged(codeCount: dataStore.codes.count)
+        ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+    }
+
+    /// Clears the import result, asking for a review if the import earned it —
+    /// now, as the alert goes, rather than on top of it.
+    private func dismissImportMessage() {
+        importMessage = nil
+        if importEarnedReviewAsk {
+            importEarnedReviewAsk = false
+            ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+        }
     }
 
     private func presentSupportEmail() {
@@ -508,6 +546,13 @@ struct SettingsView: View {
             // exactly what it does rather than leaving it to the label.
             Toggle("Fetch service logos", isOn: $fetchIssuerLogos)
                 .platformAccentToggle()
+
+            // Also leaves the device: to the user's own watch. Only an iPhone
+            // can pair one.
+            if WatchTokenRelay.deviceCanPairWatch {
+                Toggle("Send codes to Apple Watch", isOn: $sendCodesToWatch)
+                    .platformAccentToggle()
+            }
         } header: {
             Text("Privacy")
         } footer: {
@@ -524,6 +569,9 @@ struct SettingsView: View {
                 Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
                 #endif
                 Text("**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.")
+                if WatchTokenRelay.deviceCanPairWatch {
+                    Text("**Send codes to Apple Watch** copies your codes, setup keys included, to Autheris on your paired Apple Watch so it can show them. Turned off, they are removed from the watch.")
+                }
             }
             .font(.caption)
             .foregroundColor(.secondary)
@@ -571,7 +619,10 @@ struct SettingsView: View {
     ///
     /// macOS has no Face ID, and on a Mac without Touch ID the system falls back to
     /// the login password — so naming Face ID there would be wrong twice over.
-    private var appLockToggleLabel: String {
+    ///
+    /// `LocalizedStringKey`, not `String`: a `String` reaches `Toggle` as text that
+    /// is already final, so this label shipped in English in every language.
+    private var appLockToggleLabel: LocalizedStringKey {
         #if os(macOS)
         return "Require Touch ID or password"
         #else
@@ -584,6 +635,8 @@ struct SettingsView: View {
         Section {
             Toggle("Sync with iCloud", isOn: syncToggleBinding)
                 .platformAccentToggle()
+                // Turning sync off or on mid-delete would race the delete.
+                .disabled(dataStore.isDeletingCloudData)
     
             syncStatusRow
     
@@ -602,6 +655,7 @@ struct SettingsView: View {
                 } label: {
                     Text("Delete Tokens from iCloud")
                 }
+                .disabled(dataStore.isDeletingCloudData)
             }
         } header: {
             Text("iCloud Sync")

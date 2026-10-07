@@ -29,6 +29,74 @@ final class WatchTokenPayloadTests: XCTestCase {
                 timerRingHex: timerRingHex, isPinned: isPinned, modifiedAt: modifiedAt)
     }
 
+    // MARK: - Sending turned off
+
+    func testTurningSendingOffSendsAnEmptyListMarkedAsStopped() {
+        let outgoing = WatchRelayOutgoing(tokens: [token()], sendingEnabled: false)
+
+        XCTAssertEqual(outgoing.tokens, [])
+        XCTAssertTrue(outgoing.sendingStopped)
+    }
+
+    func testSendingOnSendsTheListUnmarked() {
+        let tokens = [token(), token(label: "AWS")]
+        let outgoing = WatchRelayOutgoing(tokens: tokens, sendingEnabled: true)
+
+        XCTAssertEqual(outgoing.tokens, tokens)
+        XCTAssertFalse(outgoing.sendingStopped)
+    }
+
+    // MARK: - The watch's saved copy
+
+    func testASavedCopyFromThisInstallIsKept() {
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: "A"))
+    }
+
+    /// Deleting the watch app erases its install ID but not its Keychain copy.
+    func testASavedCopyLeftByAnEarlierInstallIsDropped() {
+        XCTAssertFalse(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: nil))
+        XCTAssertFalse(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: "A", currentInstallID: "B"))
+    }
+
+    /// Saved by a build from before install IDs: kept, so an update doesn't
+    /// empty the watch.
+    func testASavedCopyFromAnEarlierBuildIsKept() {
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: nil, currentInstallID: nil))
+        XCTAssertTrue(WatchTokenPayload.cacheBelongsToThisInstall(cacheInstallID: nil, currentInstallID: "A"))
+    }
+
+    /// Every settings change reaches the relay; only the watch switch's should
+    /// make it send.
+    func testTheRelayActsOnlyWhenTheWatchSwitchChanges() {
+        var sendingSwitch = WatchSendingSwitch(lastSeen: true)
+
+        XCTAssertFalse(sendingSwitch.update(to: true))  // another setting changed
+        XCTAssertTrue(sendingSwitch.update(to: false))  // turned off
+        XCTAssertFalse(sendingSwitch.update(to: false))
+        XCTAssertTrue(sendingSwitch.update(to: true))   // turned back on
+    }
+
+    func testTheStoppedMarkSurvivesBothTransports() throws {
+        let sentAt = Date(timeIntervalSince1970: 1_800_000_000)
+
+        let blob = try WatchTokenPayload.encode([], sentAt: sentAt, sendingStopped: true)
+        XCTAssertEqual(WatchTokenPayload.decode(blob)?.sendingStopped, true)
+
+        let context = try XCTUnwrap(WatchTokenPayload.applicationContext(for: [], sentAt: sentAt,
+                                                                         sendingStopped: true))
+        let decoded = try XCTUnwrap(WatchTokenPayload.decode(applicationContext: context))
+        XCTAssertTrue(decoded.sendingStopped)
+        XCTAssertEqual(decoded.tokens, [])
+    }
+
+    /// A phone on an earlier build sends no mark at all, and an ordinary list
+    /// leaves it out too, so a watch on an earlier build reads it as before.
+    func testAPayloadWithoutTheMarkIsAnOrdinaryList() throws {
+        let blob = try WatchTokenPayload.encode([token()])
+        XCTAssertFalse(String(decoding: blob, as: UTF8.self).contains("sendingStopped"))
+        XCTAssertEqual(WatchTokenPayload.decode(blob)?.sendingStopped, false)
+    }
+
     // MARK: - Round trip
 
     func testTokensSurviveARoundTripUnchanged() throws {
@@ -145,5 +213,90 @@ final class WatchTokenPayloadTests: XCTestCase {
     func testTheFirstPayloadIsAlwaysAccepted() {
         let decoded = WatchTokenPayload.Decoded(sentAt: .distantPast, tokens: [])
         XCTAssertTrue(WatchTokenPayload.isNewer(decoded, than: .distantPast))
+    }
+
+    /// A stamp from the future came from a phone whose clock was wrong. Trusting
+    /// it would ignore every list after the clock was put right.
+    func testAStampFromTheFutureIsNotTrusted() {
+        let watchNow = Date(timeIntervalSince1970: 1_700_000_000)
+        let fromAFastClock = watchNow.addingTimeInterval(365 * 24 * 60 * 60)
+        let corrected = WatchTokenPayload.Decoded(sentAt: watchNow, tokens: [token(label: "New")])
+
+        XCTAssertTrue(WatchTokenPayload.isNewer(corrected, than: fromAFastClock, now: watchNow))
+    }
+
+    func testAStampSlightlyAheadIsStillTrusted() {
+        let watchNow = Date(timeIntervalSince1970: 1_700_000_000)
+        let applied = watchNow.addingTimeInterval(30)
+        let older = WatchTokenPayload.Decoded(sentAt: watchNow, tokens: [token(label: "Old")])
+
+        XCTAssertFalse(WatchTokenPayload.isNewer(older, than: applied, now: watchNow),
+                       "a phone a few seconds ahead is ordinary, and the order still counts")
+    }
+}
+
+/// When onboarding hears that the paired watch changed. The relay reports the
+/// pairing on every send, so only the first report and a real change may post.
+@MainActor
+final class WatchPairingStateTests: XCTestCase {
+
+    private var wasKnown = false
+    private var wasPaired = false
+    private var posts = 0
+    private var observer: NSObjectProtocol?
+
+    override func setUp() async throws {
+        try await super.setUp()
+        wasKnown = WatchTokenRelay.isPairingKnown
+        wasPaired = WatchTokenRelay.hasPairedWatch
+        observer = NotificationCenter.default.addObserver(
+            forName: WatchTokenRelay.pairedWatchDidChange, object: nil, queue: nil
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.posts += 1 }
+        }
+    }
+
+    override func tearDown() async throws {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+        WatchTokenRelay.forgetPairing()
+        if wasKnown { WatchTokenRelay.notePairedWatch(wasPaired) }
+        try await super.tearDown()
+    }
+
+    /// In the test itself, not `setUp`: the app's own relay can report while
+    /// an async `setUp` waits, and a synchronous test can't be interrupted.
+    private func startUnknown() {
+        WatchTokenRelay.forgetPairing()
+        posts = 0
+    }
+
+    func testTheFirstReportOfNoWatchIsKnownAndPosted() {
+        startUnknown()
+        XCTAssertFalse(WatchTokenRelay.isPairingKnown)
+
+        WatchTokenRelay.notePairedWatch(false)
+
+        XCTAssertTrue(WatchTokenRelay.isPairingKnown)
+        XCTAssertFalse(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 1)
+    }
+
+    func testARepeatedReportPostsNothing() {
+        startUnknown()
+        WatchTokenRelay.notePairedWatch(true)
+        WatchTokenRelay.notePairedWatch(true)
+
+        XCTAssertTrue(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 1)
+    }
+
+    func testAChangePostsAgain() {
+        startUnknown()
+        WatchTokenRelay.notePairedWatch(false)
+        WatchTokenRelay.notePairedWatch(true)
+        WatchTokenRelay.notePairedWatch(false)
+
+        XCTAssertFalse(WatchTokenRelay.hasPairedWatch)
+        XCTAssertEqual(posts, 3)
     }
 }

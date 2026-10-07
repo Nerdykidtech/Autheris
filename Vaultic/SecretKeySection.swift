@@ -48,7 +48,7 @@ struct SecretKeySection: View {
                     TextField("Setup key", text: $secret)
                         .platformNoAutocapitalization()
                         .autocorrectionDisabled()
-                        .platformTextContentType(.password)
+                        .platformSetupKeyContentType()
                         .asciiCapableKeyboard()
                         .font(.system(size: 16, weight: .medium, design: .monospaced))
                         .lineLimit(1)

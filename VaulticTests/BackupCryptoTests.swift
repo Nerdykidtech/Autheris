@@ -45,6 +45,19 @@ final class BackupCryptoTests: XCTestCase {
         XCTAssertEqual(try decrypt(encrypted), plaintext)
     }
 
+    func testAnAccentedPasswordOpensHoweverItsAccentsWereTyped() throws {
+        // "é" as one code point, and as "e" plus a combining accent: the same
+        // password to the person typing it, different bytes to PBKDF2.
+        let composed = "caf\u{00E9} au lait 2026"
+        let decomposed = "cafe\u{0301} au lait 2026"
+        XCTAssertNotEqual(Array(composed.utf8), Array(decomposed.utf8))
+
+        let sealed = try encrypt(password: decomposed)
+
+        XCTAssertEqual(try decrypt(sealed, password: composed), plaintext)
+        XCTAssertEqual(try decrypt(sealed, password: decomposed), plaintext)
+    }
+
     func testEncryptedFileContainsNoPlaintext() throws {
         let encrypted = try encrypt()
 

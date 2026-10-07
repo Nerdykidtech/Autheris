@@ -280,6 +280,86 @@
           }
         }
       }
+    },
+    "Turn on Send codes to Apple Watch in Autheris on your iPhone to see your codes here." : {
+      "localizations" : {
+        "de-DE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schalte „Codes an Apple Watch senden“ in Autheris auf deinem iPhone ein, um deine Codes hier zu sehen."
+          }
+        },
+        "es-ES" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activa «Enviar códigos al Apple Watch» en Autheris en tu iPhone para ver tus códigos aquí."
+          }
+        },
+        "fr-FR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activez « Envoyer les codes à l'Apple Watch » dans Autheris sur votre iPhone pour voir vos codes ici."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhoneのAutherisで「Apple Watchにコードを送信」をオンにすると、ここにコードが表示されます。"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ative “Enviar códigos ao Apple Watch” no Autheris do seu iPhone para ver seus códigos aqui."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在 iPhone 上的 Autheris 中打开“将验证码发送到 Apple Watch”，即可在此查看验证码。"
+          }
+        }
+      }
+    },
+    "Turned Off" : {
+      "localizations" : {
+        "de-DE" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgeschaltet"
+          }
+        },
+        "es-ES" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivado"
+          }
+        },
+        "fr-FR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Désactivé"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "オフ"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativado"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已关闭"
+          }
+        }
+      }
     }
   },
   "version" : "1.3"

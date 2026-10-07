@@ -154,16 +154,21 @@ extension View {
         #endif
     }
 
-    /// An AutoFill hint for a text field.
+    /// Marks a field that holds a token's setup key as *not* a password.
     ///
-    /// iOS uses these to offer a saved keychain password or the user's own name.
-    /// macOS has no equivalent AutoFill for a plain `TextField`, so the hint is
-    /// dropped there rather than approximated with something that would behave
-    /// differently.
+    /// A `SecureField` beside an account field is what iOS AutoFill takes for a
+    /// login form, and tagging the two `.username` and `.password` — which these
+    /// fields used to be — makes certain of it: AutoFill offers a saved password
+    /// *into* the setup-key field, and can offer to save the setup key to the
+    /// Passwords app on the way out, which would put a secret that is kept
+    /// `ThisDeviceOnly` into iCloud Keychain. `.oneTimeCode` is the hint that
+    /// keeps password AutoFill away, and it is what the field holds in spirit.
+    ///
+    /// macOS has no equivalent AutoFill for these fields, so it is a no-op there.
     @ViewBuilder
-    func platformTextContentType(_ type: PlatformTextContentType) -> some View {
+    func platformSetupKeyContentType() -> some View {
         #if os(iOS)
-        self.textContentType(type.uiKitValue)
+        self.textContentType(.oneTimeCode)
         #else
         self
         #endif
@@ -223,22 +228,6 @@ extension View {
         self
         #endif
     }
-}
-
-/// The AutoFill hints this app asks for, named once so that the call sites do
-/// not have to care whether `UITextContentType` exists on their platform.
-enum PlatformTextContentType {
-    case username
-    case password
-
-    #if os(iOS)
-    var uiKitValue: UITextContentType {
-        switch self {
-        case .username: .username
-        case .password: .password
-        }
-    }
-    #endif
 }
 
 /// A row of colour swatches.

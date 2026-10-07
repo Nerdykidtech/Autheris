@@ -30,6 +30,22 @@ final class WindowCaptureExclusion: ObservableObject {
     /// Whether the app is currently excluding its windows from capture.
     @Published private(set) var isExcluding = false
 
+    /// Re-applies the setting whenever a window comes forward. A sheet is a
+    /// window of its own, and one opened after the setting was applied — Edit,
+    /// View Secret, the Transfer QR code — would otherwise stay capturable,
+    /// since nothing in the view that hosts this redraws when a sheet opens.
+    /// Never removed: this object lives as long as the app does.
+    private var windowObservers: [NSObjectProtocol] = []
+
+    init() {
+        let center = NotificationCenter.default
+        windowObservers = [NSWindow.didBecomeKeyNotification, NSWindow.didBecomeMainNotification].map { name in
+            center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.apply() }
+            }
+        }
+    }
+
     /// Applies, or lifts, the exclusion across every window the app owns.
     func setExcluding(_ excluding: Bool) {
         guard excluding != isExcluding else { return }

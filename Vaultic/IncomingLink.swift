@@ -46,7 +46,7 @@ nonisolated enum IncomingLink: Equatable {
         }
         // Base64 first, as the transfer screen encodes it; JSON text otherwise.
         let data = Data(base64Encoded: payload) ?? Data(payload.utf8)
-        guard let tokens = decodeTokens(data), !tokens.isEmpty else { return nil }
+        guard let tokens = decodeTokens(data).map(withUsableSecrets), !tokens.isEmpty else { return nil }
         return .tokens(tokens)
     }
 
@@ -96,7 +96,8 @@ nonisolated enum IncomingLink: Equatable {
         let isCompact = items.first(where: { $0.name == "v" })?.value == "2"
         guard let dataString = items.first(where: { $0.name == "data" })?.value,
               let data = decodeBase64URL(dataString),
-              let tokens = isCompact ? TransferPayload.decodeCompact(data) : decodeTokens(data),
+              let decoded = isCompact ? TransferPayload.decodeCompact(data) : decodeTokens(data),
+              case let tokens = withUsableSecrets(decoded),
               !tokens.isEmpty
         else {
             return .failure(
@@ -126,6 +127,15 @@ nonisolated enum IncomingLink: Equatable {
             )
         }
         return parseOTPAuth(inner)
+    }
+
+    /// Drops codes whose setup key isn't Base32, as every other import does.
+    ///
+    /// An Autheris export can be written by hand or by another tool, and nothing
+    /// in the JSON or the compact format checks the key. A code with an empty or
+    /// broken one imported fine and then showed a code no service would accept.
+    private static func withUsableSecrets(_ tokens: [OTPCode]) -> [OTPCode] {
+        tokens.filter { OTPGenerator.isValidSecret($0.secret) }
     }
 
     /// An Autheris export is either the current `ExportData` envelope or, from

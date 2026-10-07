@@ -56,6 +56,9 @@ nonisolated enum WatchTokenPayload {
         /// When the phone sent it. The watch applies the newest it has seen.
         let sentAt: Date
         let tokens: [OTPCode]
+        /// The iPhone has "Send codes to Apple Watch" turned off. The list is
+        /// then empty, and the watch says why rather than "No Codes".
+        var sendingStopped = false
     }
 
     // MARK: - Encoding
@@ -65,8 +68,14 @@ nonisolated enum WatchTokenPayload {
     /// JSON rather than a property list because the application context *itself*
     /// has to be a property list, so the tokens travel inside it as a single
     /// `Data` value — and JSON keeps that blob small.
-    static func encode(_ tokens: [OTPCode], sentAt: Date = Date()) throws -> Data {
-        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt, tokens: tokens))
+    ///
+    /// - Parameter sendingStopped: Set when sending is turned off, with an
+    ///   empty `tokens`. Optional on the wire and left out when `false`, so a
+    ///   watch on an older build reads the payload as an ordinary empty list —
+    ///   its codes are still removed — instead of refusing it.
+    static func encode(_ tokens: [OTPCode], sentAt: Date = Date(), sendingStopped: Bool = false) throws -> Data {
+        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt, tokens: tokens,
+                                          sendingStopped: sendingStopped ? true : nil))
     }
 
     /// The application context for a set of tokens, ready for
@@ -76,8 +85,10 @@ nonisolated enum WatchTokenPayload {
     ///   the caller knows to take the file-transfer route instead of asking
     ///   `WCSession` to reject the update. The `sentAt` is passed in rather than
     ///   taken here so both transports carry the same stamp and cannot race.
-    static func applicationContext(for tokens: [OTPCode], sentAt: Date = Date()) -> [String: Any]? {
-        guard let blob = try? encode(tokens, sentAt: sentAt), blob.count <= contextByteBudget else { return nil }
+    static func applicationContext(for tokens: [OTPCode], sentAt: Date = Date(),
+                                   sendingStopped: Bool = false) -> [String: Any]? {
+        guard let blob = try? encode(tokens, sentAt: sentAt, sendingStopped: sendingStopped),
+              blob.count <= contextByteBudget else { return nil }
         return [versionKey: version, tokensKey: blob]
     }
 
@@ -99,7 +110,8 @@ nonisolated enum WatchTokenPayload {
     static func decode(_ blob: Data) -> Decoded? {
         guard let envelope = try? JSONDecoder().decode(Envelope.self, from: blob),
               envelope.version == version else { return nil }
-        return Decoded(sentAt: envelope.sentAt, tokens: envelope.tokens)
+        return Decoded(sentAt: envelope.sentAt, tokens: envelope.tokens,
+                       sendingStopped: envelope.sendingStopped ?? false)
     }
 
     /// Whether `candidate` is worth applying over what was last applied.
@@ -108,8 +120,42 @@ nonisolated enum WatchTokenPayload {
     /// is applied rather than ignored, and so a payload with no predecessor is
     /// always accepted (`appliedAt` starts at `.distantPast`). Kept here rather
     /// than inline in the view so the rule is asserted by a test.
-    static func isNewer(_ candidate: Decoded, than appliedAt: Date) -> Bool {
-        candidate.sentAt >= appliedAt
+    ///
+    /// A stamp more than `futureTolerance` ahead of this device's own clock is
+    /// not trusted. It came from a phone whose clock was wrong — set by hand, or
+    /// off after a restore — and trusting it froze the watch's list until the
+    /// phone's clock caught up, deleted codes and their secrets included.
+    ///
+    /// Once `appliedAt` is that far ahead, *any* list is accepted, an older one
+    /// included. Most lists travel by `updateApplicationContext`, which keeps
+    /// just the latest, but a list too big for that goes by `transferFile`,
+    /// which queues — so an older file could land late. The phone withdraws
+    /// every queued file whenever it sends a newer list
+    /// (`WatchConnectivityTokenRelay.sendIfPossible`), which is what keeps a
+    /// stale one from arriving after this has stopped trusting the stamps.
+    static func isNewer(_ candidate: Decoded, than appliedAt: Date, now: Date = Date()) -> Bool {
+        candidate.sentAt >= appliedAt || appliedAt > now.addingTimeInterval(futureTolerance)
+    }
+
+    /// How far ahead of the watch a stamp may be and still be believed. The watch
+    /// keeps its time from the phone, so honest stamps are seconds apart at most.
+    static let futureTolerance: TimeInterval = 5 * 60
+
+    /// Whether the watch's saved copy of the codes belongs to this install of the
+    /// watch app.
+    ///
+    /// The copy is in the Keychain, which outlives deleting the app; the app's
+    /// own `UserDefaults` don't. So each install gets an ID kept in both places,
+    /// and a copy whose ID doesn't match was left by an earlier install. Without
+    /// this, reinstalling the watch app showed the old codes — even with "Send
+    /// codes to Apple Watch" turned off on the iPhone since — until the iPhone
+    /// app next ran.
+    ///
+    /// A copy with no ID was saved by a build from before 3.1 and is kept, so an
+    /// update doesn't empty the watch; it is given the ID on its next save.
+    static func cacheBelongsToThisInstall(cacheInstallID: String?, currentInstallID: String?) -> Bool {
+        guard let cacheInstallID else { return true }
+        return cacheInstallID == currentInstallID
     }
 
     /// The wire form. A separate type from its contents so the version and stamp
@@ -118,5 +164,6 @@ nonisolated enum WatchTokenPayload {
         let version: Int
         let sentAt: Date
         let tokens: [OTPCode]
+        let sendingStopped: Bool?
     }
 }

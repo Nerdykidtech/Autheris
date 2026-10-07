@@ -55,6 +55,26 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "3.1",
+            version: "3.1",
+            date: "October 2026",
+            changes: [
+                "A redesigned welcome walks you through Autheris and how it treats your privacy, with the privacy settings right there to choose before you add your first code. It also lists every way your setup keys can leave the device.",
+                "On a new install, service logos are off until you turn them on, because looking one up tells logo.dev which services you use. If you're updating, nothing changes. Turning them on now shows them straight away.",
+                "A new switch, Send codes to Apple Watch, decides whether your codes go to the Autheris watch app. Turning it off removes them from the watch. It's on unless you turn it off, so your watch keeps working.",
+                "A counter-based code never goes back to a code you've already used — not when syncing, editing or restoring a backup.",
+                "An edit made while iCloud sync is running is no longer undone, and editing a code changes only what you changed, so a rename made on another device isn't overwritten.",
+                "Delete Tokens from iCloud now waits for any sync in progress, so your codes can't be uploaded again straight afterwards, and shows that it's working. It also reminds you to turn off iCloud Sync on your other devices first.",
+                "Apple Watch no longer stops updating after your iPhone's clock was set ahead, and reinstalling the watch app no longer brings back the codes it had before.",
+                "Restoring a backup that lists the same code twice no longer makes Autheris quit.",
+                "Codes with unusual settings, such as a 10-second period or 5 digits, keep them when you edit them, and the period steps in 15-second increments from any value.",
+                "iOS no longer offers to save a setup key as a password.",
+                "Encrypted backups whose password has accented letters now open on any device, and an import file with no codes in it now says so.",
+                "iCloud sync status and messages now appear in your language, and Face ID or Touch ID is only offered on the lock screen when it's available.",
+                "Your codes, iCloud sync and settings are exactly where you left them."
+            ]
+        ),
+        ChangelogRelease(
             id: "3.0",
             version: "3.0",
             date: "October 2026",

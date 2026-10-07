@@ -79,7 +79,24 @@ struct AutherisApp: App {
         // unencrypted backups and the App Lock toggle itself.
         Settings {
             Group {
-                if appLock.isLocked {
+                // Not before onboarding is finished: the welcome's privacy page
+                // asks about service logos and saves the answer when it ends,
+                // so a switch flipped here first would show the wrong value and
+                // then be overwritten.
+                if !hasCompletedOnboarding {
+                    VStack(spacing: 10) {
+                        Image(systemName: "hand.wave")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text("Finish Setting Up First")
+                            .font(.title3.weight(.semibold))
+                        Text("Settings open once you've finished the welcome in the Autheris window.")
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(40)
+                    .frame(width: 620, height: 520)
+                } else if appLock.isLocked {
                     AppLockView(manager: appLock)
                         // The preferences window's size, so it doesn't jump on unlock.
                         .frame(width: 620, height: 520)
@@ -249,6 +266,9 @@ struct AutherisApp: App {
             // Update privacy overlay when setting changes
             updatePrivacyOverlay()
         }
+        .onChange(of: enablePrivacyBlur) { _, _ in
+            updatePrivacyOverlay()
+        }
         .onChange(of: hideCodesWhenScreenCaptured) { oldValue, newValue in
             // Update privacy overlay when setting changes, and on the Mac
             // apply the setting to the windows themselves — there is no
@@ -316,6 +336,12 @@ struct AutherisApp: App {
 
     private func updatePrivacyOverlay() {
         showPrivacyOverlay = PrivacyShield.shouldShowOverlay(privacyConditions, privacyPreferences)
+        #if os(iOS)
+        // The overlay and blur above only reach this window's root view, and a
+        // sheet is presented over that — so on iOS the same decision is drawn
+        // again in a window above everything. See `PrivacyShieldWindow`.
+        PrivacyShieldWindow.show(showPrivacyOverlay ? .cover : shouldBlurContent ? .blur : .hidden)
+        #endif
         #if DEBUG
         print("Privacy overlay: \(showPrivacyOverlay), appIsActive: \(isAppActive), screenIsCaptured: \(isScreenCaptured), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher), hideCodesWhenScreenCaptured: \(hideCodesWhenScreenCaptured)")
         #endif

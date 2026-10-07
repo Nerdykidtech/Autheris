@@ -19,7 +19,8 @@ final class PreferencesStoreTests: XCTestCase {
     /// values can be put back afterwards.
     private var restoredKeys: [String] {
         privacyKeys + ["hasCompletedOnboarding", "accentTheme", AppLockEnabledKey,
-                       OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey]
+                       OTPDataStore.syncEnabledKey, AppPreferences.fetchIssuerLogosKey,
+                       AppPreferences.sendCodesToWatchKey]
     }
     private var savedKeychain: Data?
     private var savedDefaults: [String: Any] = [:]
@@ -86,10 +87,47 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertTrue(prefs.hideCodesWhenScreenCaptured)
     }
 
+    func testSnapshotKeepsTheWatchSwitchTurnedOff() {
+        XCTAssertTrue(PreferencesStore.snapshot(of: emptyDefaults).sendCodesToWatch)
+
+        emptyDefaults.set(false, forKey: AppPreferences.sendCodesToWatchKey)
+
+        XCTAssertFalse(PreferencesStore.snapshot(of: emptyDefaults).sendCodesToWatch)
+    }
+
     func testPersistWritesTheCurrentSchemaVersion() throws {
         PreferencesStore.persist()
 
         XCTAssertEqual(try storedPreferences().schemaVersion, AppPreferences.currentSchemaVersion)
+    }
+
+    func testAChangeToSomethingThatIsNotAPreferenceWritesNothing() throws {
+        XCTAssertTrue(PreferencesStore.persist())
+        // Stand-in for the item, so a write would show.
+        let marker = Data("untouched since the last write".utf8)
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+
+        // What the sync service does after every sync: a key that isn't a preference.
+        PreferencesStore.persistIfChanged()
+
+        XCTAssertEqual(KeychainStore.load(account: account), marker)
+    }
+
+    func testAChangedPreferenceIsWrittenAndADirectPersistAlwaysIs() throws {
+        XCTAssertTrue(PreferencesStore.persist())
+        let marker = Data("untouched since the last write".utf8)
+
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+        let current = UserDefaults.standard.object(forKey: "hideCodesInAppSwitcher") as? Bool ?? true
+        UserDefaults.standard.set(!current, forKey: "hideCodesInAppSwitcher")
+        PreferencesStore.persistIfChanged()
+        XCTAssertEqual(try storedPreferences().hideCodesInAppSwitcher, !current)
+
+        // The privacy repair calls `persist()` directly, and it must write even
+        // when nothing it can see has changed.
+        XCTAssertTrue(KeychainStore.save(marker, account: account))
+        XCTAssertTrue(PreferencesStore.persist())
+        XCTAssertNotEqual(KeychainStore.load(account: account), marker)
     }
 
     func testPersistWritesNothingBeforeTheStoredCopyHasBeenRead() throws {
@@ -145,6 +183,8 @@ final class PreferencesStoreTests: XCTestCase {
         XCTAssertEqual(UserDefaults.standard.string(forKey: "accentTheme"), "teal")
         XCTAssertEqual(UserDefaults.standard.object(forKey: AppLockEnabledKey) as? Bool, true)
         XCTAssertEqual(UserDefaults.standard.object(forKey: AppPreferences.fetchIssuerLogosKey) as? Bool, false)
+        // Not in the blob, so it comes back as its default rather than off.
+        XCTAssertEqual(UserDefaults.standard.object(forKey: AppPreferences.sendCodesToWatchKey) as? Bool, true)
 
         // And it is re-saved, so a switch turned off from now on stays off.
         let repaired = try storedPreferences()

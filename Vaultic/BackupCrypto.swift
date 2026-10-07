@@ -43,16 +43,16 @@ nonisolated enum BackupCrypto {
         var errorDescription: String? {
             switch self {
             case .unsupportedVersion:
-                return "This backup uses an unsupported format version."
+                return String(localized: "This backup uses an unsupported format version.")
             case .invalidEnvelope:
-                return "This file isn't a valid encrypted Autheris backup."
+                return String(localized: "This file isn't a valid encrypted Autheris backup.")
             }
         }
     }
 
     static func encrypt(plaintext: Data, password: String) throws -> Data {
         let salt = Data((0..<16).map { _ in UInt8.random(in: 0...255) })
-        let key = try deriveKey(password: password, salt: salt, iterations: currentIterations)
+        let key = try deriveKey(password: normalized(password), salt: salt, iterations: currentIterations)
         let sealed = try AES.GCM.seal(plaintext, using: key)
         guard let combined = sealed.combined else {
             throw BackupCryptoError.invalidEnvelope
@@ -83,9 +83,36 @@ nonisolated enum BackupCrypto {
             throw BackupCryptoError.unsupportedVersion
         }
 
-        let key = try deriveKey(password: password, salt: envelope.salt, iterations: iterations)
         let sealed = try AES.GCM.SealedBox(combined: envelope.combined)
-        return try AES.GCM.open(sealed, using: key)
+
+        // The password as typed is tried second, and only when it differs from
+        // the normalized one: backups made before passwords were normalized were
+        // keyed from the raw bytes, and they still have to open.
+        var candidates = [normalized(password)]
+        if !password.utf8.elementsEqual(candidates[0].utf8) {
+            candidates.append(password)
+        }
+        var lastError: Error = BackupCryptoError.invalidEnvelope
+        for candidate in candidates {
+            let key = try deriveKey(password: candidate, salt: envelope.salt, iterations: iterations)
+            do {
+                return try AES.GCM.open(sealed, using: key)
+            } catch {
+                lastError = error
+            }
+        }
+        throw lastError
+    }
+
+    /// The password in one canonical Unicode form (NFC).
+    ///
+    /// The key is derived from the password's bytes, and one accented letter has
+    /// more than one spelling in bytes — "é" composed, or "e" plus a combining
+    /// accent — depending on the keyboard and the platform it was typed on. Without
+    /// this, a backup made on one device could refuse the right password on
+    /// another.
+    private static func normalized(_ password: String) -> String {
+        password.precomposedStringWithCanonicalMapping
     }
 
     // MARK: - Key derivation

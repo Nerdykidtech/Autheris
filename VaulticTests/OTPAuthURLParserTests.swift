@@ -198,4 +198,18 @@ final class OTPAuthURLParserTests: XCTestCase {
         XCTAssertEqual(parsed.label, "GitHub")
         XCTAssertEqual(parsed.account, "")
     }
+
+    func testEscapesAreDecodedOnce() throws {
+        let url = try XCTUnwrap(URL(string: "otpauth://totp/Example%20Bank:alice%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=A%2541"))
+        let parsed = try XCTUnwrap(OTPAuthURLParser.parse(url))
+
+        XCTAssertEqual(parsed.label, "A%41", "an issuer's literal percent sign survives")
+        XCTAssertEqual(parsed.account, "alice@example.com")
+    }
+
+    func testAnEscapedPathStillDecodes() throws {
+        let url = try XCTUnwrap(URL(string: "otpauth://totp/Example%20Bank?secret=JBSWY3DPEHPK3PXP"))
+
+        XCTAssertEqual(OTPAuthURLParser.parse(url)?.label, "Example Bank")
+    }
 }

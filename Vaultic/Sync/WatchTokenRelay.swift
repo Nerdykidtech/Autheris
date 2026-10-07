@@ -1,4 +1,7 @@
 import Foundation
+#if os(iOS)
+import WatchConnectivity
+#endif
 
 /// The watch link, as `OTPDataStore` needs it: hand over the current token list.
 ///
@@ -25,25 +28,93 @@ final class DisabledWatchTokenRelay: WatchTokenRelayService {
 /// Builds the relay this platform actually has.
 @MainActor
 enum WatchTokenRelay {
+    /// Whether this device can have an Apple Watch at all — an iPhone. Decides
+    /// whether Settings shows the "Send codes to Apple Watch" switch.
+    static var deviceCanPairWatch: Bool {
+        #if os(iOS)
+        WCSession.isSupported()
+        #else
+        false
+        #endif
+    }
+
+    /// Whether a watch is paired with this iPhone, as the relay last saw it.
+    /// Meaningless until `isPairingKnown`. Onboarding shows its watch switch
+    /// only when this is true, and listens for `pairedWatchDidChange`.
+    private(set) static var hasPairedWatch = false
+
+    /// Whether WatchConnectivity has said yet. Until it has, onboarding shows
+    /// no watch row at all, rather than the "no watch" row and then a switch
+    /// in its place.
+    private(set) static var isPairingKnown = false
+
+    /// Posted on the main actor when `hasPairedWatch` or `isPairingKnown`
+    /// changes.
+    static let pairedWatchDidChange = Notification.Name("WatchTokenRelay.pairedWatchDidChange")
+
+    /// Records what WatchConnectivity says, and posts `pairedWatchDidChange`
+    /// only the first time and when it changes: the relay reports on every send.
+    static func notePairedWatch(_ paired: Bool) {
+        guard !isPairingKnown || paired != hasPairedWatch else { return }
+        isPairingKnown = true
+        hasPairedWatch = paired
+        NotificationCenter.default.post(name: pairedWatchDidChange, object: nil)
+    }
+
+    #if DEBUG
+    /// Back to "WatchConnectivity hasn't said yet", for tests.
+    static func forgetPairing() {
+        isPairingKnown = false
+        hasPairedWatch = false
+    }
+    #endif
+
     /// The real relay on iPhone, an inert one everywhere else.
     ///
     /// Only iOS has a watch to talk to, but `OTPDataStore` is built on every
     /// platform, so picking here is what keeps a `#if` out of the store.
     ///
     /// ### When the watch gets codes at all
-    /// There is no "send codes to my watch" setting, because installing the watch
-    /// app *is* the opt-in: the phone only sends to a watch it reports as paired
-    /// with the app installed (`isPaired` && `isWatchAppInstalled`), so a user who
-    /// has not chosen to put Autheris on their wrist never has a secret leave the
-    /// phone. That is the same spirit as iCloud Sync being off until asked for —
-    /// with the request made by installing the app rather than by flipping a
-    /// switch.
+    /// Only when the watch app is installed on a paired watch (`isPaired` &&
+    /// `isWatchAppInstalled`) *and* "Send codes to Apple Watch" is on. Installing
+    /// the app used to be the only opt-in, but watchOS can install it
+    /// automatically, so it was no real choice. The switch is in Settings, and on
+    /// the onboarding privacy page when a watch is paired. Turning it off sends
+    /// an empty list, which removes the codes from the watch.
     static func make() -> WatchTokenRelayService {
         #if os(iOS)
         return WatchConnectivityTokenRelay()
         #else
         return DisabledWatchTokenRelay()
         #endif
+    }
+}
+
+/// What the watch is sent for a list, given the "Send codes to Apple Watch"
+/// switch. Apart from the relay so the rule is asserted without a paired watch.
+nonisolated struct WatchRelayOutgoing: Equatable, Sendable {
+    let tokens: [OTPCode]
+    /// Set with an empty list when sending is off: the empty list is what
+    /// removes the codes the watch already holds, and the flag is how the watch
+    /// knows to say "Turned Off" rather than "No Codes".
+    let sendingStopped: Bool
+
+    init(tokens: [OTPCode], sendingEnabled: Bool) {
+        self.tokens = sendingEnabled ? tokens : []
+        sendingStopped = !sendingEnabled
+    }
+}
+
+/// Remembers the "Send codes to Apple Watch" switch, so a settings change
+/// re-sends only when it was this switch that changed. `UserDefaults` reports
+/// every key, and the launch alone restores nine of them.
+nonisolated struct WatchSendingSwitch: Sendable {
+    private(set) var lastSeen: Bool
+
+    /// Records `value`, and says whether it differs from the last one seen.
+    mutating func update(to value: Bool) -> Bool {
+        defer { lastSeen = value }
+        return value != lastSeen
     }
 }
 
@@ -120,10 +191,21 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// activation finally completes.
     private var latestTokens: [OTPCode]?
 
-    /// The list the watch was last sent, so an unchanged list is not re-sent on
+    /// What the watch was last sent, so an unchanged list is not re-sent on
     /// every save. Cleared whenever the set of paired watches changes, because
     /// "already sent" says nothing about a watch that was not there at the time.
-    private var lastSentTokens: [OTPCode]?
+    private var lastSent: WatchRelayOutgoing?
+
+    /// Whether "Send codes to Apple Watch" is on.
+    static var isSendingEnabled: Bool {
+        UserDefaults.standard.object(forKey: AppPreferences.sendCodesToWatchKey) as? Bool
+            ?? AppPreferences.sendCodesToWatchDefault
+    }
+
+    /// Re-offers the list when the switch changes, so turning it off clears the
+    /// watch straight away rather than at the next edit.
+    private var settingObserver: NSObjectProtocol?
+    private var sendingSwitch = WatchSendingSwitch(lastSeen: WatchConnectivityTokenRelay.isSendingEnabled)
 
     /// Where an oversized payload is staged for `transferFile`.
     private var stagingDirectory: URL { FileManager.default.temporaryDirectory.appendingPathComponent("WatchRelay", isDirectory: true) }
@@ -161,6 +243,19 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
                 self?.sendIfPossible()
             }
         }
+
+        // Fires for every key, so it acts only when the watch switch changed.
+        settingObserver = NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self,
+                      self.sendingSwitch.update(to: Self.isSendingEnabled) else { return }
+                self.sendIfPossible()
+            }
+        }
     }
 
     func push(_ tokens: [OTPCode]) {
@@ -183,18 +278,31 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
             return
         }
 
+        WatchTokenRelay.notePairedWatch(session.isPaired)
+
         // Nothing to send to until a watch is paired *and* the watch app is
-        // installed. This is what makes installing the watch app the opt-in.
+        // installed. Whether codes go to it is the user's switch, checked below.
         guard session.isPaired, session.isWatchAppInstalled else { return }
 
-        guard tokens != lastSentTokens else { return }
+        // Sending turned off sends an empty list: that is what removes the
+        // codes the watch already holds.
+        let outgoing = WatchRelayOutgoing(tokens: tokens, sendingEnabled: Self.isSendingEnabled)
+        guard outgoing != lastSent else { return }
 
         let sentAt = Date()
 
-        if let context = WatchTokenPayload.applicationContext(for: tokens, sentAt: sentAt) {
+        // Whatever list is still queued as a file is older than this one. File
+        // transfers are queued and can land after a later context, and the watch
+        // can't always tell them apart by stamp — after the phone's clock was
+        // set back, an older list carries the later time. So the old ones are
+        // withdrawn rather than left to arrive. See `WatchTokenPayload.isNewer`.
+        session.outstandingFileTransfers.forEach { $0.cancel() }
+
+        if let context = WatchTokenPayload.applicationContext(for: outgoing.tokens, sentAt: sentAt,
+                                                              sendingStopped: outgoing.sendingStopped) {
             do {
                 try session.updateApplicationContext(context)
-                lastSentTokens = tokens
+                lastSent = outgoing
             } catch {
                 #if DEBUG
                 print("Watch relay: application context failed: \(error.localizedDescription)")
@@ -203,7 +311,7 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
             return
         }
 
-        sendAsFile(tokens, sentAt: sentAt, over: session)
+        sendAsFile(outgoing, sentAt: sentAt, over: session)
     }
 
     /// The oversized path: too many codes to fit an application context.
@@ -211,18 +319,19 @@ final class WatchConnectivityTokenRelay: NSObject, WatchTokenRelayService {
     /// A distinct file per send, and the directory is pruned only of transfers
     /// that have *finished* — `transferFile` reads the file in the background, so
     /// deleting one out from under a transfer in progress would fail it.
-    private func sendAsFile(_ tokens: [OTPCode], sentAt: Date, over session: WCSession) {
+    private func sendAsFile(_ outgoing: WatchRelayOutgoing, sentAt: Date, over session: WCSession) {
         do {
             pruneFinishedTransfers()
-            let url = try WatchRelayStaging.write(WatchTokenPayload.encode(tokens, sentAt: sentAt),
-                                                  in: stagingDirectory)
+            let payload = try WatchTokenPayload.encode(outgoing.tokens, sentAt: sentAt,
+                                                       sendingStopped: outgoing.sendingStopped)
+            let url = try WatchRelayStaging.write(payload, in: stagingDirectory)
 
             // The transfer object is deliberately not kept: it reports progress
             // and failure, and there is nothing useful to do with either. The list
             // is re-offered on the next edit, on the next launch, and whenever the
             // set of paired watches changes.
             _ = session.transferFile(url, metadata: nil)
-            lastSentTokens = tokens
+            lastSent = outgoing
         } catch {
             #if DEBUG
             print("Watch relay: file transfer failed: \(error.localizedDescription)")
@@ -259,7 +368,9 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
     nonisolated func session(_ session: WCSession,
                              activationDidCompleteWith activationState: WCSessionActivationState,
                              error: Error?) {
+        let paired = session.isPaired
         Task { @MainActor in
+            WatchTokenRelay.notePairedWatch(paired)
             self.sendIfPossible()
         }
     }
@@ -271,8 +382,10 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
     /// who installs the watch app *after* the phone has already pushed would see
     /// an empty watch until they happened to edit a token.
     nonisolated func sessionWatchStateDidChange(_ session: WCSession) {
+        let paired = session.isPaired
         Task { @MainActor in
-            self.lastSentTokens = nil
+            WatchTokenRelay.notePairedWatch(paired)
+            self.lastSent = nil
             self.sendIfPossible()
         }
     }
@@ -287,7 +400,7 @@ extension WatchConnectivityTokenRelay: WCSessionDelegate {
         // be re-activated for the relay to follow the user to their new watch. The
         // "already sent" record is dropped for the same reason as above.
         Task { @MainActor in
-            self.lastSentTokens = nil
+            self.lastSent = nil
             self.session?.activate()
         }
     }

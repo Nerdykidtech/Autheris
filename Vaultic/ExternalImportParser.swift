@@ -45,7 +45,17 @@ enum ExternalImportError: LocalizedError {
 /// `OTPDataStore.addCodes` skips them with the same rule every other add uses, and
 /// counts them as skipped.
 enum ExternalImportParser {
+    /// The tokens in an export, or `noTokens` when the file is a supported format
+    /// but nothing in it can be imported — every entry Steam, say, or a key too
+    /// short to be one. An empty list used to come back instead, and the import
+    /// screen read that as every token already being here.
     static func parse(data: Data) throws -> [OTPCode] {
+        let tokens = try parseEntries(data: data)
+        guard !tokens.isEmpty else { throw ExternalImportError.noTokens }
+        return tokens
+    }
+
+    private static func parseEntries(data: Data) throws -> [OTPCode] {
         let json = try JSONSerialization.jsonObject(with: data)
 
         if let root = json as? [String: Any] {

@@ -33,6 +33,13 @@ enum KeychainStore {
         return query
     }
 
+    /// Removes the item. `true` when it is gone, including when there was none.
+    @discardableResult
+    static func delete(account: String) -> Bool {
+        let status = SecItemDelete(query(account: account) as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
+    }
+
     static func save(_ data: Data, account: String) -> Bool {
         let baseQuery = query(account: account)
 

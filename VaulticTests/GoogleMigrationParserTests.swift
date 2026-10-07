@@ -20,8 +20,10 @@ final class GoogleMigrationParserTests: XCTestCase {
 
     // MARK: - A minimal protobuf writer
 
+    /// A negative value is written as its 64-bit two's complement, ten bytes
+    /// long, as protobuf writes a negative `int64`.
     private func varint(_ value: Int) -> [UInt8] {
-        var remaining = value
+        var remaining = UInt64(bitPattern: Int64(value))
         var bytes: [UInt8] = []
         repeat {
             var byte = UInt8(remaining & 0x7F)
@@ -81,6 +83,47 @@ final class GoogleMigrationParserTests: XCTestCase {
         XCTAssertEqual(tokens[0].secret, "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ")
         XCTAssertEqual(tokens[0].label, "Example")
         XCTAssertEqual(tokens[0].account, "alice@example.com")
+    }
+
+    func testACounterPast35BitsIsReadWhole() throws {
+        // `int64` on the wire. Varints used to be capped at 35 bits, which every
+        // tag and length fits but a counter need not.
+        let large = 1 << 40
+        let tokens = try parse(export(secret: rawSecret, name: "alice@example.com",
+                                      issuer: "Example", type: 1, counter: large))
+
+        XCTAssertEqual(tokens.first?.counter, UInt64(large))
+    }
+
+    func testACounterBasedEntryWithANegativeCounterIsNotImported() {
+        // Read as 0, it would have been a token whose codes the service had moved
+        // past long ago.
+        XCTAssertNil(GoogleMigrationParser.parseMigrationURL(
+            export(secret: rawSecret, name: "alice@example.com", issuer: "Example", type: 1, counter: -1)))
+    }
+
+    func testALaterValidCounterReplacesAnEarlierNegativeOne() throws {
+        // A field written twice keeps its last value, as protobuf has it.
+        var parameters: [UInt8] = []
+        parameters += field(1, bytes: Array(rawSecret.utf8))
+        parameters += field(2, bytes: Array("Example".utf8))
+        parameters += field(6, varint: 1)
+        parameters += field(7, varint: -1)
+        parameters += field(7, varint: 5)
+        let base64 = Data(field(1, bytes: parameters)).base64EncodedString()
+        let encoded = base64.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? base64
+
+        let tokens = try parse("otpauth-migration://offline?data=\(encoded)")
+
+        XCTAssertEqual(tokens.first?.counter, 5)
+    }
+
+    func testATimeBasedEntryWithANegativeCounterIsStillImported() throws {
+        let tokens = try parse(export(secret: rawSecret, name: "alice@example.com",
+                                      issuer: "Example", type: 2, counter: -1))
+
+        XCTAssertEqual(tokens.first?.kind, .totp)
+        XCTAssertEqual(tokens.first?.counter, 0)
     }
 
     func testTheImportedHotpEntryGeneratesTheRfc4226CodeForItsCounter() throws {

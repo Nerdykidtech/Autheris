@@ -73,6 +73,9 @@ struct BackupView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var backups: [URL] = []
     @State private var showingCreateBackupAlert = false
+    /// The warning before an unencrypted backup, which holds every setup key as
+    /// plain text — a file anyone could generate the user's codes from.
+    @State private var showingUnencryptedWarning = false
     @State private var showingCreatePasswordAlert = false
     @State private var newBackupPassword = ""
     @State private var newBackupConfirmPassword = ""
@@ -126,9 +129,21 @@ struct BackupView: View {
                         showingShareSheet = true
                     }
                 }
-                Button("OK", role: .cancel) { }
+                // Share leads on to the share sheet, so only OK — the end of the
+                // task — earns a review ask.
+                Button("OK", role: .cancel) {
+                    ReviewPrompt.momentFinished(codeCount: dataStore.codes.count)
+                }
             } message: {
                 Text("Your tokens have been backed up successfully.")
+            }
+            .alert("Create an Unencrypted Backup?", isPresented: $showingUnencryptedWarning) {
+                Button("Create Unencrypted Backup", role: .destructive) {
+                    createBackup()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This file holds every setup key as plain text. Anyone who gets a copy can generate your codes. An encrypted backup is safer.")
             }
             .alert("Create Encrypted Backup", isPresented: $showingCreatePasswordAlert) {
                 SecureField("Password", text: $newBackupPassword)
@@ -235,7 +250,9 @@ struct BackupView: View {
                     .foregroundColor(.accentColor)
             }
 
-            Button(action: createBackup) {
+            Button {
+                showingUnencryptedWarning = true
+            } label: {
                 Label("Create Unencrypted Backup", systemImage: "doc.badge.plus")
                     .font(.subheadline)
             }
