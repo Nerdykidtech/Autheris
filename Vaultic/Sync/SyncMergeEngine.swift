@@ -77,7 +77,10 @@ nonisolated enum SyncFingerprint {
     /// and for the counter it is not just bookkeeping: a fingerprint that ignored it
     /// would make spending a code look like "no change", so the device the user was
     /// *not* holding would keep generating the spent one.
-    private static let version = "v3"
+    ///
+    /// Bumped to `v4` when `customIcon` joined the field list, so a picture chosen
+    /// on one device reaches the others instead of looking like "no change".
+    private static let version = "v4"
 
     static func forToken(_ token: OTPCode) -> String {
         let fields = [
@@ -91,6 +94,7 @@ nonisolated enum SyncFingerprint {
             token.kind.rawValue,
             String(token.counter),
             token.timerRingHex ?? "",
+            token.customIcon?.base64EncodedString() ?? "",
             token.isPinned ? "1" : "0"
         ]
         // Length-prefix every field so concatenation stays unambiguous even when

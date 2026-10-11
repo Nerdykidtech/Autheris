@@ -35,7 +35,7 @@ struct TokenSecretView: View {
                 
                 VStack(spacing: 16) {
                     HStack(spacing: 12) {
-                        IssuerIconView(branding: branding)
+                        IssuerIconView(branding: branding, customIcon: code.customIcon)
                         
                         VStack(alignment: .leading, spacing: 1) {
                             Text(code.label)

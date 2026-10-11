@@ -38,8 +38,8 @@ extension CKDatabase: CloudRecordSaving {}
 /// Syncs tokens through the user's **private** CloudKit database.
 ///
 /// ### Where the secrets live
-/// `label`, `account`, `secret`, `timerRingHex` and `isPinned` are written to
-/// `record.encryptedValues`, so CloudKit encrypts them end to end with keys Apple
+/// `label`, `account`, `secret`, `timerRingHex`, `customIcon` and `isPinned` are
+/// written to `record.encryptedValues`, so CloudKit encrypts them end to end with keys Apple
 /// manages on the user's behalf. They are never stored as readable fields, and
 /// the developer cannot read them from the CloudKit dashboard. Only `modifiedAt`,
 /// `deleted`, `fingerprint`, `algorithm`, `digits` and `period` are plain fields —
@@ -140,10 +140,14 @@ final class CloudKitTokenSyncService: TokenSyncService {
         static let account = "account"
         static let secret = "secret"
         static let timerRingHex = "timerRingHex"
+        /// The token's picture, as base64 text of its PNG bytes. Encrypted with the
+        /// rest, because a picture of a person or a logo says which services someone
+        /// uses, just as the label does.
+        static let customIcon = "customIcon"
         static let isPinned = "isPinned"
 
         static let plain = [modifiedAt, deleted, fingerprint, algorithm, digits, period, kind, counter]
-        static let encrypted = [label, account, secret, timerRingHex, isPinned]
+        static let encrypted = [label, account, secret, timerRingHex, customIcon, isPinned]
 
         /// The complete field set the `AutherisToken` schema must define.
         static var all: [String] { plain + encrypted }
@@ -624,6 +628,10 @@ final class CloudKitTokenSyncService: TokenSyncService {
             kind: OTPKind(rawValue: (record[Field.kind] as? String) ?? "") ?? .totp,
             counter: (record[Field.counter] as? NSNumber)?.uint64Value ?? 0,
             timerRingHex: record.encryptedValues[Field.timerRingHex] as? String,
+            // Absent on every record written before custom icons existed, which is
+            // exactly what `nil` means: the service's logo.
+            customIcon: (record.encryptedValues[Field.customIcon] as? String)
+                .flatMap { Data(base64Encoded: $0) },
             // Absent on every record written before pinning existed, which is
             // exactly what `false` means. See `EncryptedBool` for why this is a
             // string rather than a number.
@@ -657,6 +665,13 @@ final class CloudKitTokenSyncService: TokenSyncService {
                 record.encryptedValues[Field.timerRingHex] = ring as CKRecordValue
             } else {
                 record.encryptedValues[Field.timerRingHex] = nil
+            }
+            // Assigned on both branches, like the ring colour, so removing a picture
+            // clears it on the server too.
+            if let icon = token.customIcon {
+                record.encryptedValues[Field.customIcon] = icon.base64EncodedString() as CKRecordValue
+            } else {
+                record.encryptedValues[Field.customIcon] = nil
             }
             record.encryptedValues[Field.isPinned] = EncryptedBool.text(token.isPinned) as CKRecordValue
             record[Field.algorithm] = token.algorithm.rawValue as CKRecordValue

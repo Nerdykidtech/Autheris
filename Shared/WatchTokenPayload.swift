@@ -74,7 +74,9 @@ nonisolated enum WatchTokenPayload {
     ///   watch on an older build reads the payload as an ordinary empty list —
     ///   its codes are still removed — instead of refusing it.
     static func encode(_ tokens: [OTPCode], sentAt: Date = Date(), sendingStopped: Bool = false) throws -> Data {
-        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt, tokens: tokens,
+        // The watch draws no icons, so pictures stay on the phone.
+        try JSONEncoder().encode(Envelope(version: version, sentAt: sentAt,
+                                          tokens: tokens.map(\.withoutCustomIcon),
                                           sendingStopped: sendingStopped ? true : nil))
     }
 

@@ -13989,6 +13989,523 @@
           }
         }
       }
+    },
+    "Icon": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icono"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icône"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ícone"
+          }
+        }
+      }
+    },
+    "Choose Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir une image"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild auswählen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を選択"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择图片"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher imagem"
+          }
+        }
+      }
+    },
+    "Change Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer l'image"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild ändern"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を変更"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改图片"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alterar imagem"
+          }
+        }
+      }
+    },
+    "Choose Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un emoji"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji auswählen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字を選択"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择表情符号"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher emoji"
+          }
+        }
+      }
+    },
+    "Use Service Logo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Service Logo"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar el logotipo del servicio"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser le logo du service"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst-Logo verwenden"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サービスのロゴを使う"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用服务徽标"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar o logotipo do serviço"
+          }
+        }
+      }
+    },
+    "Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表情符号"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        }
+      }
+    },
+    "That picture could not be used as an icon. Try a different one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That picture could not be used as an icon. Try a different one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esa imagen no se pudo usar como icono. Prueba con otra."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image ne peut pas être utilisée comme icône. Essayez-en une autre."
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Bild kann nicht als Symbol verwendet werden. Versuche ein anderes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この画像はアイコンとして使用できません。別の画像を選んでください。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将此图片用作图标，请选择其他图片。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível usar esta imagem como ícone. Tente outra."
+          }
+        }
+      }
+    },
+    "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu imagen o emoji se guarda con este token. Se sincroniza con iCloud Sync si está activado y se incluye en las copias de seguridad. No se incluye en los códigos QR de transferencia, y nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre image ou emoji est enregistré avec ce jeton. Il se synchronise avec iCloud Sync si celui-ci est activé et figure dans les sauvegardes. Il n'est pas inclus dans les codes QR de transfert, et n'est jamais envoyé à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Bild oder Emoji wird mit diesem Token gespeichert. Es wird mit iCloud-Sync synchronisiert, wenn dieser aktiv ist, und ist in Backups enthalten. Es ist nicht in QR-Codes für die Übertragung enthalten und wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像や絵文字はこのトークンとともに保存されます。iCloud同期がオンのときは同期され、バックアップにも含まれます。転送用QRコードには含まれず、Apple Watchやlogo.devに送信されることもありません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片或表情符号会与此令牌一起保存。开启 iCloud 同步时会同步，并包含在备份中。不会包含在传输二维码中，也绝不会发送到 Apple Watch 或 logo.dev。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sua imagem ou emoji é salvo com este token. Ele é sincronizado com o iCloud Sync quando ele está ativado e entra nos backups. Ele não entra nos códigos QR de transferência e nunca é enviado ao Apple Watch nem ao logo.dev."
+          }
+        }
+      }
+    },
+    "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes dar a cualquier código su propia imagen: elige una foto o un emoji de una lista. Las imágenes se sincronizan con iCloud Sync y se incluyen en las copias de seguridad, y los emoji funcionan aunque los logotipos de los servicios estén desactivados."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez donner à chaque code sa propre image : choisissez une photo ou un emoji dans une liste. Les images se synchronisent avec iCloud Sync et figurent dans les sauvegardes, et les emoji fonctionnent même si les logos des services sont désactivés."
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeder Code kann ein eigenes Bild erhalten: Wähle ein Foto oder ein Emoji aus einer Liste. Bilder werden mit iCloud-Sync synchronisiert und sind in Backups enthalten; Emoji funktionieren auch dann, wenn Dienst-Logos ausgeschaltet sind."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どのコードにも自分の画像を設定できます。写真を選ぶか、一覧から絵文字を選んでください。画像はiCloud同期で同期され、バックアップにも含まれます。サービスのロゴをオフにしていても絵文字を使えます。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个代码都可以设置自己的图片：选择照片，或从列表中选择表情符号。图片会通过 iCloud 同步同步并包含在备份中；即使关闭了服务徽标，表情符号也能使用。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode dar a qualquer código sua própria imagem: escolha uma foto ou um emoji de uma lista. As imagens são sincronizadas com o iCloud Sync e entram nos backups, e os emoji funcionam mesmo com os logotipos dos serviços desativados."
+          }
+        }
+      }
+    },
+    "The countdown bar no longer moves when the number drops from ten seconds to nine.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The countdown bar no longer moves when the number drops from ten seconds to nine."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barra de cuenta atrás ya no se desplaza cuando el número pasa de diez segundos a nueve."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barre de compte à rebours ne bouge plus lorsque le nombre passe de dix secondes à neuf."
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Countdown-Balken verschiebt sich nicht mehr, wenn die Zahl von zehn auf neun Sekunden springt."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り時間の数字が10秒から9秒になっても、カウントダウンのバーが動かなくなりました。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒计时数字从十秒变为九秒时，进度条不再移动。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A barra de contagem regressiva não se desloca mais quando o número passa de dez segundos para nove."
+          }
+        }
+      }
+    },
+    "A picture is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A picture is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una imagen nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une image n'est jamais envoyée à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Bild wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像がApple Watchやlogo.devに送信されることはありません。"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片绝不会发送到 Apple Watch 或 logo.dev。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma imagem nunca é enviada ao Apple Watch nem ao logo.dev."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

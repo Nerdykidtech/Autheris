@@ -55,6 +55,16 @@ struct ChangelogRelease: Identifiable, Sendable {
     
     static let catalog: [ChangelogRelease] = [
         ChangelogRelease(
+            id: "3.2",
+            version: "3.2",
+            date: "October 2026",
+            changes: [
+                "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.",
+                "The countdown bar no longer moves when the number drops from ten seconds to nine.",
+                "A picture is never sent to the Apple Watch or to logo.dev."
+            ]
+        ),
+        ChangelogRelease(
             id: "3.1",
             version: "3.1",
             date: "October 2026",

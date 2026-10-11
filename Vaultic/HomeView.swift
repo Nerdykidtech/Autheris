@@ -1,6 +1,7 @@
 import SwiftUI
 import Foundation
 import Combine
+import PhotosUI
 #if os(iOS)
 import UIKit
 #else
@@ -626,7 +627,7 @@ struct OTPCardView: View {
 
     private var surface: some View {
         HStack(spacing: 12) {
-            IssuerIconView(branding: branding, size: iconSize)
+            IssuerIconView(branding: branding, size: iconSize, customIcon: code.customIcon)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
@@ -674,9 +675,17 @@ struct OTPCardView: View {
                             .frame(width: countdownWidth)
                             .tint(isExpiring ? .red : timerRingColor)
 
-                        Text("\(remainingSeconds)s")
-                            .font(.caption.monospacedDigit())
-                            .foregroundColor(isExpiring ? .red : .secondary)
+                        // Sized for the longest label this period can show, so the
+                        // bar doesn't move when the count drops from "10s" to "9s".
+                        ZStack(alignment: .trailing) {
+                            Text("\(code.effectivePeriod)s")
+                                .font(.caption.monospacedDigit())
+                                .hidden()
+
+                            Text("\(remainingSeconds)s")
+                                .font(.caption.monospacedDigit())
+                                .foregroundColor(isExpiring ? .red : .secondary)
+                        }
                     }
                 } else {
                     // A counter-based code has nothing to count down and no colour to
@@ -823,6 +832,10 @@ struct EditTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
+    /// The picture the screen is showing, which is the token's own, a new one the
+    /// user picked, or `nil` for the service's logo. Compared to `code.customIcon`.
+    @State private var customIcon: Data?
+    @State private var selectedPhoto: PhotosPickerItem?
     
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
@@ -855,11 +868,18 @@ struct EditTokenView: View {
         digits != code.effectiveDigits ||
         period != code.effectivePeriod ||
         counter != Int(clamping: code.counter) ||
-        ringColorChanged
+        ringColorChanged ||
+        iconChanged
     }
 
     private var ringColorChanged: Bool {
         ringColor != openedRingColor
+    }
+
+    /// Compared with the picture the screen opened with, as stored, rather than
+    /// with what the screen shows: re-encoding the same picture would not match.
+    private var iconChanged: Bool {
+        customIcon != code.customIcon
     }
     
     init(code: OTPCode, dataStore: OTPDataStore) {
@@ -884,6 +904,7 @@ struct EditTokenView: View {
         }
         _openedRingColor = State(initialValue: opened)
         _ringColor = State(initialValue: opened)
+        _customIcon = State(initialValue: code.customIcon)
     }
     
     var body: some View {
@@ -891,6 +912,7 @@ struct EditTokenView: View {
             Form {
                 headerSection
                 identitySection
+                iconSection
                 codeSection
                 // A counter-based code has no countdown ring, so a ring colour would
                 // be a setting that changes nothing on screen.
@@ -940,6 +962,12 @@ struct EditTokenView: View {
             } message: {
                 Text(alertMessage)
             }
+            .onChange(of: selectedPhoto) { _, newItem in
+                guard let newItem else { return }
+                // Cleared so picking the same photo again still fires.
+                selectedPhoto = nil
+                Task { await loadPicture(from: newItem) }
+            }
         }
         .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
@@ -953,7 +981,8 @@ struct EditTokenView: View {
     private var headerSection: some View {
         Section {
             HStack(spacing: 14) {
-                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false)
+                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false,
+                               customIcon: customIcon)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(label.isEmpty ? code.label : label)
@@ -991,6 +1020,36 @@ struct EditTokenView: View {
 
             TextField("Account (optional)", text: $account)
                 .platformNoAutocapitalization()
+        }
+    }
+
+    /// A picture for this token in place of the service's logo. The footer says
+    /// where the picture goes, because it is the one thing on this screen that is
+    /// not a setting of the code.
+    private var iconSection: some View {
+        Section {
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                Label(customIcon == nil ? "Choose Picture" : "Change Picture", systemImage: "photo")
+            }
+
+            // Pushed rather than presented: a sheet opened from a row of this Form
+            // would be redrawn away by the same kind of change that closes one in a
+            // List.
+            NavigationLink {
+                EmojiIconPicker(selection: $customIcon)
+            } label: {
+                Label("Choose Emoji", systemImage: "face.smiling")
+            }
+
+            if customIcon != nil {
+                Button("Use Service Logo") {
+                    customIcon = nil
+                }
+            }
+        } header: {
+            Text("Icon")
+        } footer: {
+            Text("Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.")
         }
     }
 
@@ -1123,6 +1182,21 @@ struct EditTokenView: View {
         return picked == brand ? nil : picked
     }
     
+    /// Reads the picked photo and keeps it as a small PNG; see `CustomIcon`.
+    private func loadPicture(from item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self) else {
+            alertMessage = String(localized: "Could not read the selected image.")
+            showingAlert = true
+            return
+        }
+        guard let prepared = CustomIcon.prepared(from: data) else {
+            alertMessage = String(localized: "That picture could not be used as an icon. Try a different one.")
+            showingAlert = true
+            return
+        }
+        customIcon = prepared
+    }
+
     private func saveChanges() {
         if label.isEmpty {
             alertMessage = String(localized: "Service name cannot be empty.")
@@ -1142,6 +1216,7 @@ struct EditTokenView: View {
             period: period != code.effectivePeriod ? period : nil,
             counter: counter != Int(clamping: code.counter) ? UInt64(max(0, counter)) : nil,
             timerRingHex: ringColorChanged ? .some(ringHexForSave()) : nil,
+            customIcon: iconChanged ? .some(customIcon) : nil,
             modifiedAt: code.modifiedAt
         )
 

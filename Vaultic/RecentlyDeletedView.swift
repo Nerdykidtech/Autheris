@@ -110,7 +110,8 @@ struct RecentlyDeletedView: View {
 
     private func row(_ entry: TrashBin.Entry) -> some View {
         HStack(spacing: 12) {
-            IssuerIconView(branding: IssuerBranding.forLabel(entry.code.label), size: 36)
+            IssuerIconView(branding: IssuerBranding.forLabel(entry.code.label), size: 36,
+                           customIcon: entry.code.customIcon)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(entry.code.label)

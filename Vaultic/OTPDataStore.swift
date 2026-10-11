@@ -407,8 +407,8 @@ final class OTPDataStore: ObservableObject {
                                    secret: token.secret, algorithm: token.algorithm,
                                    digits: token.digits, period: token.period,
                                    kind: token.kind, counter: token.counter,
-                                   timerRingHex: token.timerRingHex, isPinned: token.isPinned,
-                                   modifiedAt: now)
+                                   timerRingHex: token.timerRingHex, customIcon: token.customIcon,
+                                   isPinned: token.isPinned, modifiedAt: now)
             guard !TrashBin.collides(imported, with: codes + added) else { continue }
             added.append(imported)
         }
@@ -610,6 +610,7 @@ final class OTPDataStore: ObservableObject {
             // a code already used — which the next sync would undo anyway.
             counter: changed(\.counter).map { max($0, codes[index].counter) },
             timerRingHex: changed(\.timerRingHex),
+            customIcon: changed(\.customIcon),
             isPinned: changed(\.isPinned)
         )
 
