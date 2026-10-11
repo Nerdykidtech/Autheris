@@ -168,17 +168,15 @@ final class AppLockManager: ObservableObject {
 
     /// Asks for Face ID, Touch ID or the passcode again before a sensitive action:
     /// turning App Lock off, exporting or backing up every secret, or showing a
-    /// setup key.
+    /// setup key. This applies whether or not App Lock is on, because these actions
+    /// reveal every code and App Lock is not the only thing that should guard them.
     ///
     /// The grace period means a phone unlocked moments ago opens straight into
     /// Autheris, so without this anyone holding it could export the whole vault.
-    /// Returns `true` straight away when App Lock is off, since the user has chosen
-    /// not to be asked, and when the device has no passcode, since there is then
-    /// nothing to authenticate with.
+    /// Returns `true` straight away only when the device has no passcode, since there
+    /// is then nothing to authenticate with.
     static func reauthenticate(reason: String,
                                context: DeviceOwnerAuthenticating = LAContext()) async -> Bool {
-        guard UserDefaults.standard.bool(forKey: AppLockEnabledKey) else { return true }
-
         let availability = context.ownerAuthenticationAvailability()
         guard availability.available else {
             return (availability.error as? LAError)?.code == .passcodeNotSet

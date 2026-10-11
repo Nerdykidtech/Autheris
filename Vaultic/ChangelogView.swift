@@ -62,6 +62,7 @@ struct ChangelogRelease: Identifiable, Sendable {
                 "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.",
                 "The countdown bar no longer moves when the number drops from ten seconds to nine.",
                 "A picture is never sent to the Apple Watch or to logo.dev.",
+                "Backup, Transfer QR codes and setup keys now ask for Face ID, Touch ID or your passcode even when App Lock is off, since they show every code.",
                 "App Lock now protects your codes where they are stored, not only the screen. With it on, the iPhone asks for Face ID, Touch ID or your passcode before the codes can be read, and turning App Lock on or off asks you to authenticate."
             ]
         ),

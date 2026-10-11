@@ -127,6 +127,15 @@ final class AppLockManagerTests: XCTestCase {
                       "only a missing passcode turns App Lock off")
     }
 
+    func testReauthenticationAsksEvenWhenAppLockIsOff() async {
+        UserDefaults.standard.set(false, forKey: AppLockEnabledKey)
+
+        let allowed = await AppLockManager.reauthenticate(reason: "test",
+                                                          context: FakeAuthenticationContext.refuses)
+
+        XCTAssertFalse(allowed, "exports and setup keys reveal every code, so they ask whether or not App Lock is on")
+    }
+
     func testAFailedAuthenticationKeepsTheLock() async {
         UserDefaults.standard.set(true, forKey: AppLockEnabledKey)
 
