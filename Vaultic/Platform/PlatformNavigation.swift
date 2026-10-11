@@ -245,9 +245,10 @@ struct PlatformSwatchRow<Content: View>: View {
 
     var body: some View {
         #if os(iOS)
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             row
         }
+        .scrollIndicators(.hidden)
         #else
         row
         #endif
@@ -272,7 +273,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .primaryAction
         #else
-        .navigationBarTrailing
+        .topBarTrailing
         #endif
     }
 
@@ -284,7 +285,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .navigation
         #else
-        .navigationBarLeading
+        .topBarLeading
         #endif
     }
 
@@ -305,7 +306,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .cancellationAction
         #else
-        .navigationBarLeading
+        .topBarLeading
         #endif
     }
 
@@ -316,7 +317,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .confirmationAction
         #else
-        .navigationBarTrailing
+        .topBarTrailing
         #endif
     }
 }

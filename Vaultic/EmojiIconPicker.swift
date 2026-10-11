@@ -1444,7 +1444,7 @@ struct EmojiIconPicker: View {
     private var matches: [Entry] {
         let term = query.trimmingCharacters(in: .whitespaces)
         guard !term.isEmpty else { return Self.catalog }
-        return Self.catalog.filter { $0.name.localizedCaseInsensitiveContains(term) }
+        return Self.catalog.filter { $0.name.localizedStandardContains(term) }
     }
 
     private let columns = [GridItem(.adaptive(minimum: 56), spacing: 8)]

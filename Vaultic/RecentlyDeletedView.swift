@@ -121,13 +121,13 @@ struct RecentlyDeletedView: View {
                 if !entry.code.account.isEmpty {
                     Text(entry.code.account)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
                 Text(timeLeftText(for: entry))
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer(minLength: 8)
@@ -146,16 +146,16 @@ struct RecentlyDeletedView: View {
         VStack(spacing: 12) {
             Image(systemName: "trash")
                 .font(.system(size: 40))
-                .foregroundColor(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .opacity(0.5)
 
             Text("Nothing Deleted")
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Text("Codes you delete are kept here for \(TrashBin.retentionDays) days in case you change your mind.")
                 .font(.subheadline)
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundStyle(.secondary.opacity(0.8))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
         }

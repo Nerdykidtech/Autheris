@@ -22,6 +22,7 @@ extension EnvironmentValues {
 }
 
 struct ImportConfirmationView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// Codes that arrived in a link, not yet in the vault. See `IncomingLink`.
     let tokens: [OTPCode]
     @ObservedObject var dataStore: OTPDataStore
@@ -92,19 +93,19 @@ struct ImportConfirmationView: View {
             // Icon
             Image(systemName: "square.and.arrow.down")
                 .font(.system(size: 44))
-                .foregroundColor(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .symbolRenderingMode(.hierarchical)
             
             // Title
             Text("Import Tokens")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             // Description
             Text("A link is asking to add these codes to Autheris. Only import them if you expected this.")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
@@ -116,11 +117,11 @@ struct ImportConfirmationView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(verbatim: token.label)
                                 .font(.callout.weight(.semibold))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             if !token.account.isEmpty {
                                 Text(verbatim: token.account)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,13 +133,13 @@ struct ImportConfirmationView: View {
             // Buttons
             VStack(spacing: 12) {
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7)) {
                         importTokens()
                     }
                 }) {
                     Text("Import")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
@@ -148,13 +149,13 @@ struct ImportConfirmationView: View {
                 }
                 
                 Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7)) {
                         isPresented = false
                     }
                 }) {
                     Text("Cancel")
                         .font(.headline)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
@@ -213,7 +214,7 @@ struct ImportConfirmationView: View {
 
             Text("Check your home screen for the new tokens!")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 4)
         }
@@ -239,18 +240,18 @@ struct ImportConfirmationView: View {
         VStack(spacing: 20) {
             Image(systemName: icon)
                 .font(.system(size: 52))
-                .foregroundColor(tint)
+                .foregroundStyle(tint)
                 .symbolRenderingMode(.hierarchical)
 
             Text(title)
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
 
             content()
 
             Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7)) {
                     isPresented = false
                 }
                 // A batch — a migration from another app — earns an ask as it is
@@ -262,7 +263,7 @@ struct ImportConfirmationView: View {
             }) {
                 Text("Done")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(
@@ -277,7 +278,7 @@ struct ImportConfirmationView: View {
     private func message(_ text: Text) -> some View {
         text
             .font(.body)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
             .multilineTextAlignment(.center)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -287,17 +288,17 @@ struct ImportConfirmationView: View {
             if let icon = icon {
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
             
             Text(value)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .font(.callout)
     }

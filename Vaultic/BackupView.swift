@@ -31,12 +31,12 @@ private struct BackupRowView: View {
                 if let date = backupCreationDate(backupURL) {
                     Text(date, style: .date)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Text(backupFileSizeText(backupURL))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -55,7 +55,7 @@ private struct BackupRowView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
@@ -247,7 +247,7 @@ struct BackupView: View {
             } label: {
                 Label("Create Encrypted Backup", systemImage: "lock.doc.fill")
                     .font(.headline)
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
 
             Button {
@@ -285,16 +285,16 @@ struct BackupView: View {
             VStack(spacing: 12) {
                 Image(systemName: "externaldrive")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .opacity(0.5)
 
                 Text("No Backups Yet")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("Create your first backup to save all your tokens")
                     .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
+                    .foregroundStyle(.secondary.opacity(0.8))
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -310,11 +310,11 @@ struct BackupView: View {
 
                 Text("Encrypted backups (.autheris) are protected with your password using AES-GCM. Unencrypted backups are plain JSON.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("Note: Backups do not sync via iCloud. For device transfer, use the QR code export feature.")
                     .font(.caption2)
-                    .foregroundColor(.orange)
+                    .foregroundStyle(.orange)
             }
             .padding(.vertical, 8)
         }

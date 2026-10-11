@@ -632,7 +632,7 @@ struct WelcomeView: View {
                 .buttonStyle(.plain)
                 .onboardingGlass()
                 .accessibilityLabel(Text("Back"))
-                .transition(.scale(scale: 0.6).combined(with: .opacity))
+                .transition(reduceMotion ? .opacity : .scale(scale: 0.6).combined(with: .opacity))
             }
 
             Button {

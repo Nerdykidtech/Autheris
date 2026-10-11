@@ -381,7 +381,7 @@ struct IssuerIconView: View {
             // Monogram letter
             Text(String(branding.displayName.prefix(1)).uppercased())
                 .font(.system(size: size * 0.5, weight: .semibold, design: .rounded))
-                .foregroundColor(branding.color)
+                .foregroundStyle(branding.color)
         }
     }
 }

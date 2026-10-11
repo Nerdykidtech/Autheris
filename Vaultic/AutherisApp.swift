@@ -372,16 +372,16 @@ struct PrivacyOverlay: View {
             VStack(spacing: 16) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 64))
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .symbolRenderingMode(.hierarchical)
                 
                 Text("Autheris")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text("Protected by Privacy Mode")
                     .font(.system(size: 16, weight: .medium, design: .default))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             .padding()

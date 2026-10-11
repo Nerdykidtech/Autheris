@@ -45,7 +45,7 @@ struct TokenSecretView: View {
                             if !code.account.isEmpty {
                                 Text(code.account)
                                     .font(.system(size: 12))
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
                         }
@@ -81,7 +81,7 @@ struct TokenSecretView: View {
                             Capsule()
                                 .fill(isDirty ? Color.accentColor : Color.accentColor.opacity(0.4))
                         )
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .disabled(!isDirty)
                 .padding(.horizontal, 32)

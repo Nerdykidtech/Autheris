@@ -42,6 +42,7 @@ struct SettingsView: View {
     @State private var showingTeardownDialog = false
     @State private var showingDeleteCloudDataDialog = false
     @State private var syncErrorMessage: String?
+    @State private var showingSyncError = false
 
     @State private var showingBackupView = false
     /// The open transfer sheet and the link it shows.
@@ -149,7 +150,7 @@ struct SettingsView: View {
         }
         .alert(
             "iCloud Sync",
-            isPresented: Binding(get: { syncErrorMessage != nil }, set: { if !$0 { syncErrorMessage = nil } })
+            isPresented: $showingSyncError
         ) {
             Button("OK", role: .cancel) { syncErrorMessage = nil }
         } message: {
@@ -170,14 +171,14 @@ struct SettingsView: View {
                 VStack(spacing: 20) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 50))
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     
                     Text("Unable to Generate QR Code")
                         .font(.headline)
                     
                     Text(transferUnavailableReason)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                     
                     Button("Dismiss") {
@@ -323,7 +324,7 @@ struct SettingsView: View {
                 if let detail = dataStore.syncStatus.detail {
                     Text(detail)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -346,6 +347,7 @@ struct SettingsView: View {
             isICloudSyncEnabled = false
         } catch {
             syncErrorMessage = error.localizedDescription
+            showingSyncError = true
         }
     }
 
@@ -530,7 +532,7 @@ struct SettingsView: View {
                         .font(.title3.weight(.semibold))
                     Text("Version \(appMarketingVersion) (\(appBuildNumber))")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
     
                 Spacer()
@@ -587,7 +589,7 @@ struct SettingsView: View {
                 }
             }
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
             .padding(.top, 4)
         }
     }
@@ -693,7 +695,7 @@ struct SettingsView: View {
                 // the status row reports the precise reason if it fails.
                 Text("iCloud isn't reachable right now. You can still turn sync on — it will connect once iCloud is available.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
     
             if isICloudSyncEnabled {
@@ -709,7 +711,7 @@ struct SettingsView: View {
         } footer: {
             Text("Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.top, 4)
         }
     }
@@ -738,7 +740,7 @@ struct SettingsView: View {
                             // it out of the catalog.
                             Text(verbatim: "A")
                                 .font(.caption.weight(.bold))
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                         )
                 }
                 .buttonStyle(.plain)
@@ -770,7 +772,7 @@ struct SettingsView: View {
         } footer: {
             Text("Choose an accent tint, or use the default Autheris color.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.top, 4)
         }
     }
@@ -834,7 +836,7 @@ struct SettingsView: View {
         } footer: {
             Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files. Deleted codes stay recoverable on this device for \(TrashBin.retentionDays) days.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.top, 4)
         }
     }
@@ -885,7 +887,7 @@ struct SettingsView: View {
             if !dataStore.trash.isEmpty {
                 // A count badge: `verbatim` keeps a bare "%lld" out of the catalog.
                 Text(verbatim: "\(dataStore.trash.count)")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             #if os(macOS)
             actionRowChevron
@@ -941,7 +943,7 @@ struct SettingsView: View {
         } footer: {
             Text("Made by Hunter Eddington")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.top, 4)
         }
     }

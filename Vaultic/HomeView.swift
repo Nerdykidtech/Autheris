@@ -41,8 +41,8 @@ struct HomeView: View {
         guard !searchText.isEmpty else { return ordered }
 
         return ordered.filter { code in
-            code.label.localizedCaseInsensitiveContains(searchText) ||
-            code.account.localizedCaseInsensitiveContains(searchText)
+            code.label.localizedStandardContains(searchText) ||
+            code.account.localizedStandardContains(searchText)
         }
     }
 
@@ -59,19 +59,19 @@ struct HomeView: View {
                 // Yet" here would be wrong, and adding would be refused anyway.
                 Image(systemName: "exclamationmark.lock")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .opacity(0.5)
 
                 Text("Codes Unavailable")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 if dataStore.hasUnreadableCodes {
                     // Stored, but not in a form this version can read. That won't
                     // fix itself, so there has to be a way forward.
                     Text("The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary.opacity(0.8))
+                        .foregroundStyle(.secondary.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
@@ -83,38 +83,38 @@ struct HomeView: View {
                 } else {
                     Text(OTPDataStore.vaultUnavailableMessage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary.opacity(0.8))
+                        .foregroundStyle(.secondary.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
             } else if searchText.isEmpty {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .opacity(0.5)
 
                 Text("No Tokens Yet")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("Add your first authentication token to get started")
                     .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
+                    .foregroundStyle(.secondary.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             } else {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .opacity(0.5)
 
                 Text("No Results")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("No tokens match \"\(searchText)\"")
                     .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
+                    .foregroundStyle(.secondary.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -236,13 +236,12 @@ struct HomeView: View {
             }
 
             // Add token button on the right (standard iOS pattern)
-            Button(action: {
+            Button("Add Token", systemImage: "plus.circle.fill") {
                 showingAddToken = true
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title3)
-                    .foregroundColor(.accentColor)
             }
+            .labelStyle(.iconOnly)
+            .font(.title3)
+            .foregroundStyle(Color.accentColor)
             // Nothing can be added to a vault that hasn't loaded; see
             // `OTPDataStore.isVaultLoaded`.
             .disabled(!dataStore.isVaultLoaded)
@@ -331,6 +330,7 @@ struct HomeView: View {
 /// and letting go settles it into place. That is the iPhone behaviour, at one card
 /// per gesture rather than one row.
 private struct TokenGridView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let codes: [OTPCode]
     let columns: Int
     let rearranging: Bool
@@ -435,13 +435,13 @@ private struct TokenGridView: View {
                 if let current = currentIndex(of: code.id), current != slot {
                     let destination = TokenGrid.insertionIndex(hoveringSlot: slot,
                                                                liftedFrom: current)
-                    withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) {
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.75)) {
                         dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
                     }
                 }
             }
             .onEnded { _ in
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8)) {
                     draggedID = nil
                 }
             }
@@ -490,6 +490,7 @@ enum TokenSheet: Identifiable {
 }
 
 struct OTPCardView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let code: OTPCode
     let dataStore: OTPDataStore
     /// The time to show the code and countdown for. Handed down from the list's
@@ -554,7 +555,7 @@ struct OTPCardView: View {
 
     var body: some View {
         card
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
             .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
 
@@ -569,6 +570,10 @@ struct OTPCardView: View {
             surface
                 .onTapGesture {
                     // Tap to copy with haptic feedback
+                    copyToClipboard()
+                }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(named: "Copy code") {
                     copyToClipboard()
                 }
                 .contextMenu {
@@ -634,7 +639,7 @@ struct OTPCardView: View {
                     if code.isPinned {
                         Image(systemName: "pin.fill")
                             .font(.caption2)
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
 
                     Text(code.label)
@@ -651,7 +656,7 @@ struct OTPCardView: View {
                 if !code.account.isEmpty {
                     Text(code.account)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -662,11 +667,11 @@ struct OTPCardView: View {
                 if isCopied {
                     Label("Copied", systemImage: "checkmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 } else {
                     Text(code.code(at: now))
                         .font(.system(codeTextStyle, design: .monospaced).weight(.bold))
-                        .foregroundColor(isExpiring ? .red : .primary)
+                        .foregroundStyle(isExpiring ? .red : .primary)
                 }
 
                 if code.isTimeBased {
@@ -684,7 +689,7 @@ struct OTPCardView: View {
 
                             Text("\(remainingSeconds)s")
                                 .font(.caption.monospacedDigit())
-                                .foregroundColor(isExpiring ? .red : .secondary)
+                                .foregroundStyle(isExpiring ? .red : .secondary)
                         }
                     }
                 } else {
@@ -706,7 +711,7 @@ struct OTPCardView: View {
                         // lossless.
                         Text("Counter \(Int(clamping: code.counter))")
                             .font(.caption.monospacedDigit())
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             // Fixed rather than flexible. This column shares the row
                             // with the service name, and a squeezable label here is
                             // what wrapped "Counter" onto two lines and stretched the
@@ -737,7 +742,7 @@ struct OTPCardView: View {
                                 // both, so the chip looked empty and off-centre.
                                 .labelStyle(.titleAndIcon)
                                 .font(.caption.weight(.semibold))
-                                .foregroundColor(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                                 .lineLimit(1)
                                 .fixedSize()
                                 .padding(.horizontal, 10)
@@ -789,7 +794,8 @@ struct OTPCardView: View {
         }
         
         // Reset after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        Task {
+            try? await Task.sleep(for: .seconds(2))
             withAnimation {
                 isCopied = false
             }
@@ -992,7 +998,7 @@ struct EditTokenView: View {
                     if !account.isEmpty {
                         Text(account)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -1119,7 +1125,7 @@ struct EditTokenView: View {
                         Text("Ring color")
                         Text(ringColorLabel)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
                 }
@@ -1158,7 +1164,7 @@ struct EditTokenView: View {
     private var previewText: some View {
         Text(previewCode)
             .font(.system(.body, design: .monospaced).weight(.semibold))
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
     }
 
     private var ringColorMatchesBranding: Bool {
