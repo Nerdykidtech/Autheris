@@ -131,6 +131,7 @@ nonisolated enum VaultKeychain {
         case errSecItemNotFound:
             return .notFound
         default:
+            KeychainStore.report(status, during: "read", account: boundAccount(account))
             return .unavailable(status)
         }
     }
@@ -142,18 +143,24 @@ nonisolated enum VaultKeychain {
         if updateStatus == errSecSuccess {
             return true
         }
-        guard updateStatus == errSecItemNotFound else { return false }
+        guard updateStatus == errSecItemNotFound else {
+            KeychainStore.report(updateStatus, during: "update", account: boundAccount(account))
+            return false
+        }
 
         var add = KeychainStore.query(account: boundAccount(account))
         add[kSecValueData as String] = data
         add[kSecAttrAccessControl as String] = access
-        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
+        let addStatus = SecItemAdd(add as CFDictionary, nil)
+        KeychainStore.report(addStatus, during: "add", account: boundAccount(account))
+        return addStatus == errSecSuccess
     }
 
     private static func deleteBound(account: String, context: LAContext?) -> Bool {
         var query = KeychainStore.query(account: boundAccount(account))
         query[kSecUseAuthenticationContext as String] = noPrompt(context)
         let status = SecItemDelete(query as CFDictionary)
+        KeychainStore.report(status, during: "delete", account: boundAccount(account))
         return status == errSecSuccess || status == errSecItemNotFound
     }
 

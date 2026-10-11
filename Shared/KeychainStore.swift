@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Security
 
 /// Minimal Generic Password Keychain store.
@@ -9,6 +10,27 @@ import Security
 /// Keychain backup).
 enum KeychainStore {
     private static let service = "com.eddingtontech.autheris"
+    private static let log = Logger(subsystem: "com.eddingtontech.autheris", category: "Keychain")
+
+    /// Records a Keychain call that did not succeed, with the status it returned, in
+    /// every build. The item's data is never logged, only the operation, the account
+    /// name (which is not secret) and the status.
+    ///
+    /// A status the caller will simply retry is logged as information. Anything else
+    /// is an error, because it means the item may not have been written or deleted.
+    static func report(_ status: OSStatus, during operation: String, account: String) {
+        switch status {
+        case errSecSuccess, errSecItemNotFound:
+            return
+        case errSecInteractionNotAllowed:
+            // The device is locked, or the owner hasn't authenticated. The caller keeps
+            // its copy and tries again when that changes.
+            log.info("\(operation, privacy: .public) of \(account, privacy: .public) waiting: not accessible right now (status \(status, privacy: .public))")
+        default:
+            let message = SecCopyErrorMessageString(status, nil) as String? ?? "unknown error"
+            log.error("\(operation, privacy: .public) of \(account, privacy: .public) failed: \(message, privacy: .public) (status \(status, privacy: .public))")
+        }
+    }
 
     /// The identity of an item, shared by every operation.
     ///
@@ -37,6 +59,7 @@ enum KeychainStore {
     @discardableResult
     static func delete(account: String) -> Bool {
         let status = SecItemDelete(query(account: account) as CFDictionary)
+        report(status, during: "delete", account: account)
         return status == errSecSuccess || status == errSecItemNotFound
     }
 
@@ -53,9 +76,7 @@ enum KeychainStore {
         }
 
         guard updateStatus == errSecItemNotFound else {
-            #if DEBUG
-            print("Keychain update failed with status \(updateStatus)")
-            #endif
+            report(updateStatus, during: "update", account: account)
             return false
         }
 
@@ -64,6 +85,7 @@ enum KeychainStore {
         addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
 
         let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+        report(addStatus, during: "add", account: account)
         return addStatus == errSecSuccess
     }
 
@@ -104,6 +126,7 @@ enum KeychainStore {
         case errSecItemNotFound:
             return .notFound
         default:
+            report(status, during: "read", account: account)
             return .unavailable(status)
         }
     }
