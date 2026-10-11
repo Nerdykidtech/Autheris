@@ -42,6 +42,7 @@
       }
     },
     "%@ is already in Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -82,6 +83,7 @@
       }
     },
     "%@ was added to Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -711,6 +713,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "有链接请求将这些验证码添加到 Autheris。仅在你预期如此时才导入。"
+          }
+        }
+      }
+    },
+    "A picture is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Bild wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A picture is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una imagen nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une image n'est jamais envoyée à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像がApple Watchやlogo.devに送信されることはありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma imagem nunca é enviada ao Apple Watch nem ao logo.dev."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片绝不会发送到 Apple Watch 或 logo.dev。"
           }
         }
       }
@@ -1512,6 +1561,7 @@
       }
     },
     "Already Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -1747,6 +1797,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "App 锁定不可用"
+          }
+        }
+      }
+    },
+    "App Lock Unchanged": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock unverändert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock Unchanged"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock sin cambios"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock inchangé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockは変更されていません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock sem alterações"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock 未更改"
+          }
+        }
+      }
+    },
+    "App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock bewahrt deine Codes in einer Form auf, die deinen Gerätecode erfordert. Wenn du den Gerätecode entfernst, kann Autheris deine Codes nicht mehr lesen, bis du wieder einen Code festlegst. Wenn du deinen Gerätecode oder Face ID deaktivieren möchtest, schalte zuerst App Lock aus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock guarda tus códigos de una forma que requiere tu código de acceso. Si eliminas el código de acceso del dispositivo, Autheris no podrá leer tus códigos hasta que vuelvas a configurar uno. Si piensas desactivar el código de acceso o Face ID, desactiva primero App Lock."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock conserve vos codes sous une forme qui nécessite votre code d'accès. Si vous supprimez le code d'accès de l'appareil, Autheris ne pourra plus lire vos codes tant que vous n'en aurez pas défini un nouveau. Si vous comptez désactiver le code d'accès ou Face ID, désactivez d'abord App Lock."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockは、コードをパスコードが必要な形で保存します。端末のパスコードを削除すると、パスコードを設定し直すまでAutherisはコードを読み取れません。パスコードまたはFace IDを無効にする予定がある場合は、先にApp Lockを無効にしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O App Lock guarda seus códigos de uma forma que exige sua senha. Se você remover a senha do dispositivo, o Autheris não conseguirá ler seus códigos até que você defina uma senha novamente. Se pretende desativar a senha ou o Face ID, desative o App Lock primeiro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock 以需要你设备密码才能读取的形式保存你的验证码。如果移除设备密码，在重新设置密码之前，Autheris 将无法读取你的验证码。如果你打算关闭设备密码或 Face ID，请先关闭 App Lock。"
           }
         }
       }
@@ -2027,6 +2171,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "请进行验证以关闭 App 锁定。"
+          }
+        }
+      }
+    },
+    "Authenticate to turn on App Lock.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiziere dich, um App Lock einzuschalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authenticate to turn on App Lock."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para activar App Lock."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour activer App Lock."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockをオンにするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para ativar o App Lock."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请验证身份以开启 App Lock。"
           }
         }
       }
@@ -3034,6 +3225,53 @@
         }
       }
     },
+    "Change Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild ändern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer l'image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を変更"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alterar imagem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改图片"
+          }
+        }
+      }
+    },
     "Changelog": {
       "localizations": {
         "de-DE": {
@@ -3110,6 +3348,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "新添加的账户就在主页上！"
+          }
+        }
+      }
+    },
+    "Choose Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字を選択"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择表情符号"
+          }
+        }
+      }
+    },
+    "Choose Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir une image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を選択"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher imagem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择图片"
           }
         }
       }
@@ -3275,6 +3607,7 @@
       }
     },
     "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -3310,6 +3643,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "只要 Autheris 不在最前面，或屏幕正在被录制、投送，验证码就会隐藏。离开 30 秒后应用锁会重新锁定。"
+          }
+        }
+      }
+    },
+    "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes sind immer ausgeblendet, wenn Autheris nicht die vorderste App ist und solange der Bildschirm aufgenommen oder gespiegelt wird. App Lock sperrt 30 Sekunden nach dem Verlassen der App erneut. Bei eingeschaltetem App Lock werden deine Codes außerdem so gespeichert, dass das iPhone selbst Face ID, Touch ID oder deinen Gerätecode verlangt, bevor sie gelesen werden können."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos se ocultan siempre que Autheris no sea la app en primer plano, y mientras la pantalla se graba o se duplica. App Lock vuelve a bloquear 30 segundos después de salir. Con App Lock activado, tus códigos también se guardan de forma que el iPhone pida Face ID, Touch ID o tu código de acceso antes de poder leerlos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes sont masqués dès qu'Autheris n'est pas l'app au premier plan, et pendant l'enregistrement ou la mise en miroir de l'écran. App Lock se verrouille à nouveau 30 secondes après votre départ. Avec App Lock activé, vos codes sont aussi stockés de façon que l'iPhone demande Face ID, Touch ID ou votre code d'accès avant de pouvoir les lire."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisが最前面のアプリでないとき、および画面が録画・ミラーリングされているときは、コードは隠されます。App Lockは、アプリを離れてから30秒後に再びロックされます。App Lockがオンのときは、コードはiPhone自体がFace ID、Touch ID、またはパスコードを求めてからでないと読めない形で保存されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os códigos ficam ocultos sempre que o Autheris não estiver em primeiro plano e enquanto a tela estiver sendo gravada ou espelhada. O App Lock bloqueia novamente 30 segundos depois que você sai. Com o App Lock ativado, seus códigos também são guardados de modo que o iPhone peça Face ID, Touch ID ou sua senha antes de poderem ser lidos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只要 Autheris 不在最前台，或屏幕正在录制或镜像，验证码就会被隐藏。离开应用 30 秒后 App Lock 会重新锁定。开启 App Lock 后，你的验证码还会以这样的方式存储：iPhone 本身需要 Face ID、Touch ID 或设备密码才能读取。"
           }
         }
       }
@@ -3590,6 +3970,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "复制"
+          }
+        }
+      }
+    },
+    "Copy code": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy code"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar código"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier le code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをコピー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制验证码"
           }
         }
       }
@@ -5432,6 +5859,53 @@
         }
       }
     },
+    "Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表情符号"
+          }
+        }
+      }
+    },
     "Encrypted Aegis exports aren't supported yet. Export an unencrypted Aegis vault instead.": {
       "localizations": {
         "de-DE": {
@@ -6232,6 +6706,53 @@
         }
       }
     },
+    "Icon": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icono"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icône"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ícone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标"
+          }
+        }
+      }
+    },
     "If Autheris is on your Apple Watch, this iPhone copies your codes to it, setup keys included, so the watch can show them. Off, they are removed from the watch.": {
       "localizations": {
         "de-DE": {
@@ -6593,6 +7114,7 @@
       }
     },
     "Imported %lld codes to Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "variations": {
@@ -6711,6 +7233,7 @@
       }
     },
     "Importing tokens...": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -9190,6 +9713,53 @@
         }
       }
     },
+    "Reveals the setup key": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeigt den Einrichtungsschlüssel an"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveals the setup key"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra la clave de configuración"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche la clé de configuration"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定キーを表示"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra a chave de configuração"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示设置密钥"
+          }
+        }
+      }
+    },
     "Ring color": {
       "localizations": {
         "de-DE": {
@@ -9590,6 +10160,53 @@
         }
       }
     },
+    "Search emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji suchen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher un emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字を検索"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesquisar emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索表情符号"
+          }
+        }
+      }
+    },
     "Search tokens": {
       "localizations": {
         "de-DE": {
@@ -9866,6 +10483,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "另行保存并重新开始"
+          }
+        }
+      }
+    },
+    "Set a device passcode to unlock your codes. They were protected by it and can't be read without one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege einen Gerätecode fest, um deine Codes zu entsperren. Sie wurden damit geschützt und können ohne ihn nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a device passcode to unlock your codes. They were protected by it and can't be read without one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configura un código de acceso del dispositivo para desbloquear tus códigos. Estaban protegidos con él y no se pueden leer sin uno."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez un code d'accès sur l'appareil pour déverrouiller vos codes. Ils étaient protégés par lui et ne peuvent pas être lus sans lui."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードのロックを解除するには、端末のパスコードを設定してください。コードはパスコードで保護されていたため、パスコードがないと読み取れません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defina uma senha do dispositivo para desbloquear seus códigos. Eles estavam protegidos por ela e não podem ser lidos sem uma."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请设置设备密码以解锁你的验证码。验证码受该密码保护，没有它就无法读取。"
           }
         }
       }
@@ -10831,6 +11495,7 @@
       }
     },
     "Tap to reveal the setup key": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -10866,6 +11531,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "点按以显示设置密钥"
+          }
+        }
+      }
+    },
+    "That picture could not be used as an icon. Try a different one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Bild kann nicht als Symbol verwendet werden. Versuche ein anderes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That picture could not be used as an icon. Try a different one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esa imagen no se pudo usar como icono. Prueba con otra."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image ne peut pas être utilisée comme icône. Essayez-en une autre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この画像はアイコンとして使用できません。別の画像を選んでください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível usar esta imagem como ícone. Tente outra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将此图片用作图标，请选择其他图片。"
           }
         }
       }
@@ -10986,6 +11698,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "此版本的 Autheris 无法读取存储在此设备上的验证码。它们没有被更改。你可以将它们另行保存并重新开始，然后在“设置”中恢复备份；如果开启了 iCloud 同步，也可以让其他设备将验证码同步回来。"
+          }
+        }
+      }
+    },
+    "The countdown bar no longer moves when the number drops from ten seconds to nine.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Countdown-Balken verschiebt sich nicht mehr, wenn die Zahl von zehn auf neun Sekunden springt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The countdown bar no longer moves when the number drops from ten seconds to nine."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barra de cuenta atrás ya no se desplaza cuando el número pasa de diez segundos a nueve."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barre de compte à rebours ne bouge plus lorsque le nombre passe de dix secondes à neuf."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り時間の数字が10秒から9秒になっても、カウントダウンのバーが動かなくなりました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A barra de contagem regressiva não se desloca mais quando o número passa de dez segundos para nove."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒计时数字从十秒变为九秒时，进度条不再移动。"
+          }
+        }
+      }
+    },
+    "The next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im nächsten Schritt wählst du, wohin die Datei gehen soll, etwa iCloud Drive, E-Mail, Nachrichten oder AirDrop. Jeder dieser Wege kann eine Kopie behalten, ebenso wie jeder, der Zugriff auf den Speicherort hat. Eine verschlüsselte Sicherung braucht ein Passwort und ist deutlich sicherer."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El siguiente paso te permite elegir dónde se guarda el archivo, como iCloud Drive, el correo, Mensajes o AirDrop. Cada uno de ellos puede conservar una copia, y también quien tenga acceso al lugar donde lo guardes. Una copia de seguridad cifrada necesita una contraseña y es mucho más segura."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'étape suivante vous permet de choisir où le fichier est envoyé, par exemple iCloud Drive, l'e-mail, Messages ou AirDrop. Chacun de ces services peut conserver une copie, tout comme quiconque a accès à l'emplacement où vous l'enregistrez. Une sauvegarde chiffrée nécessite un mot de passe et est bien plus sûre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次の手順で、ファイルの送り先を選べます。iCloud Drive、メール、メッセージ、AirDropなど、それぞれがコピーを保持する場合があり、保存先にアクセスできる人も同様です。暗号化されたバックアップはパスワードが必要で、はるかに安全です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No próximo passo, você escolhe para onde o arquivo vai, como iCloud Drive, e-mail, Mensagens ou AirDrop. Cada um desses destinos pode manter uma cópia, assim como quem tiver acesso ao local onde você salvar. Um backup criptografado precisa de senha e é muito mais seguro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步可以选择文件的去向，例如 iCloud 云盘、邮件、信息或隔空投送。这些途径都可能保留副本，保存位置的任何访问者也一样。加密备份需要设置密码，安全得多。"
           }
         }
       }
@@ -11430,42 +12236,49 @@
         }
       }
     },
-    "This file holds every setup key as plain text. Anyone who gets a copy can generate your codes. An encrypted backup is safer.": {
+    "This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back.": {
+      "extractionState": "manual",
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Diese Datei enthält alle Einrichtungsschlüssel als Klartext. Wer eine Kopie erhält, kann deine Codes erzeugen. Ein verschlüsseltes Backup ist sicherer."
+            "value": "Diese Datei enthält den Einrichtungsschlüssel jedes Codes im Klartext, und kein Passwort schützt sie. Wer sie öffnet, kann alle deine Codes erzeugen. Sobald du sie teilst, lassen sich die Kopien nicht mehr zurückholen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este archivo contiene todas las claves de configuración como texto sin cifrar. Cualquiera que obtenga una copia puede generar tus códigos. Una copia de seguridad cifrada es más segura."
+            "value": "Este archivo contiene la clave de configuración de cada código en texto sin cifrar, y no está protegido por ninguna contraseña. Cualquiera que lo abra puede generar todos tus códigos. Una vez compartido, no podrás retirar las copias."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce fichier contient toutes les clés de configuration en clair. Toute personne qui en obtient une copie peut générer vos codes. Une sauvegarde chiffrée est plus sûre."
+            "value": "Ce fichier contient la clé de configuration de chaque code en clair, et aucun mot de passe ne le protège. Quiconque l'ouvre peut générer tous vos codes. Une fois partagé, il est impossible de reprendre les copies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このファイルにはすべてのセットアップキーが平文で含まれます。コピーを入手した人は誰でもあなたのコードを生成できます。暗号化されたバックアップの方が安全です。"
+            "value": "このファイルには、すべてのコードの設定キーが平文で含まれています。パスワードによる保護はありません。開いた人は、あなたのコードをすべて生成できます。共有してしまうと、コピーを取り戻すことはできません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este arquivo guarda todas as chaves de configuração em texto simples. Qualquer pessoa que tiver uma cópia pode gerar seus códigos. Um backup criptografado é mais seguro."
+            "value": "Este arquivo contém a chave de configuração de cada código como texto simples, e nenhuma senha o protege. Quem o abrir pode gerar todos os seus códigos. Depois de compartilhado, não é possível recuperar as cópias."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此文件以明文形式保存所有设置密钥。任何获得副本的人都能生成你的验证码。加密备份更安全。"
+            "value": "此文件以明文保存每个验证码的设置密钥，且没有密码保护。任何打开它的人都能生成你的全部验证码。一旦分享，副本就无法收回。"
           }
         }
       }
@@ -11951,6 +12764,7 @@
       }
     },
     "Try Again": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -11986,6 +12800,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "重试"
+          }
+        }
+      }
+    },
+    "Turn On": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einschalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンにする"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启"
+          }
+        }
+      }
+    },
+    "Turn On App Lock?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock einschalten?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On App Lock?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Activar App Lock?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer App Lock ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockをオンにしますか?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar o App Lock?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启 App Lock？"
           }
         }
       }
@@ -12590,6 +13498,53 @@
         }
       }
     },
+    "Use Service Logo": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst-Logo verwenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Service Logo"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar el logotipo del servicio"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser le logo du service"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サービスのロゴを使う"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar o logotipo do serviço"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用服务徽标"
+          }
+        }
+      }
+    },
     "Use a password of at least %lld characters.": {
       "localizations": {
         "de-DE": {
@@ -12671,6 +13626,7 @@
       }
     },
     "Verification Code Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -12711,6 +13667,7 @@
       }
     },
     "Verification Codes Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -13190,6 +14147,53 @@
         }
       }
     },
+    "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeder Code kann ein eigenes Bild erhalten: Wähle ein Foto oder ein Emoji aus einer Liste. Bilder werden mit iCloud-Sync synchronisiert und sind in Backups enthalten; Emoji funktionieren auch dann, wenn Dienst-Logos ausgeschaltet sind."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes dar a cualquier código su propia imagen: elige una foto o un emoji de una lista. Las imágenes se sincronizan con iCloud Sync y se incluyen en las copias de seguridad, y los emoji funcionan aunque los logotipos de los servicios estén desactivados."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez donner à chaque code sa propre image : choisissez une photo ou un emoji dans une liste. Les images se synchronisent avec iCloud Sync et figurent dans les sauvegardes, et les emoji fonctionnent même si les logos des services sont désactivés."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どのコードにも自分の画像を設定できます。写真を選ぶか、一覧から絵文字を選んでください。画像はiCloud同期で同期され、バックアップにも含まれます。サービスのロゴをオフにしていても絵文字を使えます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode dar a qualquer código sua própria imagem: escolha uma foto ou um emoji de uma lista. As imagens são sincronizadas com o iCloud Sync e entram nos backups, e os emoji funcionam mesmo com os logotipos dos serviços desativados."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个代码都可以设置自己的图片：选择照片，或从列表中选择表情符号。图片会通过 iCloud 同步同步并包含在备份中；即使关闭了服务徽标，表情符号也能使用。"
+          }
+        }
+      }
+    },
     "You're All Set": {
       "localizations": {
         "de-DE": {
@@ -13231,6 +14235,7 @@
       }
     },
     "You've scanned a QR code with authentication tokens. Would you like to import them?": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -13266,6 +14271,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "你扫描的二维码中包含验证码，要导入吗？"
+          }
+        }
+      }
+    },
+    "Your codes couldn't be moved to the new protection, so App Lock is as it was. Try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Codes konnten nicht in den neuen Schutz verschoben werden, daher bleibt App Lock unverändert. Versuche es erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your codes couldn't be moved to the new protection, so App Lock is as it was. Try again."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron trasladar tus códigos a la nueva protección, así que App Lock sigue como estaba. Inténtalo de nuevo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos codes n'ont pas pu être transférés vers la nouvelle protection, App Lock reste donc inchangé. Réessayez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを新しい保護方式に移行できなかったため、App Lockは変更されていません。もう一度お試しください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível mover seus códigos para a nova proteção, então o App Lock continua como estava. Tente novamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将你的验证码移至新的保护方式，因此 App Lock 保持不变。请重试。"
           }
         }
       }
@@ -13386,6 +14438,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "你对这个设置密钥的更改尚未保存。"
+          }
+        }
+      }
+    },
+    "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Bild oder Emoji wird mit diesem Token gespeichert. Es wird mit iCloud-Sync synchronisiert, wenn dieser aktiv ist, und ist in Backups enthalten. Es ist nicht in QR-Codes für die Übertragung enthalten und wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu imagen o emoji se guarda con este token. Se sincroniza con iCloud Sync si está activado y se incluye en las copias de seguridad. No se incluye en los códigos QR de transferencia, y nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre image ou emoji est enregistré avec ce jeton. Il se synchronise avec iCloud Sync si celui-ci est activé et figure dans les sauvegardes. Il n'est pas inclus dans les codes QR de transfert, et n'est jamais envoyé à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像や絵文字はこのトークンとともに保存されます。iCloud同期がオンのときは同期され、バックアップにも含まれます。転送用QRコードには含まれず、Apple Watchやlogo.devに送信されることもありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sua imagem ou emoji é salvo com este token. Ele é sincronizado com o iCloud Sync quando ele está ativado e entra nos backups. Ele não entra nos códigos QR de transferência e nunca é enviado ao Apple Watch nem ao logo.dev."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片或表情符号会与此令牌一起保存。开启 iCloud 同步时会同步，并包含在备份中。不会包含在传输二维码中，也绝不会发送到 Apple Watch 或 logo.dev。"
           }
         }
       }
@@ -13986,523 +15085,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "• **要求 Face ID / Touch ID**：打开 Autheris 时锁屏，或在后台停留 30 秒后返回时锁定。"
-          }
-        }
-      }
-    },
-    "Icon": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Icon"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Icono"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Icône"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Symbol"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アイコン"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "图标"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ícone"
-          }
-        }
-      }
-    },
-    "Choose Picture": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose Picture"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elegir imagen"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir une image"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bild auswählen"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画像を選択"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择图片"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escolher imagem"
-          }
-        }
-      }
-    },
-    "Change Picture": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Change Picture"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cambiar imagen"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Changer l'image"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bild ändern"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画像を変更"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "更改图片"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alterar imagem"
-          }
-        }
-      }
-    },
-    "Choose Emoji": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choose Emoji"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Elegir emoji"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Choisir un emoji"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji auswählen"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "絵文字を選択"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择表情符号"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Escolher emoji"
-          }
-        }
-      }
-    },
-    "Use Service Logo": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Use Service Logo"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar el logotipo del servicio"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Utiliser le logo du service"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dienst-Logo verwenden"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "サービスのロゴを使う"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "使用服务徽标"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Usar o logotipo do serviço"
-          }
-        }
-      }
-    },
-    "Emoji": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji"
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji"
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji"
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "絵文字"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "表情符号"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Emoji"
-          }
-        }
-      }
-    },
-    "That picture could not be used as an icon. Try a different one.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "That picture could not be used as an icon. Try a different one."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Esa imagen no se pudo usar como icono. Prueba con otra."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cette image ne peut pas être utilisée comme icône. Essayez-en une autre."
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dieses Bild kann nicht als Symbol verwendet werden. Versuche ein anderes."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "この画像はアイコンとして使用できません。別の画像を選んでください。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "无法将此图片用作图标，请选择其他图片。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Não foi possível usar esta imagem como ícone. Tente outra."
-          }
-        }
-      }
-    },
-    "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tu imagen o emoji se guarda con este token. Se sincroniza con iCloud Sync si está activado y se incluye en las copias de seguridad. No se incluye en los códigos QR de transferencia, y nunca se envía al Apple Watch ni a logo.dev."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Votre image ou emoji est enregistré avec ce jeton. Il se synchronise avec iCloud Sync si celui-ci est activé et figure dans les sauvegardes. Il n'est pas inclus dans les codes QR de transfert, et n'est jamais envoyé à l'Apple Watch ni à logo.dev."
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dein Bild oder Emoji wird mit diesem Token gespeichert. Es wird mit iCloud-Sync synchronisiert, wenn dieser aktiv ist, und ist in Backups enthalten. Es ist nicht in QR-Codes für die Übertragung enthalten und wird nie an die Apple Watch oder an logo.dev gesendet."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画像や絵文字はこのトークンとともに保存されます。iCloud同期がオンのときは同期され、バックアップにも含まれます。転送用QRコードには含まれず、Apple Watchやlogo.devに送信されることもありません。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "图片或表情符号会与此令牌一起保存。开启 iCloud 同步时会同步，并包含在备份中。不会包含在传输二维码中，也绝不会发送到 Apple Watch 或 logo.dev。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sua imagem ou emoji é salvo com este token. Ele é sincronizado com o iCloud Sync quando ele está ativado e entra nos backups. Ele não entra nos códigos QR de transferência e nunca é enviado ao Apple Watch nem ao logo.dev."
-          }
-        }
-      }
-    },
-    "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Puedes dar a cualquier código su propia imagen: elige una foto o un emoji de una lista. Las imágenes se sincronizan con iCloud Sync y se incluyen en las copias de seguridad, y los emoji funcionan aunque los logotipos de los servicios estén desactivados."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vous pouvez donner à chaque code sa propre image : choisissez une photo ou un emoji dans une liste. Les images se synchronisent avec iCloud Sync et figurent dans les sauvegardes, et les emoji fonctionnent même si les logos des services sont désactivés."
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Jeder Code kann ein eigenes Bild erhalten: Wähle ein Foto oder ein Emoji aus einer Liste. Bilder werden mit iCloud-Sync synchronisiert und sind in Backups enthalten; Emoji funktionieren auch dann, wenn Dienst-Logos ausgeschaltet sind."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "どのコードにも自分の画像を設定できます。写真を選ぶか、一覧から絵文字を選んでください。画像はiCloud同期で同期され、バックアップにも含まれます。サービスのロゴをオフにしていても絵文字を使えます。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每个代码都可以设置自己的图片：选择照片，或从列表中选择表情符号。图片会通过 iCloud 同步同步并包含在备份中；即使关闭了服务徽标，表情符号也能使用。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Você pode dar a qualquer código sua própria imagem: escolha uma foto ou um emoji de uma lista. As imagens são sincronizadas com o iCloud Sync e entram nos backups, e os emoji funcionam mesmo com os logotipos dos serviços desativados."
-          }
-        }
-      }
-    },
-    "The countdown bar no longer moves when the number drops from ten seconds to nine.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The countdown bar no longer moves when the number drops from ten seconds to nine."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La barra de cuenta atrás ya no se desplaza cuando el número pasa de diez segundos a nueve."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La barre de compte à rebours ne bouge plus lorsque le nombre passe de dix secondes à neuf."
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der Countdown-Balken verschiebt sich nicht mehr, wenn die Zahl von zehn auf neun Sekunden springt."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "残り時間の数字が10秒から9秒になっても、カウントダウンのバーが動かなくなりました。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "倒计时数字从十秒变为九秒时，进度条不再移动。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A barra de contagem regressiva não se desloca mais quando o número passa de dez segundos para nove."
-          }
-        }
-      }
-    },
-    "A picture is never sent to the Apple Watch or to logo.dev.": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A picture is never sent to the Apple Watch or to logo.dev."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una imagen nunca se envía al Apple Watch ni a logo.dev."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Une image n'est jamais envoyée à l'Apple Watch ni à logo.dev."
-          }
-        },
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ein Bild wird nie an die Apple Watch oder an logo.dev gesendet."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画像がApple Watchやlogo.devに送信されることはありません。"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "图片绝不会发送到 Apple Watch 或 logo.dev。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uma imagem nunca é enviada ao Apple Watch nem ao logo.dev."
           }
         }
       }

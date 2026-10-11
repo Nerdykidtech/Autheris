@@ -143,7 +143,8 @@ struct BackupView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back.\n\nThe next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer.")
+                Text("This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back.")
+                Text("The next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer.")
             }
             .alert("Create Encrypted Backup", isPresented: $showingCreatePasswordAlert) {
                 SecureField("Password", text: $newBackupPassword)
