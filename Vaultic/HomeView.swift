@@ -1033,9 +1033,12 @@ struct EditTokenView: View {
     /// where the picture goes, because it is the one thing on this screen that is
     /// not a setting of the code.
     private var iconSection: some View {
-        Section {
+        // Read here, not in the label: the label is a Sendable closure, which can't
+        // reach the main-actor property.
+        let hasPicture = customIcon != nil
+        return Section {
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                Label(customIcon == nil ? "Choose Picture" : "Change Picture", systemImage: "photo")
+                Label(hasPicture ? "Change Picture" : "Choose Picture", systemImage: "photo")
             }
 
             // Pushed rather than presented: a sheet opened from a row of this Form

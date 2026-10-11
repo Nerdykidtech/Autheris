@@ -3,7 +3,7 @@ import LocalAuthentication
 import Combine
 
 /// Shared UserDefaults key so the Settings toggle and the lock manager cannot drift.
-let AppLockEnabledKey = "enableAppLock"
+nonisolated let AppLockEnabledKey = "enableAppLock"
 
 /// The part of `LAContext` App Lock uses, so tests can stand in a device that has
 /// no passcode, or one that refuses.

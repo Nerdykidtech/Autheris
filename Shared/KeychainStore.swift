@@ -8,7 +8,7 @@ import Security
 /// `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, so it is only readable while
 /// the device is unlocked and never migrates to another device (or an iCloud
 /// Keychain backup).
-enum KeychainStore {
+nonisolated enum KeychainStore {
     private static let service = "com.eddingtontech.autheris"
     private static let log = Logger(subsystem: "com.eddingtontech.autheris", category: "Keychain")
 
@@ -96,7 +96,7 @@ enum KeychainStore {
     /// silent push, a background fetch) can't read them at all — and treating
     /// that as an empty vault means the next save writes the empty list over the
     /// real one.
-    enum ReadResult {
+    nonisolated enum ReadResult {
         case found(Data)
         case notFound
         /// The item may well exist but can't be read now, usually
