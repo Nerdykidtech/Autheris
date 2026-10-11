@@ -905,7 +905,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
         for name in AppActivity.keychainMayHaveBecomeReadable {
             NotificationCenter.default.post(name: name, object: nil)
         }
-        for _ in 0..<100 where !locked.isVaultLoaded { await Task.yield() }
+        await waitUntil { locked.isVaultLoaded }
 
         XCTAssertTrue(locked.isVaultLoaded)
         XCTAssertEqual(locked.codes.map(\.id), [existing.id])

@@ -42,14 +42,17 @@ nonisolated enum CustomIcon {
     /// An emoji drawn as a PNG, for a token whose icon the user picked from the
     /// emoji list. It is rendered once, here, so an emoji icon is stored and synced
     /// exactly like a photo and needs no network to show.
+    ///
+    /// The render is 240 pixels, and some emoji (lion, compass) are over
+    /// `maximumBytes` at that size, so it goes through `prepared` like a photo does
+    /// and comes out at the largest size that fits. Checking the size here instead
+    /// made those emoji silently do nothing when tapped.
     @MainActor
     static func emoji(_ character: String) -> Data? {
         let renderer = ImageRenderer(content: Text(character).font(.system(size: 120)))
         renderer.scale = 2
-        guard let image = renderer.cgImage,
-              let png = pngData(for: image),
-              png.count <= maximumBytes else { return nil }
-        return png
+        guard let image = renderer.cgImage, let png = pngData(for: image) else { return nil }
+        return prepared(from: png)
     }
 
     private static func pngData(for image: CGImage) -> Data? {

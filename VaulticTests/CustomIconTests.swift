@@ -40,6 +40,18 @@ final class CustomIconTests: XCTestCase {
         XCTAssertNotNil(CGImageSourceCreateWithData(emoji as CFData, nil))
     }
 
+    /// Lion and compass render over the limit at full size; they must still come
+    /// out as a picture, not nil (which made the tap do nothing).
+    @MainActor
+    func testEmojiThatIsLargeAtFullSizeStillBecomeAPicture() throws {
+        for emoji in ["🦁", "🧭"] {
+            let picture = try XCTUnwrap(CustomIcon.emoji(emoji), emoji)
+
+            XCTAssertLessThanOrEqual(picture.count, CustomIcon.maximumBytes, emoji)
+            XCTAssertNotNil(CGImageSourceCreateWithData(picture as CFData, nil), emoji)
+        }
+    }
+
     func testDataThatIsNotAPictureIsRefused() {
         XCTAssertNil(CustomIcon.prepared(from: Data("not a picture".utf8)))
     }
