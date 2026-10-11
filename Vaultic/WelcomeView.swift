@@ -16,6 +16,7 @@ struct WelcomeView: View {
     @State private var revealedPages: Set<Int> = []
     @State private var choices = OnboardingChoices()
     @State private var showingAppLockUnavailable = false
+    @State private var showingAppLockPasscodeWarning = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // Bound straight to Settings' keys: their defaults don't change for a new
@@ -95,6 +96,12 @@ struct WelcomeView: View {
         .onReceive(NotificationCenter.default.publisher(for: WatchTokenRelay.pairedWatchDidChange)) { _ in
             hasPairedWatch = WatchTokenRelay.hasPairedWatch
             isPairingKnown = WatchTokenRelay.isPairingKnown
+        }
+        .alert("Turn On App Lock?", isPresented: $showingAppLockPasscodeWarning) {
+            Button("Turn On") { Task { await switchAppLock(on: true) } }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first.")
         }
         .alert("App Lock Unavailable", isPresented: $showingAppLockUnavailable) {
             Button("OK", role: .cancel) { }
@@ -559,20 +566,39 @@ struct WelcomeView: View {
         #endif
     }
 
-    /// Turns on only when the device can authenticate its owner, as in
-    /// Settings. Turning it off asks for nothing here: there are no codes yet to
-    /// protect, and Settings asks once there are.
+    /// Turns on only when the device can authenticate its owner, and asks them to
+    /// authenticate, as Settings does. Turning it off asks for nothing while no codes
+    /// are bound, which is the case during onboarding.
     private var appLockBinding: Binding<Bool> {
         Binding(
             get: { enableAppLock },
             set: { newValue in
                 if newValue && !AppLockManager.canLock() {
                     showingAppLockUnavailable = true
+                } else if newValue {
+                    showingAppLockPasscodeWarning = true
                 } else {
-                    enableAppLock = newValue
+                    Task { await switchAppLock(on: false) }
                 }
             }
         )
+    }
+
+    /// Moves the codes into or out of the form that needs the owner's authentication,
+    /// then changes the switch. A move that fails leaves the switch where it was.
+    private func switchAppLock(on: Bool) async {
+        if !on && !VaultKeychain.hasBoundItems() {
+            enableAppLock = false
+            return
+        }
+        guard let context = await AppLockManager.authenticateForVault(
+            reason: on
+                ? String(localized: "Authenticate to turn on App Lock.")
+                : String(localized: "Authenticate to turn off App Lock.")
+        ) else { return }
+        guard VaultKeychain.moveAll(toProtected: on, context: context) else { return }
+        VaultSession.shared.begin(context)
+        enableAppLock = on
     }
 
     // MARK: - Bottom controls

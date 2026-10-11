@@ -19,7 +19,7 @@ enum KeychainStore {
     /// keychain ignores them, and an item added there with an accessibility
     /// attribute is rejected outright. Opting in explicitly is what makes the Mac
     /// store these the same way the phone does.
-    private static func query(account: String) -> [String: Any] {
+    static func query(account: String) -> [String: Any] {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

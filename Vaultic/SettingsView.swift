@@ -67,6 +67,8 @@ struct SettingsView: View {
     @State private var supportBody = SupportMailData.troubleshootingTemplate()
     @State private var showingSupportError = false
     @State private var showingAppLockUnavailable = false
+    @State private var showingAppLockMoveFailed = false
+    @State private var showingAppLockPasscodeWarning = false
     @State private var supportErrorMessage = ""
 
     private var appMarketingVersion: String {
@@ -218,6 +220,17 @@ struct SettingsView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("App Lock needs a passcode or password on this device to unlock Autheris. Set one up, then turn App Lock on again.")
+        }
+        .alert("Turn On App Lock?", isPresented: $showingAppLockPasscodeWarning) {
+            Button("Turn On") { Task { await switchAppLock(on: true) } }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first.")
+        }
+        .alert("App Lock Unchanged", isPresented: $showingAppLockMoveFailed) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Your codes couldn't be moved to the new protection, so App Lock is as it was. Try again.")
         }
         .task {
             // Re-check the iCloud account each time Settings opens, so a user who
@@ -561,7 +574,7 @@ struct SettingsView: View {
                 // A Mac preferences window is narrower and its tab is short, so the
                 // iPhone's per-switch list reads as a wall of text. The switch labels
                 // carry the meaning already; this says what they add up to.
-                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.")
+                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.")
                 #else
                 Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
                 Text("• **Hide codes in app switcher**: Shows a privacy screen instead of your OTP codes when using the app switcher.")
@@ -590,21 +603,55 @@ struct SettingsView: View {
             set: { newValue in
                 guard !newValue else {
                     if AppLockManager.canLock() {
-                        enableAppLock = true
+                        showingAppLockPasscodeWarning = true
                     } else {
                         showingAppLockUnavailable = true
                     }
                     return
                 }
-                Task {
-                    if await AppLockManager.reauthenticate(
-                        reason: String(localized: "Authenticate to turn off App Lock.")
-                    ) {
-                        enableAppLock = false
-                    }
-                }
+                Task { await switchAppLock(on: false) }
             }
         )
+    }
+
+    /// Turns App Lock on or off, moving the codes into or out of the form that needs
+    /// the owner's authentication. The switch changes only after the move, so a move
+    /// that fails leaves App Lock as it was.
+    private func switchAppLock(on: Bool) async {
+        if on {
+            guard let context = await AppLockManager.authenticateForVault(
+                reason: String(localized: "Authenticate to turn on App Lock.")
+            ) else { return }
+            guard VaultKeychain.moveAll(toProtected: true, context: context) else {
+                showingAppLockMoveFailed = true
+                return
+            }
+            VaultSession.shared.begin(context)
+            enableAppLock = true
+            dataStore.saveCodes()
+            return
+        }
+
+        // With no codes bound, there is nothing to move and the switch asks as it
+        // always has. Bound codes can only be moved with the owner's authentication.
+        guard VaultKeychain.hasBoundItems() else {
+            if await AppLockManager.reauthenticate(
+                reason: String(localized: "Authenticate to turn off App Lock.")
+            ) {
+                enableAppLock = false
+            }
+            return
+        }
+        guard let context = await AppLockManager.authenticateForVault(
+            reason: String(localized: "Authenticate to turn off App Lock.")
+        ) else { return }
+        guard VaultKeychain.moveAll(toProtected: false, context: context) else {
+            showingAppLockMoveFailed = true
+            return
+        }
+        VaultSession.shared.begin(context)
+        enableAppLock = false
+        dataStore.saveCodes()
     }
 
     /// Why there is no transfer QR code: the codes can't be read, or there are
