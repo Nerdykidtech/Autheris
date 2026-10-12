@@ -15,12 +15,13 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
-## [3.2] — October 2026
+## [3.2] — October 17, 2026
 
 ### Added
 
 - Any code can have its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off. A picture is never sent to the Apple Watch or to logo.dev, and it is not included in Transfer QR codes.
-- Folders sort your codes. Turn them on in Settings, then give each folder a name and an optional colour; the colour shows on its chip above the list. With iCloud Sync on, folders and the codes in them sync to your other devices. Folders are not included in backups, Transfer QR codes or the Apple Watch.
+- Folders sort your tokens. Turn them on in Settings, then give each folder a name and an optional colour, shown on its chip above the list. Tap a chip to see that folder, arrange each folder in its own order without changing All, and in Edit drag a token onto a chip to file it. With iCloud Sync on, folders and the tokens in them sync to your other devices. Folders are not included in backups, Transfer QR codes or the Apple Watch.
+- iCloud Sync has a Sync Now button, to sync straight away instead of waiting for the next change.
 - Appearance can be System, Light or Dark, and there are three more accent colours: blue, violet and orange.
 
 ### Changed
