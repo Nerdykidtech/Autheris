@@ -92,7 +92,7 @@ final class CloudKitTokenSyncService: TokenSyncService {
     static let legacyRecordTypes = ["AutherisSyncRecord"]
 
     /// Every record type a "delete my iCloud data" request must remove.
-    static var ownedRecordTypes: [String] { [recordType] + legacyRecordTypes }
+    static var ownedRecordTypes: [String] { [recordType, FolderRecordCodec.recordType] + legacyRecordTypes }
 
     /// The exact CloudKit field names this app reads and writes.
     ///

@@ -34,7 +34,7 @@ struct FoldersSettingsView: View {
             Section {
                 Toggle("Folders", isOn: $isEnabled)
             } footer: {
-                Text("Sort your tokens into folders on this device. They are not synced to iCloud or included in backups yet.")
+                Text("Sort your tokens into folders. With Sync with iCloud on, folders and the tokens in them sync to your other devices through your private iCloud database. They are not part of backups, Transfer QR codes or the Apple Watch.")
                     .settingsFooterStyle()
             }
 

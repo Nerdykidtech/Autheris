@@ -58,6 +58,12 @@ final class OTPDataStore: ObservableObject {
     private var tombstones: [String: Date] = [:]
 
     private var syncService: TokenSyncService
+    /// Folders and which token each one holds. Lives with the store so a folder
+    /// edit schedules the same sync a token edit does.
+    let organization = TokenOrganizationStore()
+    /// The folder side of sync. `nil` when a test supplies its own token sync, so the
+    /// tests never reach CloudKit.
+    private let folderSync: FolderSyncing?
     private var syncTask: Task<Void, Never>?
     /// Set while a sync is running. A sync requested meanwhile only sets
     /// `needsResync`, and runs once the current one finishes.
@@ -124,6 +130,7 @@ final class OTPDataStore: ObservableObject {
     /// - Parameter readKeychain: injectable so tests can stand in for a locked
     ///   device. Writes still go to the real Keychain.
     init(syncService: TokenSyncService? = nil,
+         folderSync: FolderSyncing? = nil,
          watchRelay: WatchTokenRelayService? = nil,
          readKeychain: @escaping @MainActor (String) -> KeychainStore.ReadResult = OTPDataStore.liveVaultRead) {
         // Restore Keychain-backed preferences before anything reads UserDefaults.
@@ -139,6 +146,7 @@ final class OTPDataStore: ObservableObject {
         let enabled = UserDefaults.standard.bool(forKey: Self.syncEnabledKey)
         isSyncEnabled = enabled
         self.syncService = syncService ?? CloudKitTokenSyncService(isEnabled: enabled)
+        self.folderSync = folderSync ?? (syncService == nil ? CloudKitFolderSync() : nil)
         // Before `loadVault()`, which saves and therefore pushes: the relay has to
         // exist by then, or the first launch after installing the watch app offers
         // it nothing.
@@ -167,6 +175,9 @@ final class OTPDataStore: ObservableObject {
         SyncRemoteNotificationRouter.register { [weak self] userInfo in
             await self?.handleRemoteNotification(userInfo) ?? false
         }
+
+        // Set last, once every stored property exists: the closure captures `self`.
+        organization.onLocalChange = { [weak self] in self?.scheduleSync() }
 
         if enabled {
             Task { [weak self] in
@@ -911,6 +922,33 @@ final class OTPDataStore: ObservableObject {
         guard isSyncEnabled else { return }
         isSyncAvailable = syncService.isAvailable
         apply(outcome, snapshot: snapshot)
+        await syncFolders()
+    }
+
+    /// Syncs the folder list after the tokens. A copy from iCloud is adopted only when
+    /// it is newer, and a local change is uploaded from here.
+    private func syncFolders() async {
+        guard isSyncEnabled, let folderSync else { return }
+        // Entries for tokens deleted for good are dropped first, so they are not
+        // uploaded again. A token still in the trash keeps its folder, so a restore
+        // puts it back where it was.
+        let deleted = permanentlyDeletedTokenIDs
+        let pruned = organization.organization.removingEntries(forTokens: deleted)
+        if pruned != organization.organization {
+            // Kept without a new timestamp: pruning is housekeeping, not an edit, so it
+            // must not make this device's copy look newer than iCloud's.
+            organization.adoptRemote(pruned)
+        }
+        guard let adopted = await folderSync.sync(local: pruned) else { return }
+        // Teardown can land while this is in flight, as it can for the tokens.
+        guard isSyncEnabled else { return }
+        organization.adoptRemote(adopted.removingEntries(forTokens: deleted))
+    }
+
+    /// Tokens deleted and no longer in the trash, so nothing can restore them.
+    private var permanentlyDeletedTokenIDs: Set<UUID> {
+        let deleted = Set(tombstones.keys.compactMap { UUID(uuidString: $0) })
+        return deleted.subtracting(trash.map { $0.code.id })
     }
 
     /// Folds a merge result back into local storage.

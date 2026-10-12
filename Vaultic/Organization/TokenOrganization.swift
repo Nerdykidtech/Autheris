@@ -21,6 +21,16 @@ struct TokenOrganization: Codable, Equatable, Sendable {
     private(set) var folders: [OrganizationItem] = []
     /// Folder id for each token that has one.
     private(set) var folderByToken: [UUID: UUID] = [:]
+    /// When this organization last changed on any device. The sync rule is
+    /// last-write-wins on this, so it is set by `stamp(_:)` on every real change.
+    /// `nil` for a copy saved before syncing existed, which loses to any stamped copy.
+    private(set) var modifiedAt: Date?
+
+    /// Records that the organization changed at `date`. Called by the store, which
+    /// only does so for a change that really altered something.
+    mutating func stamp(_ date: Date) {
+        modifiedAt = date
+    }
 
     /// What the Home list is showing.
     enum Filter: Equatable, Sendable {
@@ -88,6 +98,15 @@ struct TokenOrganization: Codable, Equatable, Sendable {
         case .folder(let id):
             return codes.filter { folderByToken[$0.id] == id }
         }
+    }
+
+    /// The same organization without the folder entries of the given tokens. Used for
+    /// tokens deleted for good, whose entries would otherwise grow the synced record
+    /// without bound.
+    func removingEntries(forTokens ids: Set<UUID>) -> TokenOrganization {
+        var copy = self
+        copy.folderByToken = folderByToken.filter { !ids.contains($0.key) }
+        return copy
     }
 
     /// Whether a filter still points at a folder that exists. Home falls back to

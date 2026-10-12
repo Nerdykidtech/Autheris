@@ -849,7 +849,7 @@ struct SettingsView: View {
                 Text("iCloud Sync")
             }
         } footer: {
-            Text("Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.")
+            Text("Syncs your tokens and folders through your private iCloud database. Secret keys and folder names are end-to-end encrypted and are never stored in a readable form.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)

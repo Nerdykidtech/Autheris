@@ -12208,43 +12208,43 @@
         }
       }
     },
-    "Sort your tokens into folders on this device. They are not synced to iCloud or included in backups yet.": {
+    "Sort your tokens into folders. With Sync with iCloud on, folders and the tokens in them sync to your other devices through your private iCloud database. They are not part of backups, Transfer QR codes or the Apple Watch.": {
       "extractionState": "manual",
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sortieren Sie Ihre Tokens auf diesem Gerät in Ordner. Sie werden noch nicht mit iCloud synchronisiert und nicht in Sicherungen aufgenommen."
+            "value": "Sortieren Sie Ihre Tokens in Ordner. Ist „Mit iCloud synchronisieren“ aktiv, werden Ordner und die darin enthaltenen Tokens über Ihre private iCloud-Datenbank auf Ihre anderen Geräte synchronisiert. Sie sind nicht Teil von Sicherungen, QR-Codes für die Übertragung oder der Apple Watch."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Organiza tus tokens en carpetas en este dispositivo. Todavía no se sincronizan con iCloud ni se incluyen en las copias de seguridad."
+            "value": "Organice sus tokens en carpetas. Con «Sincronizar con iCloud» activado, las carpetas y los tokens que contienen se sincronizan con sus otros dispositivos a través de su base de datos privada de iCloud. No forman parte de las copias de seguridad, los códigos QR de transferencia ni el Apple Watch."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Classez vos jetons en dossiers sur cet appareil. Ils ne sont pas encore synchronisés avec iCloud ni inclus dans les sauvegardes."
+            "value": "Classez vos jetons dans des dossiers. Avec « Synchroniser avec iCloud » activé, les dossiers et les jetons qu'ils contiennent se synchronisent sur vos autres appareils via votre base de données iCloud privée. Ils ne font pas partie des sauvegardes, des codes QR de transfert ni de l'Apple Watch."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "トークンをこの端末上でフォルダに分類できます。まだiCloudとは同期されず、バックアップにも含まれません。"
+            "value": "トークンをフォルダに分類できます。「iCloudと同期」がオンのとき、フォルダとその中のトークンは非公開のiCloudデータベースを通じて他の端末と同期されます。バックアップ、転送用QRコード、Apple Watchには含まれません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Organize seus tokens em pastas neste dispositivo. Ainda não são sincronizados com o iCloud nem incluídos nos backups."
+            "value": "Organize seus tokens em pastas. Com \"Sincronizar com o iCloud\" ativado, as pastas e os tokens nelas são sincronizados com seus outros dispositivos pelo seu banco de dados privado do iCloud. Eles não fazem parte dos backups, dos QR codes de transferência nem do Apple Watch."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "在此设备上将令牌分类到文件夹中。目前不会同步到 iCloud，也不包含在备份中。"
+            "value": "将令牌分类到文件夹中。开启“与 iCloud 同步”后，文件夹及其中的令牌会通过您的私有 iCloud 数据库同步到其他设备。它们不包含在备份、转移二维码或 Apple Watch 中。"
           }
         }
       }
@@ -12609,42 +12609,43 @@
         }
       }
     },
-    "Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.": {
+    "Syncs your tokens and folders through your private iCloud database. Secret keys and folder names are end-to-end encrypted and are never stored in a readable form.": {
+      "extractionState": "manual",
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisiert Ihre Codes über Ihre private iCloud-Datenbank. Schlüssel sind Ende-zu-Ende-verschlüsselt und werden nie im lesbaren Zustand gespeichert."
+            "value": "Synchronisiert Ihre Tokens und Ordner über Ihre private iCloud-Datenbank. Geheime Schlüssel und Ordnernamen sind Ende-zu-Ende-verschlüsselt und werden nie in lesbarer Form gespeichert."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincroniza tus códigos con tu base de datos privada de iCloud. Las claves secretas se cifran de extremo a extremo y nunca se guardan en un formato legible."
+            "value": "Sincroniza sus tokens y carpetas a través de su base de datos privada de iCloud. Las claves secretas y los nombres de las carpetas están cifrados de extremo a extremo y nunca se guardan en un formato legible."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronise vos codes via votre base iCloud privée. Les clés secrètes sont chiffrées de bout en bout et ne sont jamais stockées sous une forme lisible."
+            "value": "Synchronise vos jetons et dossiers via votre base de données iCloud privée. Les clés secrètes et les noms de dossiers sont chiffrés de bout en bout et ne sont jamais stockés sous une forme lisible."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プライベートな iCloud データベースを通じてコードを同期します。シークレットキーはエンドツーエンドで暗号化され、読める形で保存されることはありません。"
+            "value": "トークンとフォルダを非公開のiCloudデータベースを通じて同期します。秘密鍵とフォルダ名はエンドツーエンドで暗号化され、読み取り可能な形で保存されることはありません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincroniza seus códigos pelo seu banco de dados privado do iCloud. As chaves secretas são criptografadas de ponta a ponta e nunca ficam gravadas em forma legível."
+            "value": "Sincroniza seus tokens e pastas pelo seu banco de dados privado do iCloud. As chaves secretas e os nomes das pastas são criptografados de ponta a ponta e nunca ficam armazenados em forma legível."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "通过你的私人 iCloud 数据库同步账户。密钥经过端到端加密，绝不会以可读形式保存。"
+            "value": "通过您的私有 iCloud 数据库同步令牌和文件夹。密钥和文件夹名称均经过端到端加密，绝不会以可读形式存储。"
           }
         }
       }
