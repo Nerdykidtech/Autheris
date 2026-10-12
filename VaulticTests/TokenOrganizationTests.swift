@@ -72,6 +72,62 @@ final class TokenOrganizationTests: XCTestCase {
         XCTAssertEqual(organization.filter([second, first], by: .folder(folder.id)).map(\.id), [second.id, first.id])
     }
 
+    func testMovingFoldersReordersThemAsAListWould() {
+        var organization = TokenOrganization()
+        let a = organization.addFolder(named: "A")!
+        let b = organization.addFolder(named: "B")!
+        let c = organization.addFolder(named: "C")!
+        organization.moveFolders(from: IndexSet(integer: 2), to: 0)
+        XCTAssertEqual(organization.folders.map(\.id), [c.id, a.id, b.id])
+        organization.moveFolders(from: IndexSet(integer: 0), to: 3)
+        XCTAssertEqual(organization.folders.map(\.id), [a.id, b.id, c.id])
+        organization.moveFolders(from: IndexSet(integer: 1), to: 2)
+        XCTAssertEqual(organization.folders.map(\.id), [a.id, b.id, c.id], "moving an item onto its own place changes nothing")
+    }
+
+    func testAFolderShowsItsOwnOrderAndTokensWithNoPlaceFollow() {
+        var organization = TokenOrganization()
+        let folder = organization.addFolder(named: "Work")!
+        let a = token("A"), b = token("B"), c = token("C"), d = token("D")
+        organization.setFolder(folder.id, for: a.id)
+        organization.setFolder(folder.id, for: c.id)
+        organization.setFolder(folder.id, for: d.id)
+        organization.setTokenOrder([d.id, a.id], forFolder: folder.id)
+
+        let shown = organization.orderedTokens([a, b, c, d], inFolder: folder.id)
+
+        XCTAssertEqual(shown.map(\.id), [d.id, a.id, c.id], "saved places first, then the rest in All's order")
+    }
+
+    func testSettingAFolderOrderLeavesTheAllOrderAlone() {
+        var organization = TokenOrganization()
+        let folder = organization.addFolder(named: "Work")!
+        let a = token("A"), b = token("B")
+        organization.setFolder(folder.id, for: a.id)
+        organization.setFolder(folder.id, for: b.id)
+        let all = [a, b]
+
+        organization.setTokenOrder([b.id, a.id], forFolder: folder.id)
+
+        XCTAssertEqual(all.map(\.id), [a.id, b.id], "the All list is the array it was given, unchanged")
+        XCTAssertEqual(organization.orderedTokens(all, inFolder: folder.id).map(\.id), [b.id, a.id])
+    }
+
+    func testDeletingAFolderOrTokenDropsItsSavedPlaces() {
+        var organization = TokenOrganization()
+        let folder = organization.addFolder(named: "Work")!
+        let a = token("A"), b = token("B")
+        organization.setFolder(folder.id, for: a.id)
+        organization.setFolder(folder.id, for: b.id)
+        organization.setTokenOrder([b.id, a.id], forFolder: folder.id)
+
+        let pruned = organization.removingEntries(forTokens: [b.id])
+        XCTAssertEqual(pruned.tokenOrder[folder.id], [a.id])
+
+        organization.deleteFolder(folder.id)
+        XCTAssertNil(organization.tokenOrder[folder.id])
+    }
+
     func testAFilterOnADeletedFolderIsNoLongerContained() {
         var organization = TokenOrganization()
         let folder = organization.addFolder(named: "Work")!

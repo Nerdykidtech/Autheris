@@ -14,6 +14,8 @@ struct HomeView: View {
     /// Off by default; when on, the chips above the list narrow it by folder.
     @AppStorage(TokenOrganizationStore.enabledKey) private var foldersEnabled = false
     @State private var organizationFilter: TokenOrganization.Filter = .all
+    /// Where the folder chips are, shared with the grid so its grabber can drop on them.
+    @State private var dropTargets = FolderDropTargets()
     #if os(macOS)
     /// Opens the Mac's `Settings` scene — the preferences window — which is what
     /// the gear button does there. On iOS/iPad the gear opens the sheet instead.
@@ -42,9 +44,14 @@ struct HomeView: View {
     /// narrows by the search term.
     var filteredCodes: [OTPCode] {
         let ordered = dataStore.orderedCodes
-        let inFolder = foldersEnabled
-            ? organizationStore.organization.filter(ordered, by: organizationFilter)
-            : ordered
+        let inFolder: [OTPCode]
+        switch (foldersEnabled, organizationFilter) {
+        case (true, .folder(let id)):
+            // A folder shows its own order, which its moves save; All is unaffected.
+            inFolder = TokenOrdering.displayed(organizationStore.organization.orderedTokens(ordered, inFolder: id))
+        default:
+            inFolder = ordered
+        }
         guard !searchText.isEmpty else { return inFolder }
 
         return inFolder.filter { code in
@@ -59,10 +66,22 @@ struct HomeView: View {
         foldersEnabled && !organizationStore.organization.folders.isEmpty
     }
 
-    /// Reordering a filtered list cannot be mapped back onto the stored order, so
-    /// dragging is only offered while the whole list is on screen.
+    /// Dragging is offered while search is empty. In a folder a move saves that
+    /// folder's own order.
     private var canReorder: Bool {
-        searchText.isEmpty && organizationFilter == .all && !filteredCodes.isEmpty
+        searchText.isEmpty && !filteredCodes.isEmpty
+    }
+
+    /// The folder Home is showing, or `nil` for All. A move made there saves that
+    /// folder's own order, in the list and in the grid alike.
+    private var openFolderID: UUID? {
+        guard foldersEnabled, case .folder(let id) = organizationFilter else { return nil }
+        return id
+    }
+
+    /// The grid rearranges All or, in a folder, that folder's own order.
+    private var canRearrangeGrid: Bool {
+        canReorder
     }
 
     private var emptyState: some View {
@@ -180,6 +199,7 @@ struct HomeView: View {
     private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
         ScrollView {
             TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now,
+                          folderID: openFolderID,
                           presentSheet: { tokenSheet = $0 })
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -194,12 +214,20 @@ struct HomeView: View {
             ForEach(filteredCodes) { code in
                 OTPCardView(code: code, dataStore: dataStore, now: now,
                             presentSheet: { tokenSheet = $0 })
+                    // In Edit mode (always, in a Mac list) the card can be dragged onto a
+                    // folder chip.
+                    .modifier(FilingDrag(tokenID: code.id, layout: .list))
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
             }
             .onMove { offsets, destination in
-                dataStore.move(offsets: offsets, destination: destination)
+                if foldersEnabled, case .folder(let folderID) = organizationFilter {
+                    dataStore.moveInFolder(folderID, shown: filteredCodes,
+                                           offsets: offsets, destination: destination)
+                } else {
+                    dataStore.move(offsets: offsets, destination: destination)
+                }
             }
             .moveDisabled(!canReorder)
         }
@@ -246,9 +274,11 @@ struct HomeView: View {
             // that would offer nothing to rearrange.
             if canReorder {
                 if isGridLayout(width: width) {
-                    Button(isRearrangingGrid ? "Done" : "Edit") {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isRearrangingGrid.toggle()
+                    if canRearrangeGrid {
+                        Button(isRearrangingGrid ? "Done" : "Edit") {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isRearrangingGrid.toggle()
+                            }
                         }
                     }
                 } else {
@@ -280,7 +310,10 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 0) {
             if showsOrganizationFilter {
-                OrganizationFilterBar(organization: organizationStore.organization, filter: $organizationFilter)
+                OrganizationFilterBar(organization: organizationStore.organization, filter: $organizationFilter,
+                                      onFile: { token, folder in
+                                          organizationStore.update { $0.setFolder(folder, for: token) }
+                                      })
                     .padding(.vertical, 8)
             }
             // The width decides the layout: two cards across, or the one-column
@@ -296,7 +329,7 @@ struct HomeView: View {
                         TimelineView(.periodic(from: Self.startOfCurrentSecond, by: 1)) { timeline in
                             if isGridLayout(width: proxy.size.width) {
                                 cardGrid(columns: columns(forWidth: proxy.size.width),
-                                         rearranging: isRearrangingGrid && canReorder,
+                                         rearranging: isRearrangingGrid && canRearrangeGrid,
                                          now: timeline.date)
                             } else {
                                 singleColumnList(now: timeline.date)
@@ -307,6 +340,7 @@ struct HomeView: View {
                 .toolbar { toolbarContent(width: proxy.size.width) }
             }
             }
+            .environment(dropTargets)
             .platformSearchable(text: $searchText, prompt: "Search tokens")
             .onChange(of: organizationStore.organization) { _, organization in
                 // A folder that was just deleted can't keep the list filtered.
@@ -376,10 +410,15 @@ private struct TokenGridView: View {
     let rearranging: Bool
     /// The time every card's code and countdown are shown for.
     let now: Date
+    /// The folder being shown, or `nil` for All. In a folder a move saves that
+    /// folder's order, and All is left as it is.
+    let folderID: UUID?
     /// Asks `HomeView` for a card's Edit or setup-key sheet; see `TokenSheet`.
     let presentSheet: (TokenSheet) -> Void
 
     @EnvironmentObject private var dataStore: OTPDataStore
+    /// The folder chips, so the grabber can drop a card on one.
+    @Environment(FolderDropTargets.self) private var dropTargets
 
     /// The grid's own coordinate space. A drag is measured against the grid rather
     /// than against the card it started on, so a card's offset can be computed from
@@ -388,6 +427,9 @@ private struct TokenGridView: View {
 
     /// The card under the finger.
     @State private var draggedID: UUID?
+    /// Where the carried card was when it was picked up, so a drop on a folder chip
+    /// can put it back if crossing the grid on the way had moved it.
+    @State private var pickedUpIndex: Int?
     /// Where the finger is, in `coordinateSpace`.
     @State private var finger: CGPoint = .zero
     /// Where on the card the finger took hold, so picking it up does not make it jump.
@@ -415,6 +457,8 @@ private struct TokenGridView: View {
 
         return OTPCardView(code: code, dataStore: dataStore, now: now,
                            presentSheet: presentSheet, isRearranging: rearranging)
+            // While rearranging, the card can also be dragged onto a folder chip.
+            .modifier(FilingDrag(tokenID: code.id, layout: .grid(isRearranging: rearranging)))
             .overlay(alignment: .trailing) {
                 if rearranging {
                     grabber(for: code)
@@ -450,6 +494,17 @@ private struct TokenGridView: View {
             .contentShape(Rectangle())
             .padding(.trailing, 2)
             .gesture(dragToReorder(code))
+            // The same drag, measured on the screen, so it can find the folder chips,
+            // which sit outside the grid.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .onChanged { value in
+                        let folder = dropTargets.folder(at: value.location)
+                        if dropTargets.hoveredFolder != folder {
+                            dropTargets.hoveredFolder = folder
+                        }
+                    }
+            )
             .accessibilityLabel("Reorder \(code.label)")
     }
 
@@ -460,12 +515,17 @@ private struct TokenGridView: View {
                     // Picked up. Remember where the finger is on the card so it
                     // carries on from there rather than snapping to the centre.
                     draggedID = code.id
+                    pickedUpIndex = index
                     let origin = origin(ofIndex: index)
                     grabOffset = CGSize(width: value.startLocation.x - origin.x,
                                         height: value.startLocation.y - origin.y)
                 }
 
                 finger = value.location
+
+                // Over a folder chip the card is on its way to a folder, not to a new
+                // place in the grid.
+                guard dropTargets.hoveredFolder == nil else { return }
 
                 let slot = TokenGrid.slotIndex(at: value.location,
                                                cellSize: cellSize,
@@ -476,15 +536,38 @@ private struct TokenGridView: View {
                     let destination = TokenGrid.insertionIndex(hoveringSlot: slot,
                                                                liftedFrom: current)
                     withAnimation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.75)) {
-                        dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
+                        move(code, toDisplayedIndex: destination)
                     }
                 }
             }
             .onEnded { _ in
+                if let folder = dropTargets.hoveredFolder {
+                    dataStore.organization.update { $0.setFolder(folder, for: code.id) }
+                    // Back to where it started, if crossing the grid had moved it.
+                    if let original = pickedUpIndex, let current = currentIndex(of: code.id), current != original {
+                        let destination = original < current ? original : original + 1
+                        move(code, toDisplayedIndex: destination)
+                    }
+                    Haptics.notify(.success)
+                }
+                dropTargets.hoveredFolder = nil
+                pickedUpIndex = nil
                 withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8)) {
                     draggedID = nil
                 }
             }
+    }
+
+    /// Moves a card to an insertion index in the grid as shown: in All the All order,
+    /// in a folder only that folder's order.
+    private func move(_ code: OTPCode, toDisplayedIndex destination: Int) {
+        guard let current = currentIndex(of: code.id) else { return }
+        if let folderID {
+            dataStore.moveInFolder(folderID, shown: codes,
+                                   offsets: IndexSet(integer: current), destination: destination)
+        } else {
+            dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
+        }
     }
 
     // MARK: - Grid geometry

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A folder the user made for sorting tokens.
-struct OrganizationItem: Identifiable, Codable, Equatable, Hashable, Sendable {
+nonisolated struct OrganizationItem: Identifiable, Codable, Equatable, Hashable, Sendable {
     let id: UUID
     var name: String
     /// `nil` shows the folder in the app's accent. Folders saved before colours
@@ -14,7 +14,7 @@ struct OrganizationItem: Identifiable, Codable, Equatable, Hashable, Sendable {
 /// This is deliberately separate from `OTPCode`. A folder is a way of looking at
 /// tokens, not a property of them, so it stays out of the iCloud record, the merge
 /// rule and the backup format. A reinstall or a second device starts with none filed.
-struct TokenOrganization: Codable, Equatable, Sendable {
+nonisolated struct TokenOrganization: Codable, Equatable, Sendable {
     /// The longest name a folder may have.
     static let maximumNameLength = 40
 
@@ -25,6 +25,25 @@ struct TokenOrganization: Codable, Equatable, Sendable {
     /// last-write-wins on this, so it is set by `stamp(_:)` on every real change.
     /// `nil` for a copy saved before syncing existed, which loses to any stamped copy.
     private(set) var modifiedAt: Date?
+    /// The order of each folder's tokens, as arranged in that folder. Kept apart from
+    /// the All order, so arranging a folder never moves a token in All, and All never
+    /// reorders a folder.
+    private(set) var tokenOrder: [UUID: [UUID]] = [:]
+
+    private enum CodingKeys: String, CodingKey {
+        case folders, folderByToken, modifiedAt, tokenOrder
+    }
+
+    init() {}
+
+    /// Saved data from before per-folder order has no `tokenOrder`, and loads with none.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        folders = try container.decodeIfPresent([OrganizationItem].self, forKey: .folders) ?? []
+        folderByToken = try container.decodeIfPresent([UUID: UUID].self, forKey: .folderByToken) ?? [:]
+        modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt)
+        tokenOrder = try container.decodeIfPresent([UUID: [UUID]].self, forKey: .tokenOrder) ?? [:]
+    }
 
     /// Records that the organization changed at `date`. Called by the store, which
     /// only does so for a change that really altered something.
@@ -68,10 +87,46 @@ struct TokenOrganization: Codable, Equatable, Sendable {
         return true
     }
 
+    /// Moves folders the way a `List` reports a move: `destination` is an index in the
+    /// list as it was before the move.
+    mutating func moveFolders(from source: IndexSet, to destination: Int) {
+        let moving = source.sorted().map { folders[$0] }
+        var remaining = folders
+        for index in source.sorted(by: >) {
+            remaining.remove(at: index)
+        }
+        let removedBeforeDestination = source.filter { $0 < destination }.count
+        remaining.insert(contentsOf: moving, at: destination - removedBeforeDestination)
+        folders = remaining
+    }
+
     /// Deletes a folder. Its tokens are left unfiled; the tokens themselves are untouched.
     mutating func deleteFolder(_ id: UUID) {
         folders.removeAll { $0.id == id }
         folderByToken = folderByToken.filter { $0.value != id }
+        tokenOrder[id] = nil
+    }
+
+    /// Saves the order of a folder's tokens, as the user arranged them there.
+    mutating func setTokenOrder(_ ids: [UUID], forFolder folderID: UUID) {
+        tokenOrder[folderID] = ids
+    }
+
+    /// The tokens in a folder, in the order arranged there. A token with no saved place
+    /// comes after the arranged ones, in the order it has in `tokens`.
+    func orderedTokens(_ tokens: [OTPCode], inFolder folderID: UUID) -> [OTPCode] {
+        let members = tokens.filter { folderByToken[$0.id] == folderID }
+        let saved = tokenOrder[folderID] ?? []
+        var rank: [UUID: Int] = [:]
+        for (index, id) in saved.enumerated() where rank[id] == nil {
+            rank[id] = index
+        }
+        return members.enumerated().sorted { lhs, rhs in
+            let left = rank[lhs.element.id] ?? Int.max
+            let right = rank[rhs.element.id] ?? Int.max
+            if left != right { return left < right }
+            return lhs.offset < rhs.offset
+        }.map(\.element)
     }
 
     // MARK: - Filing tokens
@@ -106,6 +161,7 @@ struct TokenOrganization: Codable, Equatable, Sendable {
     func removingEntries(forTokens ids: Set<UUID>) -> TokenOrganization {
         var copy = self
         copy.folderByToken = folderByToken.filter { !ids.contains($0.key) }
+        copy.tokenOrder = tokenOrder.mapValues { order in order.filter { !ids.contains($0) } }
         return copy
     }
 

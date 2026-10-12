@@ -587,6 +587,10 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("iCloud", systemImage: "icloud") }
 
+            // Folders keeps its own list and sheets, so it is shown as it is, not in a Form.
+            FoldersSettingsView()
+                .tabItem { Label("Folders", systemImage: "folder") }
+
             Form {
                 dataSettingsSection
             }

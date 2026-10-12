@@ -6,7 +6,15 @@ struct SettingsRowIcon: View {
     let systemImage: String
     let tint: Color
 
-    @ScaledMetric(relativeTo: .body) private var size = 29.0
+    @ScaledMetric private var size: Double
+
+    /// `size` is the tile's side at the default text size: 29 matches the iPhone's
+    /// Settings rows, and a Mac preference list uses a smaller tile.
+    init(systemImage: String, tint: Color, size: Double = 29) {
+        self.systemImage = systemImage
+        self.tint = tint
+        _size = ScaledMetric(wrappedValue: size, relativeTo: .body)
+    }
 
     var body: some View {
         Image(systemName: systemImage)

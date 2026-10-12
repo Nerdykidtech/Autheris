@@ -4,6 +4,7 @@ import XCTest
 
 /// The rule for choosing between this device's folders and iCloud's copy, the record
 /// that carries them, and the store that stamps and adopts them.
+@MainActor
 final class FolderSyncTests: XCTestCase {
 
     private let earlier = Date(timeIntervalSince1970: 1_000)
@@ -98,7 +99,6 @@ final class FolderSyncTests: XCTestCase {
 
     // MARK: - The store
 
-    @MainActor
     func testALocalChangeIsStampedSavedAndReportedForSync() async throws {
         let suite = "FolderSyncTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
@@ -115,7 +115,6 @@ final class FolderSyncTests: XCTestCase {
         XCTAssertEqual(TokenOrganizationStore(defaults: defaults).organization.folders.map(\.name), ["Work"])
     }
 
-    @MainActor
     func testAChangeThatChangesNothingIsNotStampedOrReported() async throws {
         let suite = "FolderSyncTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
@@ -131,7 +130,6 @@ final class FolderSyncTests: XCTestCase {
         XCTAssertEqual(reported, 0)
     }
 
-    @MainActor
     func testAnAdoptedCopyKeepsItsTimestampAndIsNotReportedBack() async throws {
         let suite = "FolderSyncTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

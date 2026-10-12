@@ -60,6 +60,8 @@ struct ChangelogRelease: Identifiable, Sendable {
             date: "October 2026",
             changes: [
                 "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.",
+                "Folders sort your codes. Turn them on in Settings, then give each folder a name and an optional colour; the colour shows on its chip above the list. With iCloud Sync on, folders and the codes in them sync to your other devices. Folders are not included in backups, Transfer QR codes or the Apple Watch.",
+                "Appearance can be System, Light or Dark, and there are three more accent colours: blue, violet and orange.",
                 "Settings is redesigned for iPhone and iPad: each group has its own page instead of one long list, with a side-by-side layout on iPad. Nothing moved or changed, only where it's shown.",
                 "The countdown bar no longer moves when the number drops from ten seconds to nine.",
                 "A picture is never sent to the Apple Watch or to logo.dev.",

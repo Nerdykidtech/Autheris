@@ -3,7 +3,7 @@ import SwiftUI
 /// The colour a folder is shown in. A folder with none shows in the app's accent.
 ///
 /// Stored by name, so a palette change does not silently recolour existing folders.
-enum FolderColor: String, CaseIterable, Codable, Identifiable, Sendable {
+nonisolated enum FolderColor: String, CaseIterable, Codable, Identifiable, Sendable {
     case blue
     case teal
     case green

@@ -20,6 +20,8 @@ A version number lives in four places, and a release is not finished until they 
 ### Added
 
 - Any code can have its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off. A picture is never sent to the Apple Watch or to logo.dev, and it is not included in Transfer QR codes.
+- Folders sort your codes. Turn them on in Settings, then give each folder a name and an optional colour; the colour shows on its chip above the list. With iCloud Sync on, folders and the codes in them sync to your other devices. Folders are not included in backups, Transfer QR codes or the Apple Watch.
+- Appearance can be System, Light or Dark, and there are three more accent colours: blue, violet and orange.
 
 ### Changed
 

@@ -3690,6 +3690,47 @@
         }
       }
     },
+    "Click a folder to rename it, change its colour or delete it. Drag folders to change their order.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicken Sie auf einen Ordner, um ihn umzubenennen, seine Farbe zu ändern oder ihn zu löschen. Ziehen Sie Ordner, um ihre Reihenfolge zu ändern."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haga clic en una carpeta para cambiarle el nombre, el color o eliminarla. Arrastre las carpetas para cambiar su orden."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez sur un dossier pour le renommer, changer sa couleur ou le supprimer. Faites glisser les dossiers pour changer leur ordre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをクリックすると、名前や色の変更、削除ができます。フォルダをドラッグすると順番を変えられます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clique em uma pasta para renomeá-la, mudar a cor ou excluí-la. Arraste as pastas para mudar a ordem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按文件夹可重命名、更改颜色或删除。拖移文件夹可更改顺序。"
+          }
+        }
+      }
+    },
     "Code": {
       "localizations": {
         "de-DE": {
@@ -5062,6 +5103,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "创建未加密备份"
+          }
+        }
+      }
+    },
+    "Create a folder to sort your tokens.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellen Sie einen Ordner, um Ihre Tokens zu sortieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cree una carpeta para ordenar sus tokens."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créez un dossier pour classer vos jetons."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンを分類するフォルダを作成します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crie uma pasta para organizar seus tokens."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建一个文件夹来分类令牌。"
           }
         }
       }
@@ -6792,47 +6874,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "文件夹"
-          }
-        }
-      }
-    },
-    "Folders hold a token in one place, such as Work or Banking.": {
-      "extractionState": "manual",
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ein Ordner enthält einen Token an einem Ort, zum Beispiel Arbeit oder Banking."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Una carpeta guarda un token en un solo lugar, por ejemplo Trabajo o Banca."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Un dossier range un jeton à un seul endroit, par exemple Travail ou Banque."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "フォルダは1つのトークンを1か所にまとめます。例：仕事、銀行。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Uma pasta guarda um token em um só lugar, como Trabalho ou Banco."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "文件夹让一个令牌只位于一处，例如“工作”或“银行”。"
           }
         }
       }
@@ -8740,6 +8781,47 @@
         }
       }
     },
+    "No Folders Yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun dossier pour l'instant"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダはまだありません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma pasta ainda"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有文件夹"
+          }
+        }
+      }
+    },
     "No New Tokens": {
       "localizations": {
         "de-DE": {
@@ -10623,6 +10705,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "需要 Touch ID 或密码"
+          }
+        }
+      }
+    },
+    "Required": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erforderlich"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obligatorio"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obligatoire"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必須"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obrigatório"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必填"
           }
         }
       }
@@ -12687,6 +12810,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "跟随系统"
+          }
+        }
+      }
+    },
+    "Tap a folder to rename it, change its colour or delete it. Use Edit to change the order.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippen Sie auf einen Ordner, um ihn umzubenennen, seine Farbe zu ändern oder ihn zu löschen. Mit „Bearbeiten“ ändern Sie die Reihenfolge."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque una carpeta para cambiarle el nombre, el color o eliminarla. Use «Editar» para cambiar el orden."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un dossier pour le renommer, changer sa couleur ou le supprimer. Utilisez « Modifier » pour changer l'ordre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをタップして、名前や色を変更したり削除したりできます。順番を変えるには「編集」を使います。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque em uma pasta para renomeá-la, mudar a cor ou excluí-la. Use \"Editar\" para mudar a ordem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按文件夹可重命名、更改颜色或删除。使用“编辑”更改顺序。"
           }
         }
       }

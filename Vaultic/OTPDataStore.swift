@@ -732,6 +732,14 @@ final class OTPDataStore: ObservableObject {
         applyReorder(reordered)
     }
 
+    /// A move made in a folder's list. Only that folder's order changes: the All
+    /// order in `codes` is left as it is.
+    func moveInFolder(_ folderID: UUID, shown: [OTPCode], offsets: IndexSet, destination: Int) {
+        guard isVaultLoaded else { return }
+        let reordered = TokenOrdering.moving(shown, offsets: offsets, destination: destination)
+        organization.update { $0.setTokenOrder(reordered.map(\.id), forFolder: folderID) }
+    }
+
     /// Applies a drag-to-reorder of one card from the iPad grid.
     ///
     /// The grid picks up a single card rather than a whole row, so the move is
