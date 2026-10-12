@@ -22,7 +22,8 @@ struct SettingsView: View {
 
     /// The two containers this screen can be drawn in.
     enum Presentation {
-        /// One scrolling list, in a sheet — what iPhone and iPad use.
+        /// A list of pages in a sheet, opened side by side on iPad — what iPhone and
+        /// iPad use.
         case sheet
         /// The same settings distributed across tabs, in the Mac preferences window.
         case preferences
@@ -38,6 +39,12 @@ struct SettingsView: View {
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
+
+    /// The open page. `nil` shows the list of pages on iPhone.
+    @State private var selectedPage: SettingsPage?
+    #if os(iOS)
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    #endif
 
     @State private var showingTeardownDialog = false
     @State private var showingDeleteCloudDataDialog = false
@@ -432,38 +439,115 @@ struct SettingsView: View {
     }
     // MARK: - Containers
 
-    /// The iOS and iPad container: every section stacked in one scrolling list.
+    /// The iOS and iPad container: a short list of pages, each opening on its own.
+    ///
+    /// A split view, so iPad shows the list as a sidebar beside the open page and
+    /// iPhone pushes the page. Each page is built from the same sections the Mac
+    /// shows in its tabs, so every setting still lives in exactly one place.
     private var sheetBody: some View {
-        NavigationStack {
-            List {
-
-                appHeaderSection
-
-                privacySettingsSection
-
-                syncSettingsSection
-
-                appearanceSettingsSection
-
-                dataSettingsSection
-
-                helpSettingsSection
-
-                aboutSettingsSection
-            }
-            .navigationTitle("Settings")
-            .inlineNavigationTitle()
-            .toolbar {
-                ToolbarItem(placement: .platformSheetTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+        NavigationSplitView {
+            settingsSidebar
+        } detail: {
+            // A stack of its own, so Recently Deleted can push inside the Data page.
+            NavigationStack {
+                if let selectedPage {
+                    settingsPage(selectedPage)
+                } else {
+                    ContentUnavailableView("Settings", systemImage: "gearshape")
                 }
             }
         }
-        // Settings is the tallest sheet in the app — several sections, each with a
-        // footer — and a macOS sheet carries no size of its own.
+        #if os(iOS)
+        // Side by side there is room for a page from the start, as in the system
+        // Settings app. On iPhone nothing is chosen, so the list shows first.
+        .onAppear {
+            if horizontalSizeClass == .regular, selectedPage == nil {
+                selectedPage = .privacy
+            }
+        }
+        // A page-sized sheet on iPad, so the sidebar and the page both have room.
+        .presentationSizing(.page)
+        #endif
+        // A macOS sheet carries no size of its own.
         .platformSheetSize(minWidth: 520, minHeight: 640)
+    }
+
+    /// The top level: the app, then the pages in three groups.
+    private var settingsSidebar: some View {
+        List(selection: $selectedPage) {
+            appHeaderSection
+
+            Section {
+                pageRow(.privacy)
+                pageRow(.sync, value: isICloudSyncEnabled ? "On" : "Off")
+                pageRow(.appearance, value: accentThemeName)
+            }
+
+            Section {
+                pageRow(.data)
+            }
+
+            Section {
+                pageRow(.help)
+            }
+        }
+        .navigationTitle("Settings")
+        .toolbar {
+            ToolbarItem(placement: .platformSheetTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
+    }
+
+    /// A row that opens `page`, with its icon tile and, where it helps, the
+    /// page's current state at the trailing edge.
+    private func pageRow(_ page: SettingsPage, value: LocalizedStringKey? = nil) -> some View {
+        NavigationLink(value: page) {
+            LabeledContent {
+                if let value {
+                    Text(value)
+                }
+            } label: {
+                Label {
+                    Text(page.title)
+                } icon: {
+                    SettingsRowIcon(systemImage: page.systemImage, tint: page.tint)
+                }
+            }
+        }
+    }
+
+    private var accentThemeName: LocalizedStringKey {
+        AccentTheme(rawValue: accentThemeRaw)?.displayName ?? "Default"
+    }
+
+    /// One page: its sections, under the page's title.
+    private func settingsPage(_ page: SettingsPage) -> some View {
+        List {
+            switch page {
+            case .privacy:
+                privacySettingsSection
+            case .sync:
+                syncSettingsSection
+            case .appearance:
+                appearanceSettingsSection
+            case .data:
+                dataSettingsSection
+            case .help:
+                helpSettingsSection
+                aboutSettingsSection
+            }
+        }
+        .navigationTitle(page.title)
+        .inlineNavigationTitle()
+    }
+
+    /// Whether a section names its group in a header. A page already does that in
+    /// its title, so only the Mac tabs, which hold more than one group, need it.
+    private var showsGroupHeaders: Bool {
+        presentation == .preferences
     }
 
     #if os(macOS)
@@ -513,8 +597,8 @@ struct SettingsView: View {
 
     // MARK: - Sections
     //
-    // Written once and composed by both containers: the iOS/iPad sheet stacks them
-    // in a List, and the Mac preferences window distributes them across tabs. Every
+    // Written once and composed by both containers: the iOS/iPad pages each show
+    // one group, and the Mac preferences window distributes them across tabs. Every
     // setting therefore lives in exactly one place.
 
     @ViewBuilder
@@ -543,55 +627,90 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var privacySettingsSection: some View {
+        #if os(macOS)
         Section {
-            Toggle("Blur when backgrounded", isOn: $enablePrivacyBlur)
-                .platformAccentToggle()
-            
-            Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
-                .platformAccentToggle()
-    
-            Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
-                .platformAccentToggle()
-    
-            Toggle(appLockToggleLabel, isOn: appLockToggleBinding)
-                .platformAccentToggle()
-
-            // The one switch here that reaches the network. It sits with the others
-            // because that is what it is — a privacy decision — and the footer says
-            // exactly what it does rather than leaving it to the label.
-            Toggle("Fetch service logos", isOn: $fetchIssuerLogos)
-                .platformAccentToggle()
-
-            // Also leaves the device: to the user's own watch. Only an iPhone
-            // can pair one.
-            if WatchTokenRelay.deviceCanPairWatch {
-                Toggle("Send codes to Apple Watch", isOn: $sendCodesToWatch)
-                    .platformAccentToggle()
-            }
+            privacyScreenToggles
+            appLockToggle
+            fetchLogosToggle
         } header: {
-            Text("Privacy")
+            if showsGroupHeaders {
+                Text("Privacy")
+            }
+        } footer: {
+            // A Mac preferences window is narrower and its tab is short, so a
+            // per-switch list reads as a wall of text. The switch labels carry the
+            // meaning already; this says what they add up to.
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.")
+                fetchLogosFooter
+            }
+            .settingsFooterStyle()
+        }
+        #else
+        // One group per decision, each explained right under its switches rather
+        // than in one long footer below all of them.
+        Section {
+            privacyScreenToggles
         } footer: {
             VStack(alignment: .leading, spacing: 8) {
-                #if os(macOS)
-                // A Mac preferences window is narrower and its tab is short, so the
-                // iPhone's per-switch list reads as a wall of text. The switch labels
-                // carry the meaning already; this says what they add up to.
-                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.")
-                #else
                 Text("• **Blur when backgrounded**: Automatically blurs the app when you switch to another app or go to the home screen.")
                 Text("• **Hide codes in app switcher**: Shows a privacy screen instead of your OTP codes when using the app switcher.")
                 Text("• **Hide codes while recording or mirroring**: Shows a privacy screen while the screen is being recorded or sent to another display.")
-                Text("• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.")
-                #endif
-                Text("**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.")
-                if WatchTokenRelay.deviceCanPairWatch {
-                    Text("**Send codes to Apple Watch** copies your codes, setup keys included, to Autheris on your paired Apple Watch so it can show them. Turned off, they are removed from the watch.")
-                }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .padding(.top, 4)
+            .settingsFooterStyle()
         }
+
+        Section {
+            appLockToggle
+        } footer: {
+            Text("Locks Autheris when opened, or when you return after 30 seconds in the background.")
+                .settingsFooterStyle()
+        }
+
+        // The one switch here that reaches the network, so its footer says exactly
+        // what it does rather than leaving it to the label.
+        Section {
+            fetchLogosToggle
+        } footer: {
+            fetchLogosFooter
+                .settingsFooterStyle()
+        }
+
+        // Also leaves the device: to the user's own watch. Only an iPhone can pair one.
+        if WatchTokenRelay.deviceCanPairWatch {
+            Section {
+                Toggle("Send codes to Apple Watch", isOn: $sendCodesToWatch)
+                    .platformAccentToggle()
+            } footer: {
+                Text("**Send codes to Apple Watch** copies your codes, setup keys included, to Autheris on your paired Apple Watch so it can show them. Turned off, they are removed from the watch.")
+                    .settingsFooterStyle()
+            }
+        }
+        #endif
+    }
+
+    @ViewBuilder
+    private var privacyScreenToggles: some View {
+        Toggle("Blur when backgrounded", isOn: $enablePrivacyBlur)
+            .platformAccentToggle()
+        Toggle("Hide codes in app switcher", isOn: $hideCodesInAppSwitcher)
+            .platformAccentToggle()
+        Toggle("Hide codes while recording or mirroring", isOn: $hideCodesWhenScreenCaptured)
+            .platformAccentToggle()
+    }
+
+    private var appLockToggle: some View {
+        Toggle(appLockToggleLabel, isOn: appLockToggleBinding)
+            .platformAccentToggle()
+    }
+
+    private var fetchLogosToggle: some View {
+        Toggle("Fetch service logos", isOn: $fetchIssuerLogos)
+            .platformAccentToggle()
+    }
+
+    private var fetchLogosFooter: some View {
+        Text("**Fetch service logos** looks each service's icon up by name at logo.dev, which tells that logo service which brands you have. Turned off, nothing new is looked up and any service without a saved icon shows its letter.")
     }
 
     /// Turning App Lock on takes effect straight away; turning it off asks for
@@ -707,7 +826,9 @@ struct SettingsView: View {
                 .disabled(dataStore.isDeletingCloudData)
             }
         } header: {
-            Text("iCloud Sync")
+            if showsGroupHeaders {
+                Text("iCloud Sync")
+            }
         } footer: {
             Text("Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.")
                 .font(.caption)
@@ -768,7 +889,9 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            Text("Appearance")
+            if showsGroupHeaders {
+                Text("Appearance")
+            }
         } footer: {
             Text("Choose an accent tint, or use the default Autheris color.")
                 .font(.caption)
@@ -832,7 +955,9 @@ struct SettingsView: View {
             }
             #endif
         } header: {
-            Text("Data")
+            if showsGroupHeaders {
+                Text("Data")
+            }
         } footer: {
             Text("Imports unencrypted Aegis, andOTP, and 2FAS backup files. Deleted codes stay recoverable on this device for \(TrashBin.retentionDays) days.")
                 .font(.caption)
@@ -867,7 +992,17 @@ struct SettingsView: View {
         // `Spacer` draws nothing.
         .platformActionRowHitArea()
         #else
-        Label(title, systemImage: systemImage)
+        // The title in the primary colour and the icon in the tint: a `Button` in a
+        // `List` otherwise draws both in the tint, which set these rows apart from
+        // the navigation rows beside them.
+        Label {
+            // `Color.primary`, not `.primary`: the hierarchical style resolves
+            // against the button's tint and stays blue.
+            Text(title)
+                .foregroundStyle(Color.primary)
+        } icon: {
+            Image(systemName: systemImage)
+        }
         #endif
     }
 
@@ -925,7 +1060,9 @@ struct SettingsView: View {
             }
             .platformPlainButton()
         } header: {
-            Text("Help")
+            if showsGroupHeaders {
+                Text("Help")
+            }
         }
     }
 

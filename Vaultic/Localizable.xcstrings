@@ -7593,6 +7593,53 @@
         }
       }
     },
+    "Locks Autheris when opened, or when you return after 30 seconds in the background.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sperrt Autheris beim Öffnen oder bei der Rückkehr nach 30 Sekunden im Hintergrund."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locks Autheris when opened, or when you return after 30 seconds in the background."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquea Autheris al abrirla, o al volver tras 30 segundos en segundo plano."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouille Autheris à l'ouverture, ou à votre retour après 30 secondes en arrière-plan."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動時、またはバックグラウンドで 30 秒経過したあとに戻ったときに Autheris をロックします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueia o Autheris ao abrir ou quando você volta depois de 30 segundos em segundo plano."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开 Autheris 时锁屏，或在后台停留 30 秒后返回时锁定。"
+          }
+        }
+      }
+    },
     "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.": {
       "localizations": {
         "de-DE": {

@@ -249,6 +249,9 @@ struct PlatformSwatchRow<Content: View>: View {
             row
         }
         .scrollIndicators(.hidden)
+        // The selected swatch's ring reaches just past the first swatch; unclipped,
+        // it draws into the row's margin instead of being cut off.
+        .scrollClipDisabled()
         #else
         row
         #endif
