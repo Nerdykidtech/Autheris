@@ -1,5 +1,6 @@
 import Combine
 import SwiftUI
+import TipKit
 #if os(iOS)
 import UIKit
 #endif
@@ -63,6 +64,12 @@ struct AutherisApp: App {
         PrivacyShield.shouldBlur(privacyConditions, privacyPreferences)
     }
     
+    init() {
+        // On-device tips, such as the one that offers Folders. TipKit keeps their
+        // state locally and limits how often any tip appears.
+        try? Tips.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             WindowIdentity { windowID in

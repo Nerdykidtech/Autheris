@@ -52,4 +52,11 @@ final class OnboardingChoicesTests: XCTestCase {
         XCTAssertNil(defaults.object(forKey: AppPreferences.fetchIssuerLogosKey))
         XCTAssertTrue(PreferencesStore.snapshot(of: defaults).fetchIssuerLogos)
     }
+
+    /// A new install's welcome is its introduction, so the Folders sheet meant for
+    /// people updating from an earlier version is marked seen when onboarding ends.
+    func testFinishingOnboardingMarksTheFoldersIntroductionSeen() {
+        OnboardingChoices().complete(in: defaults)
+        XCTAssertTrue(defaults.bool(forKey: FoldersIntro.seenKey))
+    }
 }

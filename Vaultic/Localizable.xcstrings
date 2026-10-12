@@ -2948,6 +2948,47 @@
         }
       }
     },
+    "Bank": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bank"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banco"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banque"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "銀行"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banco"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "银行"
+          }
+        }
+      }
+    },
     "Biometric authentication is unavailable.": {
       "localizations": {
         "de-DE": {
@@ -3727,6 +3768,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "点按文件夹可重命名、更改颜色或删除。拖移文件夹可更改顺序。"
+          }
+        }
+      }
+    },
+    "Cloud": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nube"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クラウド"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuvem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "云盘"
           }
         }
       }
@@ -6229,6 +6311,47 @@
         }
       }
     },
+    "Email": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メール"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电子邮件"
+          }
+        }
+      }
+    },
     "Emerald": {
       "localizations": {
         "de-DE": {
@@ -7076,6 +7199,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "绿色"
+          }
+        }
+      }
+    },
+    "Group your tokens into folders and filter the list with a tap.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gruppieren Sie Ihre Tokens in Ordnern und filtern Sie die Liste mit einem Tippen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrupe sus tokens en carpetas y filtre la lista con un toque."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regroupez vos jetons dans des dossiers et filtrez la liste d'un simple toucher."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンをフォルダにまとめ、タップでリストを絞り込めます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrupe seus tokens em pastas e filtre a lista com um toque."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将令牌分组到文件夹，轻点即可筛选列表。"
           }
         }
       }
@@ -8661,6 +8825,47 @@
         }
       }
     },
+    "New: Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu: Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedad: carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau : dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新機能：フォルダ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidade: pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新功能：文件夹"
+          }
+        }
+      }
+    },
     "Next": {
       "localizations": {
         "de-DE": {
@@ -9219,6 +9424,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "无"
+          }
+        }
+      }
+    },
+    "Not Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht jetzt"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora no"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus tard"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今はしない"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agora não"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以后再说"
           }
         }
       }
@@ -12331,6 +12577,88 @@
         }
       }
     },
+    "Sort with Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit Ordnern sortieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordena con carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classez avec des dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダで整理"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize com pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用文件夹整理"
+          }
+        }
+      }
+    },
+    "Sort your tokens into folders, give each one a colour, and filter your list with a tap. In Edit, drag a token onto a folder to file it. With iCloud Sync on, folders follow you to your other devices.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortieren Sie Ihre Tokens in Ordner, geben Sie jedem eine Farbe und filtern Sie Ihre Liste mit einem Tippen. Ziehen Sie im Bearbeitungsmodus einen Token auf einen Ordner, um ihn abzulegen. Mit iCloud-Synchronisierung sind Ordner auch auf Ihren anderen Geräten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organice sus tokens en carpetas, dé a cada una un color y filtre la lista con un toque. En Editar, arrastre un token a una carpeta para guardarlo en ella. Con la sincronización de iCloud, las carpetas le acompañan a sus otros dispositivos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classez vos jetons dans des dossiers, donnez une couleur à chacun et filtrez votre liste d'un toucher. En mode Modifier, faites glisser un jeton sur un dossier pour l'y ranger. Avec la synchronisation iCloud, les dossiers vous suivent sur vos autres appareils."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンをフォルダに分類し、それぞれに色を付けて、タップでリストを絞り込めます。編集中にトークンをフォルダへドラッグすると、そのフォルダに入ります。iCloud同期がオンなら、フォルダは他の端末にも反映されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize seus tokens em pastas, dê uma cor a cada uma e filtre a lista com um toque. Em Editar, arraste um token para uma pasta para guardá-lo nela. Com a sincronização do iCloud, as pastas vão para seus outros dispositivos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将令牌分类到文件夹，为每个文件夹设置颜色，轻点即可筛选列表。在编辑模式下，将令牌拖到文件夹即可归入。开启 iCloud 同步后，文件夹会同步到您的其他设备。"
+          }
+        }
+      }
+    },
     "Sort your tokens into folders. With Sync with iCloud on, folders and the tokens in them sync to your other devices through your private iCloud database. They are not part of backups, Transfer QR codes or the Apple Watch.": {
       "extractionState": "manual",
       "localizations": {
@@ -12488,6 +12816,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "支持邮箱"
+          }
+        }
+      }
+    },
+    "Sync Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt synchronisieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar ahora"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser maintenant"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今すぐ同期"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar agora"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即同步"
           }
         }
       }
@@ -14381,6 +14750,47 @@
         }
       }
     },
+    "Turn On Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner aktivieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer les dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをオンにする"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启文件夹"
+          }
+        }
+      }
+    },
     "Turn it on in Settings to sync through your private iCloud database. Setup keys are end-to-end encrypted.": {
       "localizations": {
         "de-DE": {
@@ -15627,6 +16037,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "将自动重试。更改已保存在此设备上。"
+          }
+        }
+      }
+    },
+    "Work": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arbeit"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trabajo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travail"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仕事"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trabalho"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作"
           }
         }
       }

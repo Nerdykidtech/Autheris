@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 import Foundation
 import Combine
 import PhotosUI
@@ -16,6 +17,12 @@ struct HomeView: View {
     @State private var organizationFilter: TokenOrganization.Filter = .all
     /// Where the folder chips are, shared with the grid so its grabber can drop on them.
     @State private var dropTargets = FolderDropTargets()
+    /// Whether the one-time introduction to Folders has been seen; see `FoldersIntro`.
+    @AppStorage(FoldersIntro.seenKey) private var foldersIntroSeen = false
+    @State private var showingFoldersIntro = false
+    /// The Settings page to open on, set when Home turns folders on.
+    @State private var settingsStartPage: SettingsPage?
+    private let foldersTip = FoldersTip()
     #if os(macOS)
     /// Opens the Mac's `Settings` scene — the preferences window — which is what
     /// the gear button does there. On iOS/iPad the gear opens the sheet instead.
@@ -64,6 +71,26 @@ struct HomeView: View {
     /// least one folder to choose.
     private var showsOrganizationFilter: Bool {
         foldersEnabled && !organizationStore.organization.folders.isEmpty
+    }
+
+    /// Turns folders on and opens Settings at Folders, where the first one is made.
+    private func turnOnFolders() {
+        foldersEnabled = true
+        foldersIntroSeen = true
+        FoldersTip.introSeen = true
+        foldersTip.invalidate(reason: .actionPerformed)
+        #if os(macOS)
+        openSettings()
+        NSApp.activate(ignoringOtherApps: true)
+        #else
+        settingsStartPage = .organize
+        // After the introduction sheet has gone: a second sheet can't open while the
+        // first is still closing.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            showingSettings = true
+        }
+        #endif
     }
 
     /// Dragging is offered while search is empty. In a folder a move saves that
@@ -181,12 +208,12 @@ struct HomeView: View {
             tokenList
             #else
             tokenList.sheet(isPresented: $showingSettings) {
-                SettingsView(dataStore: dataStore)
+                SettingsView(dataStore: dataStore, initialPage: settingsStartPage)
             }
             #endif
         } else {
             tokenList.platformFullScreenCover(isPresented: $showingSettings) {
-                SettingsView(dataStore: dataStore)
+                SettingsView(dataStore: dataStore, initialPage: settingsStartPage)
             }
         }
     }
@@ -309,6 +336,14 @@ struct HomeView: View {
     private var tokenList: some View {
         NavigationStack {
             VStack(spacing: 0) {
+            // Offers Folders to someone who chose Not Now; TipKit decides when.
+            TipView(foldersTip) { action in
+                if action.id == FoldersTip.turnOnActionID {
+                    turnOnFolders()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
             if showsOrganizationFilter {
                 OrganizationFilterBar(organization: organizationStore.organization, filter: $organizationFilter,
                                       onFile: { token, folder in
@@ -341,6 +376,42 @@ struct HomeView: View {
             }
             }
             .environment(dropTargets)
+            .task {
+                FoldersTip.foldersAreOn = foldersEnabled
+                FoldersTip.introSeen = foldersIntroSeen
+                // Only Home reaches here after onboarding, so it has been completed.
+                if FoldersIntro.shouldShow(hasCompletedOnboarding: true, introSeen: foldersIntroSeen,
+                                           foldersEnabled: foldersEnabled) {
+                    showingFoldersIntro = true
+                }
+                #if DEBUG
+                // For checking the introduction: launch with `-showFoldersIntro` to see it
+                // every time, whatever has been seen or turned on.
+                if ProcessInfo.processInfo.arguments.contains("-showFoldersIntro") {
+                    showingFoldersIntro = true
+                }
+                #endif
+            }
+            .onChange(of: foldersEnabled) { _, isOn in
+                FoldersTip.foldersAreOn = isOn
+            }
+            .onChange(of: showingSettings) { _, isShowing in
+                if !isShowing { settingsStartPage = nil }
+            }
+            // On the list, not a row, so a change to the codes cannot close it.
+            .sheet(isPresented: $showingFoldersIntro) {
+                FoldersIntroSheet(
+                    onTurnOn: {
+                        showingFoldersIntro = false
+                        turnOnFolders()
+                    },
+                    onNotNow: {
+                        foldersIntroSeen = true
+                        FoldersTip.introSeen = true
+                        showingFoldersIntro = false
+                    }
+                )
+            }
             .platformSearchable(text: $searchText, prompt: "Search tokens")
             .onChange(of: organizationStore.organization) { _, organization in
                 // A folder that was just deleted can't keep the list filtered.

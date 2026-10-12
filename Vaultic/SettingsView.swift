@@ -19,6 +19,8 @@ struct SettingsView: View {
     /// The settings themselves are identical either way; only the container differs.
     /// Defaulted so the existing sheet call sites are unchanged.
     var presentation: Presentation = .sheet
+    /// The page to open on, such as Folders when Home turns them on. `nil` opens the list.
+    var initialPage: SettingsPage? = nil
 
     /// The two containers this screen can be drawn in.
     enum Presentation {
@@ -463,7 +465,9 @@ struct SettingsView: View {
         // Side by side there is room for a page from the start, as in the system
         // Settings app. On iPhone nothing is chosen, so the list shows first.
         .onAppear {
-            if horizontalSizeClass == .regular, selectedPage == nil {
+            if let initialPage {
+                selectedPage = initialPage
+            } else if horizontalSizeClass == .regular, selectedPage == nil {
                 selectedPage = .privacy
             }
         }
@@ -830,6 +834,18 @@ struct SettingsView: View {
                 .disabled(dataStore.isDeletingCloudData)
     
             syncStatusRow
+
+            if isICloudSyncEnabled {
+                // Syncs straight away rather than at the next edit, launch or push.
+                // Off while a sync or a delete from iCloud is already running.
+                Button {
+                    Task { await dataStore.syncNow() }
+                } label: {
+                    actionRowLabel("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                }
+                .platformPlainButton()
+                .disabled(isSyncRunning)
+            }
     
             if !dataStore.isSyncAvailable && !isICloudSyncEnabled
                 && !dataStore.syncStatus.isConfigurationFailure {
@@ -858,6 +874,12 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
                 .padding(.top, 4)
         }
+    }
+
+    /// Whether a sync, or a delete from iCloud, is running, so Sync Now waits for it.
+    private var isSyncRunning: Bool {
+        if case .syncing = dataStore.syncStatus { return true }
+        return dataStore.isDeletingCloudData
     }
 
     @ViewBuilder
