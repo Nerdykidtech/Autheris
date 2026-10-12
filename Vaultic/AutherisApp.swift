@@ -22,6 +22,9 @@ struct AutherisApp: App {
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     @AppStorage("appearanceMode") private var appearanceModeRaw = AppearanceMode.system.rawValue
     @StateObject private var dataStore = OTPDataStore()
+    /// Folders and tags. One for the app, shared by every window, so a folder made in
+    /// one window shows in the others.
+    @State private var organizationStore = TokenOrganizationStore()
     @StateObject private var appLock = AppLockManager()
     /// Keeps the app's windows out of screen capture on the Mac. A no-op on iOS,
     /// where capture can be detected instead.
@@ -103,6 +106,7 @@ struct AutherisApp: App {
                         .frame(width: 620, height: 520)
                 } else {
                     SettingsView(dataStore: dataStore, presentation: .preferences)
+                        .environment(organizationStore)
                 }
             }
             .windowCaptureExclusion(captureExclusion)
@@ -125,6 +129,7 @@ struct AutherisApp: App {
                 } else {
                     ContentView()
                         .environmentObject(dataStore)
+                        .environment(organizationStore)
                         .environment(\.reviewImport, ReviewImportAction { tokens in
                             pendingImport = tokens
                             importWindow = windowID

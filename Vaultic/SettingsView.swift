@@ -38,6 +38,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.sendCodesToWatchKey) private var sendCodesToWatch = AppPreferences.sendCodesToWatchDefault
     @AppStorage("accentTheme") private var accentThemeRaw = ""
     @AppStorage("appearanceMode") private var appearanceModeRaw = AppearanceMode.system.rawValue
+    @AppStorage(TokenOrganizationStore.enabledKey) private var foldersEnabled = false
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
 
@@ -482,6 +483,7 @@ struct SettingsView: View {
                 pageRow(.privacy)
                 pageRow(.sync, value: isICloudSyncEnabled ? "On" : "Off")
                 pageRow(.appearance, value: accentThemeName)
+                pageRow(.organize, value: foldersEnabled ? "On" : "Off")
             }
 
             Section {
@@ -522,24 +524,32 @@ struct SettingsView: View {
     }
 
     /// One page: its sections, under the page's title.
+    @ViewBuilder
     private func settingsPage(_ page: SettingsPage) -> some View {
-        List {
-            switch page {
-            case .privacy:
-                privacySettingsSection
-            case .sync:
-                syncSettingsSection
-            case .appearance:
-                appearanceSettingsSection
-            case .data:
-                dataSettingsSection
-            case .help:
-                helpSettingsSection
-                aboutSettingsSection
+        // Folders has a list and sheets of its own, so it is shown as it is.
+        if page == .organize {
+            FoldersSettingsView()
+        } else {
+            List {
+                switch page {
+                case .privacy:
+                    privacySettingsSection
+                case .sync:
+                    syncSettingsSection
+                case .appearance:
+                    appearanceSettingsSection
+                case .organize:
+                    EmptyView()
+                case .data:
+                    dataSettingsSection
+                case .help:
+                    helpSettingsSection
+                    aboutSettingsSection
+                }
             }
+            .navigationTitle(page.title)
+            .inlineNavigationTitle()
         }
-        .navigationTitle(page.title)
-        .inlineNavigationTitle()
     }
 
     /// Whether a section names its group in a header. A page already does that in

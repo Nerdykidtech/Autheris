@@ -12,6 +12,7 @@ enum SettingsPage: Hashable, CaseIterable, Identifiable {
     case privacy
     case sync
     case appearance
+    case organize
     case data
     case help
 
@@ -22,6 +23,7 @@ enum SettingsPage: Hashable, CaseIterable, Identifiable {
         case .privacy: "Privacy"
         case .sync: "iCloud Sync"
         case .appearance: "Appearance"
+        case .organize: "Folders"
         case .data: "Data"
         case .help: "Help"
         }
@@ -32,6 +34,7 @@ enum SettingsPage: Hashable, CaseIterable, Identifiable {
         case .privacy: "hand.raised.fill"
         case .sync: "icloud.fill"
         case .appearance: "paintpalette.fill"
+        case .organize: "folder.fill"
         case .data: "externaldrive.fill"
         case .help: "questionmark"
         }
@@ -43,6 +46,7 @@ enum SettingsPage: Hashable, CaseIterable, Identifiable {
         case .privacy: .blue
         case .sync: .cyan
         case .appearance: .pink
+        case .organize: .green
         case .data: .gray
         case .help: .orange
         }
