@@ -20,6 +20,7 @@ struct AutherisApp: App {
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage("accentTheme") private var accentThemeRaw = ""
+    @AppStorage("appearanceMode") private var appearanceModeRaw = AppearanceMode.system.rawValue
     @StateObject private var dataStore = OTPDataStore()
     @StateObject private var appLock = AppLockManager()
     /// Keeps the app's windows out of screen capture on the Mac. A no-op on iOS,
@@ -191,6 +192,10 @@ struct AutherisApp: App {
         .animation(.easeInOut(duration: 0.3), value: isAppActive)
         .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
         .tint(selectedAccent?.color ?? .accentColor)
+        .onAppear { AppearanceMode.stored(appearanceModeRaw).apply() }
+        .onChange(of: appearanceModeRaw) { _, newValue in
+            AppearanceMode.stored(newValue).apply()
+        }
         .windowCaptureExclusion(captureExclusion)
         .onAppear {
             #if DEBUG

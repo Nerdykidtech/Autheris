@@ -37,6 +37,7 @@ struct SettingsView: View {
     @AppStorage(AppPreferences.fetchIssuerLogosKey) private var fetchIssuerLogos = AppPreferences.fetchIssuerLogosDefault
     @AppStorage(AppPreferences.sendCodesToWatchKey) private var sendCodesToWatch = AppPreferences.sendCodesToWatchDefault
     @AppStorage("accentTheme") private var accentThemeRaw = ""
+    @AppStorage("appearanceMode") private var appearanceModeRaw = AppearanceMode.system.rawValue
     /// Same key `OTPDataStore` owns, so the toggle and the sync engine cannot drift.
     @AppStorage(OTPDataStore.syncEnabledKey) private var isICloudSyncEnabled = false
 
@@ -485,9 +486,6 @@ struct SettingsView: View {
 
             Section {
                 pageRow(.data)
-            }
-
-            Section {
                 pageRow(.help)
             }
         }
@@ -604,24 +602,35 @@ struct SettingsView: View {
     @ViewBuilder
     private var appHeaderSection: some View {
         Section {
-            HStack(spacing: 14) {
-                Image("Logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 54, height: 54)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-    
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Autheris")
-                        .font(.title3.weight(.semibold))
-                    Text("Version \(appMarketingVersion) (\(appBuildNumber))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 14) {
+                    Image("Logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 54, height: 54)
+                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        // Keeps the logo's edge visible on a light card, where its white tile blends in.
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .strokeBorder(.secondary.opacity(0.25), lineWidth: 0.5)
+                        )
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Autheris")
+                            .font(.title3.weight(.semibold))
+                        Text("Version \(appMarketingVersion) (\(appBuildNumber))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
                 }
-    
-                Spacer()
+
+                Text("Listed in awesome-privacy's 2-Factor Authentication section, alongside Aegis and 2FAS.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 6)
         }
     }
 
@@ -840,6 +849,13 @@ struct SettingsView: View {
     @ViewBuilder
     private var appearanceSettingsSection: some View {
         Section {
+            Picker("Mode", selection: $appearanceModeRaw) {
+                ForEach(AppearanceMode.allCases) { mode in
+                    Text(mode.displayName).tag(mode.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+
             PlatformSwatchRow {
                 Button {
                     accentThemeRaw = ""
