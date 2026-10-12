@@ -49,14 +49,16 @@ nonisolated enum TransferPayload {
 
     /// The version 1 link, as every release has written it.
     static func legacyLink(for codes: [OTPCode]) -> String? {
-        let export = ExportData(version: "1.0", timestamp: Date(), tokens: codes)
+        // Pictures stay out of a transfer: a picture would push the codes past one
+        // QR code, and the compact format would then drop it without saying so.
+        let export = ExportData(version: "1.0", timestamp: Date(), tokens: codes.map(\.withoutCustomIcon))
         guard let json = try? JSONEncoder().encode(export) else { return nil }
         return "autheris://import?data=\(base64URL(json))"
     }
 
     /// The version 2 link.
     static func compactLink(for codes: [OTPCode]) -> String? {
-        guard let compressed = try? (encode(codes) as NSData).compressed(using: .zlib) else { return nil }
+        guard let compressed = try? (encode(codes.map(\.withoutCustomIcon)) as NSData).compressed(using: .zlib) else { return nil }
         return "autheris://import?v=2&data=\(base64URL(compressed as Data))"
     }
 

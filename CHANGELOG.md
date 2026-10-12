@@ -15,6 +15,29 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [3.2] — October 17, 2026
+
+### Added
+
+- Any code can have its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off. A picture is never sent to the Apple Watch or to logo.dev, and it is not included in Transfer QR codes.
+- Folders sort your tokens. Turn them on in Settings, then give each folder a name and an optional colour, shown on its chip above the list. Tap a chip to see that folder, arrange each folder in its own order without changing All, and in Edit drag a token onto a chip to file it. With iCloud Sync on, folders and the tokens in them sync to your other devices. Folders are not included in backups, Transfer QR codes or the Apple Watch.
+- iCloud Sync has a Sync Now button, to sync straight away instead of waiting for the next change.
+- Appearance can be System, Light or Dark, and there are three more accent colours: blue, violet and orange.
+
+### Changed
+
+- Settings is redesigned for iPhone and iPad. Each group — Privacy, iCloud Sync, Appearance, Data and Help — now has its own page instead of one long list, with a side-by-side layout on iPad. Nothing moved or changed, only where it's shown.
+
+### Security
+
+- An unencrypted backup now warns that anyone who opens the file can generate every code, and that a shared copy can't be taken back.
+- Backup, Transfer QR codes and setup keys now ask for Face ID, Touch ID or your passcode even when App Lock is off, since they show every code.
+- App Lock now protects your codes where they are stored, not only the screen. With it on, the iPhone asks for Face ID, Touch ID or your passcode before the codes can be read, and turning App Lock on or off asks you to authenticate.
+
+### Fixed
+
+- The countdown bar no longer moves when the number drops from two digits to one.
+
 ## [3.1] — October 2026
 
 A reliability release, mostly for iCloud sync and counter-based codes.

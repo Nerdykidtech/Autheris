@@ -425,6 +425,47 @@ final class OTPDataStoreSyncTests: XCTestCase {
         XCTAssertEqual(saved?.isPinned, true, "and the pin made meanwhile stays")
     }
 
+    func testChoosingAPictureSavesItAndCountsAsAnEdit() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(opened)
+        let picture = Data([0x89, 0x50, 0x4E, 0x47, 1])
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(customIcon: .some(picture))), .saved)
+        let saved = store.codes.first { $0.id == opened.id }
+        XCTAssertEqual(saved?.customIcon, picture)
+        XCTAssertGreaterThan(saved?.modifiedAt ?? .distantPast, opened.modifiedAt,
+                             "a new picture is a change, so sync sends it")
+    }
+
+    func testRemovingAPictureSavesTheRemoval() {
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             customIcon: Data([1, 2, 3]), modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(opened)
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(customIcon: .some(nil))), .saved)
+        XCTAssertNil(store.codes.first { $0.id == opened.id }?.customIcon)
+    }
+
+    func testAnEditThatLeavesThePictureAloneKeepsIt() {
+        let picture = Data([1, 2, 3])
+        let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
+                             customIcon: picture, modifiedAt: Date().addingTimeInterval(-60))
+        store.addCode(opened)
+
+        XCTAssertEqual(store.saveEdit(from: opened, to: opened.edited(label: "Bank (personal)")), .saved)
+        XCTAssertEqual(store.codes.first { $0.id == opened.id }?.customIcon, picture)
+    }
+
+    func testAnImportKeepsThePictureUnderANewID() {
+        let picture = Data([4, 5, 6])
+        let incoming = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP", customIcon: picture)
+
+        XCTAssertEqual(store.addCodes([incoming]), .imported(added: 1, skipped: 0))
+        XCTAssertEqual(store.codes.first?.customIcon, picture)
+        XCTAssertNotEqual(store.codes.first?.id, incoming.id)
+    }
+
     func testAnEditCanStillSetTheCounterOnPurpose() {
         let opened = OTPCode(label: "Bank", account: "user", secret: "JBSWY3DPEHPK3PXP",
                              kind: .hotp, counter: 3)
@@ -864,7 +905,7 @@ final class OTPDataStoreSyncTests: XCTestCase {
         for name in AppActivity.keychainMayHaveBecomeReadable {
             NotificationCenter.default.post(name: name, object: nil)
         }
-        for _ in 0..<100 where !locked.isVaultLoaded { await Task.yield() }
+        await waitUntil { locked.isVaultLoaded }
 
         XCTAssertTrue(locked.isVaultLoaded)
         XCTAssertEqual(locked.codes.map(\.id), [existing.id])

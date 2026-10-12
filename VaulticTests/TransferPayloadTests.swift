@@ -117,6 +117,18 @@ final class TransferPayloadTests: XCTestCase {
         }
     }
 
+    func testAPictureIsLeftOutOfEveryTransferFormat() throws {
+        let original = OTPCode(label: "Bank", account: "x", secret: "JBSWY3DPEHPK3PXP",
+                               customIcon: Data(repeating: 1, count: 500))
+
+        let compact = try XCTUnwrap(TransferPayload.compactLink(for: [original]))
+        XCTAssertNil(try importedTokens(compact).first?.customIcon)
+
+        let legacy = try XCTUnwrap(TransferPayload.legacyLink(for: [original]))
+        XCTAssertNil(try importedTokens(legacy).first?.customIcon)
+        XCTAssertEqual(try importedTokens(legacy).first?.label, "Bank")
+    }
+
     func testThePeriodAnyLinkCanSetSurvivesTheCompactFormat() throws {
         // Nothing caps a period from above. One this large used to fail the whole
         // transfer on the receiving side.

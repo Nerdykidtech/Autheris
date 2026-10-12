@@ -11,16 +11,16 @@ final class OnboardingChoicesTests: XCTestCase {
     private var suiteName: String!
     private var defaults: UserDefaults!
 
-    override func setUp() {
-        super.setUp()
+    override func setUp() async throws {
+        try await super.setUp()
         suiteName = "OnboardingChoicesTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
     }
 
-    override func tearDown() {
+    override func tearDown() async throws {
         defaults.removePersistentDomain(forName: suiteName)
         defaults = nil
-        super.tearDown()
+        try await super.tearDown()
     }
 
     func testANewInstallStartsWithServiceLogosOff() {
@@ -51,5 +51,12 @@ final class OnboardingChoicesTests: XCTestCase {
 
         XCTAssertNil(defaults.object(forKey: AppPreferences.fetchIssuerLogosKey))
         XCTAssertTrue(PreferencesStore.snapshot(of: defaults).fetchIssuerLogos)
+    }
+
+    /// A new install's welcome is its introduction, so the Folders sheet meant for
+    /// people updating from an earlier version is marked seen when onboarding ends.
+    func testFinishingOnboardingMarksTheFoldersIntroductionSeen() {
+        OnboardingChoices().complete(in: defaults)
+        XCTAssertTrue(defaults.bool(forKey: FoldersIntro.seenKey))
     }
 }

@@ -1,5 +1,6 @@
 import Combine
 import SwiftUI
+import TipKit
 #if os(iOS)
 import UIKit
 #endif
@@ -20,6 +21,7 @@ struct AutherisApp: App {
     @AppStorage("hideCodesInAppSwitcher") private var hideCodesInAppSwitcher = true
     @AppStorage("hideCodesWhenScreenCaptured") private var hideCodesWhenScreenCaptured = true
     @AppStorage("accentTheme") private var accentThemeRaw = ""
+    @AppStorage("appearanceMode") private var appearanceModeRaw = AppearanceMode.system.rawValue
     @StateObject private var dataStore = OTPDataStore()
     @StateObject private var appLock = AppLockManager()
     /// Keeps the app's windows out of screen capture on the Mac. A no-op on iOS,
@@ -62,6 +64,12 @@ struct AutherisApp: App {
         PrivacyShield.shouldBlur(privacyConditions, privacyPreferences)
     }
     
+    init() {
+        // On-device tips, such as the one that offers Folders. TipKit keeps their
+        // state locally and limits how often any tip appears.
+        try? Tips.configure()
+    }
+
     var body: some Scene {
         WindowGroup {
             WindowIdentity { windowID in
@@ -102,6 +110,7 @@ struct AutherisApp: App {
                         .frame(width: 620, height: 520)
                 } else {
                     SettingsView(dataStore: dataStore, presentation: .preferences)
+                        .environment(dataStore.organization)
                 }
             }
             .windowCaptureExclusion(captureExclusion)
@@ -124,6 +133,7 @@ struct AutherisApp: App {
                 } else {
                     ContentView()
                         .environmentObject(dataStore)
+                        .environment(dataStore.organization)
                         .environment(\.reviewImport, ReviewImportAction { tokens in
                             pendingImport = tokens
                             importWindow = windowID
@@ -191,6 +201,10 @@ struct AutherisApp: App {
         .animation(.easeInOut(duration: 0.3), value: isAppActive)
         .animation(.easeInOut(duration: 0.3), value: showPrivacyOverlay)
         .tint(selectedAccent?.color ?? .accentColor)
+        .onAppear { AppearanceMode.stored(appearanceModeRaw).apply() }
+        .onChange(of: appearanceModeRaw) { _, newValue in
+            AppearanceMode.stored(newValue).apply()
+        }
         .windowCaptureExclusion(captureExclusion)
         .onAppear {
             #if DEBUG
@@ -372,16 +386,16 @@ struct PrivacyOverlay: View {
             VStack(spacing: 16) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 64))
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .symbolRenderingMode(.hierarchical)
                 
                 Text("Autheris")
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text("Protected by Privacy Mode")
                     .font(.system(size: 16, weight: .medium, design: .default))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             .padding()

@@ -242,7 +242,13 @@ final class WatchPairingStateTests: XCTestCase {
 
     private var wasKnown = false
     private var wasPaired = false
-    private var posts = 0
+    /// Counted through its own main-actor object, so the notification closure does not
+    /// capture the test case, which XCTest does not make Sendable.
+    private let counter = PostCounter()
+    private var posts: Int {
+        get { counter.count }
+        set { counter.count = newValue }
+    }
     private var observer: NSObjectProtocol?
 
     override func setUp() async throws {
@@ -251,8 +257,8 @@ final class WatchPairingStateTests: XCTestCase {
         wasPaired = WatchTokenRelay.hasPairedWatch
         observer = NotificationCenter.default.addObserver(
             forName: WatchTokenRelay.pairedWatchDidChange, object: nil, queue: nil
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.posts += 1 }
+        ) { [counter] _ in
+            MainActor.assumeIsolated { counter.count += 1 }
         }
     }
 
@@ -299,4 +305,11 @@ final class WatchPairingStateTests: XCTestCase {
         XCTAssertFalse(WatchTokenRelay.hasPairedWatch)
         XCTAssertEqual(posts, 3)
     }
+}
+
+/// Counts pairing notifications. A main-actor class is Sendable, so the notification
+/// closure can hold it.
+@MainActor
+final class PostCounter {
+    var count = 0
 }

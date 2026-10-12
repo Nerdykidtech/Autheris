@@ -232,10 +232,9 @@ extension View {
 
 /// A row of colour swatches.
 ///
-/// On iOS the row scrolls horizontally, because a phone can overflow it and there
-/// is a gesture for that. A Mac has no touch scrolling, so an overflowing row
-/// there simply looks cut off — and at the preferences window's fixed width the
-/// swatches all fit, so they are laid out directly instead.
+/// On iOS the swatches wrap onto as many lines as the width needs, so every colour
+/// is visible on a phone at once. A Mac lays them out in one line: its preferences
+/// window is a fixed width that fits them all.
 struct PlatformSwatchRow<Content: View>: View {
     private let content: () -> Content
 
@@ -245,17 +244,14 @@ struct PlatformSwatchRow<Content: View>: View {
 
     var body: some View {
         #if os(iOS)
-        ScrollView(.horizontal, showsIndicators: false) {
-            row
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 14)], alignment: .leading, spacing: 14) {
+            content()
         }
+        .padding(.vertical, 4)
         #else
-        row
-        #endif
-    }
-
-    private var row: some View {
         HStack(spacing: 14) { content() }
             .padding(.vertical, 4)
+        #endif
     }
 }
 
@@ -272,7 +268,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .primaryAction
         #else
-        .navigationBarTrailing
+        .topBarTrailing
         #endif
     }
 
@@ -284,7 +280,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .navigation
         #else
-        .navigationBarLeading
+        .topBarLeading
         #endif
     }
 
@@ -305,7 +301,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .cancellationAction
         #else
-        .navigationBarLeading
+        .topBarLeading
         #endif
     }
 
@@ -316,7 +312,7 @@ extension ToolbarItemPlacement {
         #if os(macOS)
         .confirmationAction
         #else
-        .navigationBarTrailing
+        .topBarTrailing
         #endif
     }
 }

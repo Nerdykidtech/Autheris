@@ -90,7 +90,7 @@ struct AddTokenView: View {
                         
                         Image(systemName: "qrcode.viewfinder")
                             .font(.system(size: 50))
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .symbolRenderingMode(.hierarchical)
                         
                         Text("Scan QR Code")
@@ -99,7 +99,7 @@ struct AddTokenView: View {
                         
                         Text("Point your camera at a QR code, or upload a screenshot. Google Authenticator export (otpauth-migration) codes work too.")
                             .font(.callout)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 24)
                         
@@ -112,7 +112,7 @@ struct AddTokenView: View {
                                     .padding(.vertical, 12)
                                     .frame(maxWidth: .infinity)
                                     .background(Capsule().fill(Color.accentColor))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                             .platformPlainButton()
                             PhotosPicker(selection: $selectedPhoto, matching: .images) {
@@ -121,7 +121,7 @@ struct AddTokenView: View {
                                     .padding(.vertical, 12)
                                     .frame(maxWidth: .infinity)
                                     .background(Capsule().fill(Color.accentColor.opacity(0.2)))
-                                    .foregroundColor(.accentColor)
+                                    .foregroundStyle(Color.accentColor)
                             }
                             .buttonStyle(.plain)
                         }
@@ -129,7 +129,7 @@ struct AddTokenView: View {
                         
                         Text("Upload a screenshot of a QR code, or a Google Transfer / export image")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 24)
                             .padding(.bottom, 24)

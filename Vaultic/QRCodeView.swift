@@ -46,13 +46,13 @@ struct QRCodeView: View {
                     
                     Text("Scan this QR code with another device to import all tokens")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                     
                     Text("Tip: You can also scan this with your iPhone camera")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                         .padding(.top, 8)
@@ -75,7 +75,7 @@ struct QRCodeView: View {
                             Capsule()
                                 .fill(Color.accentColor)
                         )
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .disabled(qrImage == nil)
                 .opacity(qrImage == nil ? 0.45 : 1)

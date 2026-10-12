@@ -115,6 +115,10 @@ class LogoCacheManager {
     /// because the disk read waited for `.task`.
     private let decoded = NSCache<NSString, PlatformImage>()
 
+    /// Custom pictures decoded this launch, keyed by their bytes. The token list
+    /// redraws every second, so the picture must not be decoded on each pass.
+    private let customDecoded = NSCache<NSData, PlatformImage>()
+
     /// Names logo.dev answered without a logo, this launch. Remembered so an
     /// unknown service is asked about once rather than every time its icon
     /// appears, which is both a request wasted and the service's name sent again.
@@ -127,6 +131,16 @@ class LogoCacheManager {
     /// call from `body`; it never touches the disk.
     func decodedLogo(for branding: IssuerBranding) -> PlatformImage? {
         decoded.object(forKey: branding.cacheKey as NSString)
+    }
+
+    /// A token's own picture, decoded once per launch. `nil` if the bytes are not an
+    /// image, in which case the icon falls back to the service's logo.
+    func customIconImage(for data: Data) -> PlatformImage? {
+        let key = NSData(data: data)
+        if let image = customDecoded.object(forKey: key) { return image }
+        guard let image = PlatformImage(data: data) else { return nil }
+        customDecoded.setObject(image, forKey: key)
+        return image
     }
 
     /// The logo from memory, or else from the cache on disk — read and decoded
@@ -258,6 +272,14 @@ struct IssuerIconView: View {
     /// anyway once the rename is saved.
     var fetchesMissingLogo = true
 
+    /// The token's own picture, if it has one. It is drawn in place of the logo,
+    /// and a token that has one never looks a logo up.
+    var customIcon: Data? = nil
+
+    private var customPicture: PlatformImage? {
+        customIcon.flatMap { LogoCacheManager.shared.customIconImage(for: $0) }
+    }
+
     /// The logo, once read from the cache or fetched. Read from disk in `.task`
     /// rather than in `body`, which used to read and decode the file on every
     /// evaluation — and the token list re-evaluates every second. `body` only
@@ -284,7 +306,13 @@ struct IssuerIconView: View {
 
             // The decoded copy first, so a logo seen before draws on this frame
             // rather than after `.task` runs.
-            if let logo = logo ?? LogoCacheManager.shared.decodedLogo(for: branding) {
+            if let picture = customPicture {
+                Image(platformImage: picture)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+            } else if let logo = logo ?? LogoCacheManager.shared.decodedLogo(for: branding) {
                 Image(platformImage: logo)
                     .resizable()
                     .scaledToFill()
@@ -326,7 +354,7 @@ struct IssuerIconView: View {
     private func loadLogo() async {
         isLoading = false
         logo = LogoCacheManager.shared.getCachedLogo(for: branding)
-        guard logo == nil, fetchesMissingLogo, !branding.companyName.isEmpty,
+        guard customPicture == nil, logo == nil, fetchesMissingLogo, !branding.companyName.isEmpty,
               LogoCacheManager.isFetchingEnabled else { return }
 
         // Cancelled by the next change to the name, or by the icon going away.
@@ -353,7 +381,7 @@ struct IssuerIconView: View {
             // Monogram letter
             Text(String(branding.displayName.prefix(1)).uppercased())
                 .font(.system(size: size * 0.5, weight: .semibold, design: .rounded))
-                .foregroundColor(branding.color)
+                .foregroundStyle(branding.color)
         }
     }
 }

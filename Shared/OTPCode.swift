@@ -27,6 +27,14 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     let counter: UInt64
     /// Optional `RRGGBB` hex (no `#`) for the countdown ring; `nil` uses issuer branding color.
     let timerRingHex: String?
+    /// A picture the user chose for this token, as PNG bytes, or `nil` to use the
+    /// service's logo (or its letter) instead.
+    ///
+    /// It is user state like the ring colour: it syncs, travels in backups and
+    /// transfers, and goes through `edited()` so an edit stamps `modifiedAt`. The
+    /// watch never gets it (see `withoutCustomIcon`), and a token with one never
+    /// asks logo.dev for a logo.
+    let customIcon: Data?
     /// Whether the user has pinned this code to the top of the list.
     ///
     /// The pin itself syncs, because it is a property of the code. The *manual
@@ -52,7 +60,7 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
     /// reason: the input is a string a stranger wrote.
     static let maximumCounter = UInt64(Int64.max)
 
-    init(id: UUID = UUID(), label: String, account: String, secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30, kind: OTPKind = .totp, counter: UInt64 = 0, timerRingHex: String? = nil, isPinned: Bool = false, modifiedAt: Date = Date()) {
+    init(id: UUID = UUID(), label: String, account: String, secret: String, algorithm: OTPAlgorithm = .sha1, digits: Int = 6, period: Int = 30, kind: OTPKind = .totp, counter: UInt64 = 0, timerRingHex: String? = nil, customIcon: Data? = nil, isPinned: Bool = false, modifiedAt: Date = Date()) {
         self.id = id
         self.label = label
         self.account = account
@@ -63,6 +71,7 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
         self.kind = kind
         self.counter = min(counter, Self.maximumCounter)
         self.timerRingHex = timerRingHex
+        self.customIcon = customIcon
         self.isPinned = isPinned
         self.modifiedAt = modifiedAt
     }
@@ -169,6 +178,7 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
         kind: OTPKind? = nil,
         counter: UInt64? = nil,
         timerRingHex: String?? = nil,
+        customIcon: Data?? = nil,
         isPinned: Bool? = nil,
         modifiedAt: Date = Date()
     ) -> OTPCode {
@@ -183,15 +193,22 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
             kind: kind ?? self.kind,
             counter: counter ?? self.counter,
             timerRingHex: timerRingHex ?? self.timerRingHex,
+            customIcon: customIcon ?? self.customIcon,
             isPinned: isPinned ?? self.isPinned,
             modifiedAt: modifiedAt
         )
     }
 
+    /// The same token without its picture, for the watch, which draws no icons
+    /// and would otherwise carry every picture in its payload.
+    var withoutCustomIcon: OTPCode {
+        edited(customIcon: .some(nil), modifiedAt: modifiedAt)
+    }
+
     // MARK: - Codable
 
     private enum CodingKeys: String, CodingKey {
-        case id, label, account, secret, algorithm, digits, period, kind, counter, timerRingHex, isPinned, modifiedAt
+        case id, label, account, secret, algorithm, digits, period, kind, counter, timerRingHex, customIcon, isPinned, modifiedAt
     }
 
     /// Hand-written so `modifiedAt` may be absent from previously persisted JSON
@@ -218,6 +235,9 @@ nonisolated struct OTPCode: Identifiable, Codable, Equatable, Sendable {
         kind = OTPKind(rawValue: try container.decodeIfPresent(String.self, forKey: .kind) ?? "") ?? .totp
         counter = min(try container.decodeIfPresent(UInt64.self, forKey: .counter) ?? 0, Self.maximumCounter)
         timerRingHex = try container.decodeIfPresent(String.self, forKey: .timerRingHex)
+        // Absent on every token written before custom icons existed, which is `nil`:
+        // the service's own logo.
+        customIcon = try container.decodeIfPresent(Data.self, forKey: .customIcon)
         isPinned = try container.decodeIfPresent(Bool.self, forKey: .isPinned) ?? false
         modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? .distantPast
     }

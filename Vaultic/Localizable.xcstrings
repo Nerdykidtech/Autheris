@@ -42,6 +42,7 @@
       }
     },
     "%@ is already in Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -82,6 +83,7 @@
       }
     },
     "%@ was added to Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -715,6 +717,53 @@
         }
       }
     },
+    "A picture is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Bild wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A picture is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Una imagen nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Une image n'est jamais envoyée à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像がApple Watchやlogo.devに送信されることはありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uma imagem nunca é enviada ao Apple Watch nem ao logo.dev."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片绝不会发送到 Apple Watch 或 logo.dev。"
+          }
+        }
+      }
+    },
     "A sync is still running, so nothing was deleted from iCloud. Try again in a moment.": {
       "localizations": {
         "de-DE": {
@@ -955,6 +1004,47 @@
         }
       }
     },
+    "Add Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner hinzufügen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añadir carpeta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajouter un dossier"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを追加"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicionar pasta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加文件夹"
+          }
+        }
+      }
+    },
     "Add Token": {
       "localizations": {
         "de-DE": {
@@ -991,6 +1081,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "添加账户"
+          }
+        }
+      }
+    },
+    "Add folders in Settings to sort your tokens.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Legen Sie in den Einstellungen Ordner an, um Ihre Tokens zu sortieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añada carpetas en Ajustes para ordenar sus tokens."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ajoutez des dossiers dans Réglages pour classer vos jetons."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定でフォルダを追加すると、トークンを分類できます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adicione pastas nos Ajustes para organizar seus tokens."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“设置”中添加文件夹，即可分类令牌。"
           }
         }
       }
@@ -1313,6 +1444,47 @@
         }
       }
     },
+    "All": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alle"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tous"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すべて"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部"
+          }
+        }
+      }
+    },
     "All %lld tokens in this import already exist on your device.": {
       "localizations": {
         "de-DE": {
@@ -1512,6 +1684,7 @@
       }
     },
     "Already Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -1747,6 +1920,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "App 锁定不可用"
+          }
+        }
+      }
+    },
+    "App Lock Unchanged": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock unverändert"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock Unchanged"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock sin cambios"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock inchangé"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockは変更されていません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock sem alterações"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock 未更改"
+          }
+        }
+      }
+    },
+    "App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock bewahrt deine Codes in einer Form auf, die deinen Gerätecode erfordert. Wenn du den Gerätecode entfernst, kann Autheris deine Codes nicht mehr lesen, bis du wieder einen Code festlegst. Wenn du deinen Gerätecode oder Face ID deaktivieren möchtest, schalte zuerst App Lock aus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock keeps your codes in a form that needs your passcode. If you remove your device passcode, Autheris can't read your codes until you set a passcode again. If you plan to turn off your passcode or Face ID, turn App Lock off first."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock guarda tus códigos de una forma que requiere tu código de acceso. Si eliminas el código de acceso del dispositivo, Autheris no podrá leer tus códigos hasta que vuelvas a configurar uno. Si piensas desactivar el código de acceso o Face ID, desactiva primero App Lock."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock conserve vos codes sous une forme qui nécessite votre code d'accès. Si vous supprimez le code d'accès de l'appareil, Autheris ne pourra plus lire vos codes tant que vous n'en aurez pas défini un nouveau. Si vous comptez désactiver le code d'accès ou Face ID, désactivez d'abord App Lock."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockは、コードをパスコードが必要な形で保存します。端末のパスコードを削除すると、パスコードを設定し直すまでAutherisはコードを読み取れません。パスコードまたはFace IDを無効にする予定がある場合は、先にApp Lockを無効にしてください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O App Lock guarda seus códigos de uma forma que exige sua senha. Se você remover a senha do dispositivo, o Autheris não conseguirá ler seus códigos até que você defina uma senha novamente. Se pretende desativar a senha ou o Face ID, desative o App Lock primeiro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock 以需要你设备密码才能读取的形式保存你的验证码。如果移除设备密码，在重新设置密码之前，Autheris 将无法读取你的验证码。如果你打算关闭设备密码或 Face ID，请先关闭 App Lock。"
           }
         }
       }
@@ -2027,6 +2294,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "请进行验证以关闭 App 锁定。"
+          }
+        }
+      }
+    },
+    "Authenticate to turn on App Lock.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiziere dich, um App Lock einzuschalten."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authenticate to turn on App Lock."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentícate para activar App Lock."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Authentifiez-vous pour activer App Lock."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockをオンにするには認証してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autentique-se para ativar o App Lock."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请验证身份以开启 App Lock。"
           }
         }
       }
@@ -2634,6 +2948,47 @@
         }
       }
     },
+    "Bank": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bank"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banco"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banque"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "銀行"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Banco"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "银行"
+          }
+        }
+      }
+    },
     "Biometric authentication is unavailable.": {
       "localizations": {
         "de-DE": {
@@ -2670,6 +3025,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "生物识别认证不可用。"
+          }
+        }
+      }
+    },
+    "Blue": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blau"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azul"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bleu"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ブルー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Azul"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "蓝色"
           }
         }
       }
@@ -3034,6 +3430,53 @@
         }
       }
     },
+    "Change Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild ändern"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cambiar imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changer l'image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を変更"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alterar imagem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改图片"
+          }
+        }
+      }
+    },
     "Changelog": {
       "localizations": {
         "de-DE": {
@@ -3114,6 +3557,100 @@
         }
       }
     },
+    "Choose Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir un emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字を選択"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择表情符号"
+          }
+        }
+      }
+    },
+    "Choose Picture": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bild auswählen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose Picture"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir imagen"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisir une image"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像を選択"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolher imagem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择图片"
+          }
+        }
+      }
+    },
     "Choose a password. You'll need it to restore this backup.": {
       "localizations": {
         "de-DE": {
@@ -3190,6 +3727,88 @@
           "stringUnit": {
             "state": "translated",
             "value": "选择一种主题色，或使用 Autheris 默认颜色。"
+          }
+        }
+      }
+    },
+    "Click a folder to rename it, change its colour or delete it. Drag folders to change their order.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klicken Sie auf einen Ordner, um ihn umzubenennen, seine Farbe zu ändern oder ihn zu löschen. Ziehen Sie Ordner, um ihre Reihenfolge zu ändern."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Haga clic en una carpeta para cambiarle el nombre, el color o eliminarla. Arrastre las carpetas para cambiar su orden."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cliquez sur un dossier pour le renommer, changer sa couleur ou le supprimer. Faites glisser les dossiers pour changer leur ordre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをクリックすると、名前や色の変更、削除ができます。フォルダをドラッグすると順番を変えられます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clique em uma pasta para renomeá-la, mudar a cor ou excluí-la. Arraste as pastas para mudar a ordem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按文件夹可重命名、更改颜色或删除。拖移文件夹可更改顺序。"
+          }
+        }
+      }
+    },
+    "Cloud": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nube"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cloud"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クラウド"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuvem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "云盘"
           }
         }
       }
@@ -3275,6 +3894,7 @@
       }
     },
     "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -3310,6 +3930,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "只要 Autheris 不在最前面，或屏幕正在被录制、投送，验证码就会隐藏。离开 30 秒后应用锁会重新锁定。"
+          }
+        }
+      }
+    },
+    "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes sind immer ausgeblendet, wenn Autheris nicht die vorderste App ist und solange der Bildschirm aufgenommen oder gespiegelt wird. App Lock sperrt 30 Sekunden nach dem Verlassen der App erneut. Bei eingeschaltetem App Lock werden deine Codes außerdem so gespeichert, dass das iPhone selbst Face ID, Touch ID oder deinen Gerätecode verlangt, bevor sie gelesen werden können."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos se ocultan siempre que Autheris no sea la app en primer plano, y mientras la pantalla se graba o se duplica. App Lock vuelve a bloquear 30 segundos después de salir. Con App Lock activado, tus códigos también se guardan de forma que el iPhone pida Face ID, Touch ID o tu código de acceso antes de poder leerlos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes sont masqués dès qu'Autheris n'est pas l'app au premier plan, et pendant l'enregistrement ou la mise en miroir de l'écran. App Lock se verrouille à nouveau 30 secondes après votre départ. Avec App Lock activé, vos codes sont aussi stockés de façon que l'iPhone demande Face ID, Touch ID ou votre code d'accès avant de pouvoir les lire."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisが最前面のアプリでないとき、および画面が録画・ミラーリングされているときは、コードは隠されます。App Lockは、アプリを離れてから30秒後に再びロックされます。App Lockがオンのときは、コードはiPhone自体がFace ID、Touch ID、またはパスコードを求めてからでないと読めない形で保存されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os códigos ficam ocultos sempre que o Autheris não estiver em primeiro plano e enquanto a tela estiver sendo gravada ou espelhada. O App Lock bloqueia novamente 30 segundos depois que você sai. Com o App Lock ativado, seus códigos também são guardados de modo que o iPhone peça Face ID, Touch ID ou sua senha antes de poderem ser lidos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只要 Autheris 不在最前台，或屏幕正在录制或镜像，验证码就会被隐藏。离开应用 30 秒后 App Lock 会重新锁定。开启 App Lock 后，你的验证码还会以这样的方式存储：iPhone 本身需要 Face ID、Touch ID 或设备密码才能读取。"
           }
         }
       }
@@ -3430,6 +4097,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "收起更新说明"
+          }
+        }
+      }
+    },
+    "Color": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farbe"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couleur"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "カラー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颜色"
           }
         }
       }
@@ -3590,6 +4298,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "复制"
+          }
+        }
+      }
+    },
+    "Copy code": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code kopieren"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy code"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar código"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copier le code"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードをコピー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar código"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复制验证码"
           }
         }
       }
@@ -4434,6 +5189,47 @@
         }
       }
     },
+    "Create a folder to sort your tokens.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erstellen Sie einen Ordner, um Ihre Tokens zu sortieren."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cree una carpeta para ordenar sus tokens."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créez un dossier pour classer vos jetons."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンを分類するフォルダを作成します。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crie uma pasta para organizar seus tokens."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "创建一个文件夹来分类令牌。"
+          }
+        }
+      }
+    },
     "Create an Unencrypted Backup?": {
       "localizations": {
         "de-DE": {
@@ -4590,6 +5386,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "青色"
+          }
+        }
+      }
+    },
+    "Dark": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dunkel"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscuro"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sombre"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダーク"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escuro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "深色"
           }
         }
       }
@@ -4948,6 +5785,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "删除备份"
+          }
+        }
+      }
+    },
+    "Delete Folder?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner löschen?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Eliminar carpeta?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supprimer le dossier ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを削除しますか？"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Excluir pasta?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除文件夹？"
           }
         }
       }
@@ -5352,6 +6230,47 @@
         }
       }
     },
+    "Edit Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner bearbeiten"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar carpeta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modifier le dossier"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダを編集"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Editar pasta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑文件夹"
+          }
+        }
+      }
+    },
     "Edit Token": {
       "localizations": {
         "de-DE": {
@@ -5392,6 +6311,47 @@
         }
       }
     },
+    "Email": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-Mail"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メール"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "E-mail"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电子邮件"
+          }
+        }
+      }
+    },
     "Emerald": {
       "localizations": {
         "de-DE": {
@@ -5428,6 +6388,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "翠绿"
+          }
+        }
+      }
+    },
+    "Emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "表情符号"
           }
         }
       }
@@ -5912,6 +6919,88 @@
         }
       }
     },
+    "Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carpeta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossier"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pasta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件夹"
+          }
+        }
+      }
+    },
+    "Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件夹"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "de-DE": {
@@ -6028,6 +7117,129 @@
           "stringUnit": {
             "state": "translated",
             "value": "开始使用"
+          }
+        }
+      }
+    },
+    "Gray": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grau"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gris"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gris"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グレー"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cinza"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "灰色"
+          }
+        }
+      }
+    },
+    "Green": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grün"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vert"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "グリーン"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绿色"
+          }
+        }
+      }
+    },
+    "Group your tokens into folders and filter the list with a tap.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gruppieren Sie Ihre Tokens in Ordnern und filtern Sie die Liste mit einem Tippen."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrupe sus tokens en carpetas y filtre la lista con un toque."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Regroupez vos jetons dans des dossiers et filtrez la liste d'un simple toucher."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンをフォルダにまとめ、タップでリストを絞り込めます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agrupe seus tokens em pastas e filtre a lista com um toque."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将令牌分组到文件夹，轻点即可筛选列表。"
           }
         }
       }
@@ -6228,6 +7440,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "隐藏设置密钥"
+          }
+        }
+      }
+    },
+    "Icon": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Symbol"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icon"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icono"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Icône"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アイコン"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ícone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标"
           }
         }
       }
@@ -6593,6 +7852,7 @@
       }
     },
     "Imported %lld codes to Autheris.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "variations": {
@@ -6711,6 +7971,7 @@
       }
     },
     "Importing tokens...": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -6910,6 +8171,47 @@
         }
       }
     },
+    "Its tokens stay in your list, just not in this folder.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Die Tokens bleiben in Ihrer Liste, sind aber nicht mehr in diesem Ordner."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sus tokens se quedan en su lista, pero ya no están en esta carpeta."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos jetons restent dans votre liste, mais ne sont plus dans ce dossier."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンはリストに残ります。このフォルダから外れるだけです。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seus tokens continuam na sua lista, só não ficam mais nesta pasta."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "令牌仍保留在列表中，只是不再属于此文件夹。"
+          }
+        }
+      }
+    },
     "Keep Editing": {
       "localizations": {
         "de-DE": {
@@ -7070,6 +8372,135 @@
         }
       }
     },
+    "Light": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hell"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clair"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライト"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浅色"
+          }
+        }
+      }
+    },
+    "Listed in awesome-privacy's 2-Factor Authentication section, alongside Aegis and 2FAS.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aufgeführt im Abschnitt „2-Factor Authentication“ von awesome-privacy, neben Aegis und 2FAS."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Incluida en la sección de autenticación de dos factores de awesome-privacy, junto a Aegis y 2FAS."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Référencée dans la section « 2-Factor Authentication » d'awesome-privacy, aux côtés d'Aegis et 2FAS."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "awesome-privacy の「2-Factor Authentication」セクションに掲載（Aegis、2FAS と並んで）。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listado na seção de autenticação em dois fatores do awesome-privacy, ao lado de Aegis e 2FAS."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列入 awesome-privacy 的“2-Factor Authentication”分类，与 Aegis 和 2FAS 并列。"
+          }
+        }
+      }
+    },
+    "Locks Autheris when opened, or when you return after 30 seconds in the background.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sperrt Autheris beim Öffnen oder bei der Rückkehr nach 30 Sekunden im Hintergrund."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Locks Autheris when opened, or when you return after 30 seconds in the background."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloquea Autheris al abrirla, o al volver tras 30 segundos en segundo plano."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verrouille Autheris à l'ouverture, ou à votre retour après 30 secondes en arrière-plan."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "起動時、またはバックグラウンドで 30 秒経過したあとに戻ったときに Autheris をロックします。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bloqueia o Autheris ao abrir ou quando você volta depois de 30 segundos em segundo plano."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开 Autheris 时锁屏，或在后台停留 30 秒后返回时锁定。"
+          }
+        }
+      }
+    },
     "Looks up each service's icon by name at logo.dev, which tells logo.dev which services you use. Your codes and setup keys are never sent. Off, each service shows its first letter.": {
       "localizations": {
         "de-DE": {
@@ -7190,6 +8621,47 @@
         }
       }
     },
+    "Mode": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modus"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "モード"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模式"
+          }
+        }
+      }
+    },
     "Most services use SHA-1 and 30 seconds. If the service gave you a QR code, scan it instead — the QR carries these settings. Only change the algorithm if your codes are rejected, and your service says which it uses.": {
       "localizations": {
         "de-DE": {
@@ -7226,6 +8698,170 @@
           "stringUnit": {
             "state": "translated",
             "value": "大多数服务使用 SHA-1 和 30 秒。如果服务提供了二维码，请直接扫描，二维码里就带着这些设置。只有在验证码被拒绝、且服务说明了所用算法时，才需要修改算法。"
+          }
+        }
+      }
+    },
+    "Move a token into this folder from its edit screen.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verschieben Sie einen Token über seinen Bearbeitungsbildschirm in diesen Ordner."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mueva un token a esta carpeta desde su pantalla de edición."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Déplacez un jeton dans ce dossier depuis son écran de modification."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンの編集画面から、このフォルダに移動できます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mova um token para esta pasta pela tela de edição dele."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可在令牌的编辑页面将其移入此文件夹。"
+          }
+        }
+      }
+    },
+    "Name": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nom"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名前"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nome"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称"
+          }
+        }
+      }
+    },
+    "New Folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neuer Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nueva carpeta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau dossier"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規フォルダ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nova pasta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新建文件夹"
+          }
+        }
+      }
+    },
+    "New: Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neu: Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novedad: carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nouveau : dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新機能：フォルダ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Novidade: pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新功能：文件夹"
           }
         }
       }
@@ -7346,6 +8982,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "还没有备份"
+          }
+        }
+      }
+    },
+    "No Folders Yet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noch keine Ordner"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no hay carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun dossier pour l'instant"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダはまだありません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma pasta ainda"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有文件夹"
           }
         }
       }
@@ -7710,6 +9387,88 @@
         }
       }
     },
+    "None": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ninguna"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucun"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "なし"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无"
+          }
+        }
+      }
+    },
+    "Not Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht jetzt"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora no"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plus tard"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今はしない"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Agora não"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以后再说"
+          }
+        }
+      }
+    },
     "Note: Backups do not sync via iCloud. For device transfer, use the QR code export feature.": {
       "localizations": {
         "de-DE": {
@@ -7786,6 +9545,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "没有已删除的项目"
+          }
+        }
+      }
+    },
+    "Nothing Filed Here": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hier ist nichts abgelegt"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aquí no hay nada"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rien n'est classé ici"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ここには何もありません"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nada guardado aqui"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这里没有任何项目"
           }
         }
       }
@@ -8150,6 +9950,88 @@
         }
       }
     },
+    "Orange": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Naranja"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オレンジ"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laranja"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "橙色"
+          }
+        }
+      }
+    },
+    "Organize": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordnen"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organizar"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organiser"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整理"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organizar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整理"
+          }
+        }
+      }
+    },
     "Page %lld of %lld": {
       "localizations": {
         "de-DE": {
@@ -8346,6 +10228,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "置顶"
+          }
+        }
+      }
+    },
+    "Pink": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pink"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rosa"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rose"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ピンク"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rosa"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粉色"
           }
         }
       }
@@ -8670,6 +10593,47 @@
         }
       }
     },
+    "Purple": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lila"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morado"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "パープル"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roxo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紫色"
+          }
+        }
+      }
+    },
     "Rate Autheris": {
       "localizations": {
         "de-DE": {
@@ -8786,6 +10750,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "最近删除"
+          }
+        }
+      }
+    },
+    "Red": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rot"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rojo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rouge"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レッド"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vermelho"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "红色"
           }
         }
       }
@@ -8946,6 +10951,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "需要 Touch ID 或密码"
+          }
+        }
+      }
+    },
+    "Required": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erforderlich"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obligatorio"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obligatoire"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必須"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obrigatório"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必填"
           }
         }
       }
@@ -9180,6 +11226,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mostrar chave de configuração"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示设置密钥"
+          }
+        }
+      }
+    },
+    "Reveals the setup key": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeigt den Einrichtungsschlüssel an"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reveals the setup key"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muestra la clave de configuración"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Affiche la clé de configuration"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定キーを表示"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostra a chave de configuração"
           }
         },
         "zh-Hans": {
@@ -9590,6 +11683,53 @@
         }
       }
     },
+    "Search emoji": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emoji suchen"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search emoji"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buscar emoji"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechercher un emoji"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絵文字を検索"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pesquisar emoji"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索表情符号"
+          }
+        }
+      }
+    },
     "Search tokens": {
       "localizations": {
         "de-DE": {
@@ -9866,6 +12006,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "另行保存并重新开始"
+          }
+        }
+      }
+    },
+    "Set a device passcode to unlock your codes. They were protected by it and can't be read without one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lege einen Gerätecode fest, um deine Codes zu entsperren. Sie wurden damit geschützt und können ohne ihn nicht gelesen werden."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a device passcode to unlock your codes. They were protected by it and can't be read without one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configura un código de acceso del dispositivo para desbloquear tus códigos. Estaban protegidos con él y no se pueden leer sin uno."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Définissez un code d'accès sur l'appareil pour déverrouiller vos codes. Ils étaient protégés par lui et ne peuvent pas être lus sans lui."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードのロックを解除するには、端末のパスコードを設定してください。コードはパスコードで保護されていたため、パスコードがないと読み取れません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Defina uma senha do dispositivo para desbloquear seus códigos. Eles estavam protegidos por ela e não podem ser lidos sem uma."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请设置设备密码以解锁你的验证码。验证码受该密码保护，没有它就无法读取。"
           }
         }
       }
@@ -10390,6 +12577,129 @@
         }
       }
     },
+    "Sort with Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mit Ordnern sortieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordena con carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classez avec des dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダで整理"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize com pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用文件夹整理"
+          }
+        }
+      }
+    },
+    "Sort your tokens into folders, give each one a colour, and filter your list with a tap. In Edit, drag a token onto a folder to file it. With iCloud Sync on, folders follow you to your other devices.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortieren Sie Ihre Tokens in Ordner, geben Sie jedem eine Farbe und filtern Sie Ihre Liste mit einem Tippen. Ziehen Sie im Bearbeitungsmodus einen Token auf einen Ordner, um ihn abzulegen. Mit iCloud-Synchronisierung sind Ordner auch auf Ihren anderen Geräten."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organice sus tokens en carpetas, dé a cada una un color y filtre la lista con un toque. En Editar, arrastre un token a una carpeta para guardarlo en ella. Con la sincronización de iCloud, las carpetas le acompañan a sus otros dispositivos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classez vos jetons dans des dossiers, donnez une couleur à chacun et filtrez votre liste d'un toucher. En mode Modifier, faites glisser un jeton sur un dossier pour l'y ranger. Avec la synchronisation iCloud, les dossiers vous suivent sur vos autres appareils."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンをフォルダに分類し、それぞれに色を付けて、タップでリストを絞り込めます。編集中にトークンをフォルダへドラッグすると、そのフォルダに入ります。iCloud同期がオンなら、フォルダは他の端末にも反映されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize seus tokens em pastas, dê uma cor a cada uma e filtre a lista com um toque. Em Editar, arraste um token para uma pasta para guardá-lo nela. Com a sincronização do iCloud, as pastas vão para seus outros dispositivos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将令牌分类到文件夹，为每个文件夹设置颜色，轻点即可筛选列表。在编辑模式下，将令牌拖到文件夹即可归入。开启 iCloud 同步后，文件夹会同步到您的其他设备。"
+          }
+        }
+      }
+    },
+    "Sort your tokens into folders. With Sync with iCloud on, folders and the tokens in them sync to your other devices through your private iCloud database. They are not part of backups, Transfer QR codes or the Apple Watch.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sortieren Sie Ihre Tokens in Ordner. Ist „Mit iCloud synchronisieren“ aktiv, werden Ordner und die darin enthaltenen Tokens über Ihre private iCloud-Datenbank auf Ihre anderen Geräte synchronisiert. Sie sind nicht Teil von Sicherungen, QR-Codes für die Übertragung oder der Apple Watch."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organice sus tokens en carpetas. Con «Sincronizar con iCloud» activado, las carpetas y los tokens que contienen se sincronizan con sus otros dispositivos a través de su base de datos privada de iCloud. No forman parte de las copias de seguridad, los códigos QR de transferencia ni el Apple Watch."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classez vos jetons dans des dossiers. Avec « Synchroniser avec iCloud » activé, les dossiers et les jetons qu'ils contiennent se synchronisent sur vos autres appareils via votre base de données iCloud privée. Ils ne font pas partie des sauvegardes, des codes QR de transfert ni de l'Apple Watch."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "トークンをフォルダに分類できます。「iCloudと同期」がオンのとき、フォルダとその中のトークンは非公開のiCloudデータベースを通じて他の端末と同期されます。バックアップ、転送用QRコード、Apple Watchには含まれません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organize seus tokens em pastas. Com \"Sincronizar com o iCloud\" ativado, as pastas e os tokens nelas são sincronizados com seus outros dispositivos pelo seu banco de dados privado do iCloud. Eles não fazem parte dos backups, dos QR codes de transferência nem do Apple Watch."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将令牌分类到文件夹中。开启“与 iCloud 同步”后，文件夹及其中的令牌会通过您的私有 iCloud 数据库同步到其他设备。它们不包含在备份、转移二维码或 Apple Watch 中。"
+          }
+        }
+      }
+    },
     "Start Over?": {
       "localizations": {
         "de-DE": {
@@ -10506,6 +12816,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "支持邮箱"
+          }
+        }
+      }
+    },
+    "Sync Now": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jetzt synchronisieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar ahora"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synchroniser maintenant"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今すぐ同期"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sincronizar agora"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "立即同步"
           }
         }
       }
@@ -10750,42 +13101,125 @@
         }
       }
     },
-    "Syncs your tokens through your private iCloud database. Secret keys are end-to-end encrypted and are never stored in a readable form.": {
+    "Syncs your tokens and folders through your private iCloud database. Secret keys and folder names are end-to-end encrypted and are never stored in a readable form.": {
+      "extractionState": "manual",
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronisiert Ihre Codes über Ihre private iCloud-Datenbank. Schlüssel sind Ende-zu-Ende-verschlüsselt und werden nie im lesbaren Zustand gespeichert."
+            "value": "Synchronisiert Ihre Tokens und Ordner über Ihre private iCloud-Datenbank. Geheime Schlüssel und Ordnernamen sind Ende-zu-Ende-verschlüsselt und werden nie in lesbarer Form gespeichert."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincroniza tus códigos con tu base de datos privada de iCloud. Las claves secretas se cifran de extremo a extremo y nunca se guardan en un formato legible."
+            "value": "Sincroniza sus tokens y carpetas a través de su base de datos privada de iCloud. Las claves secretas y los nombres de las carpetas están cifrados de extremo a extremo y nunca se guardan en un formato legible."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Synchronise vos codes via votre base iCloud privée. Les clés secrètes sont chiffrées de bout en bout et ne sont jamais stockées sous une forme lisible."
+            "value": "Synchronise vos jetons et dossiers via votre base de données iCloud privée. Les clés secrètes et les noms de dossiers sont chiffrés de bout en bout et ne sont jamais stockés sous une forme lisible."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "プライベートな iCloud データベースを通じてコードを同期します。シークレットキーはエンドツーエンドで暗号化され、読める形で保存されることはありません。"
+            "value": "トークンとフォルダを非公開のiCloudデータベースを通じて同期します。秘密鍵とフォルダ名はエンドツーエンドで暗号化され、読み取り可能な形で保存されることはありません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sincroniza seus códigos pelo seu banco de dados privado do iCloud. As chaves secretas são criptografadas de ponta a ponta e nunca ficam gravadas em forma legível."
+            "value": "Sincroniza seus tokens e pastas pelo seu banco de dados privado do iCloud. As chaves secretas e os nomes das pastas são criptografados de ponta a ponta e nunca ficam armazenados em forma legível."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "通过你的私人 iCloud 数据库同步账户。密钥经过端到端加密，绝不会以可读形式保存。"
+            "value": "通过您的私有 iCloud 数据库同步令牌和文件夹。密钥和文件夹名称均经过端到端加密，绝不会以可读形式存储。"
+          }
+        }
+      }
+    },
+    "System": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Système"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        }
+      }
+    },
+    "Tap a folder to rename it, change its colour or delete it. Use Edit to change the order.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tippen Sie auf einen Ordner, um ihn umzubenennen, seine Farbe zu ändern oder ihn zu löschen. Mit „Bearbeiten“ ändern Sie die Reihenfolge."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque una carpeta para cambiarle el nombre, el color o eliminarla. Use «Editar» para cambiar el orden."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touchez un dossier pour le renommer, changer sa couleur ou le supprimer. Utilisez « Modifier » pour changer l'ordre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをタップして、名前や色を変更したり削除したりできます。順番を変えるには「編集」を使います。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toque em uma pasta para renomeá-la, mudar a cor ou excluí-la. Use \"Editar\" para mudar a ordem."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点按文件夹可重命名、更改颜色或删除。使用“编辑”更改顺序。"
           }
         }
       }
@@ -10831,6 +13265,7 @@
       }
     },
     "Tap to reveal the setup key": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -10866,6 +13301,135 @@
           "stringUnit": {
             "state": "translated",
             "value": "点按以显示设置密钥"
+          }
+        }
+      }
+    },
+    "Teal": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blaugrün"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde azulado"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sarcelle"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ティール"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Verde-azulado"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "青绿色"
+          }
+        }
+      }
+    },
+    "That name is empty, too long, or already used. Names must be different from every other folder, ignoring capitals.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Name ist leer, zu lang oder bereits vergeben. Namen müssen sich von allen anderen Ordnern unterscheiden, Groß- und Kleinschreibung spielt keine Rolle."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El nombre está vacío, es demasiado largo o ya se usa. Los nombres deben ser distintos de los de las demás carpetas, sin distinguir mayúsculas."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Le nom est vide, trop long ou déjà utilisé. Les noms doivent être différents de ceux des autres dossiers, sans tenir compte des majuscules."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名前が空、長すぎる、または使用済みです。他のフォルダと異なる名前にしてください（大文字と小文字は区別しません）。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O nome está vazio, é longo demais ou já está em uso. Os nomes devem ser diferentes de todas as outras pastas, sem diferenciar maiúsculas."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名称为空、过长或已被使用。名称必须与其他所有文件夹不同（不区分大小写）。"
+          }
+        }
+      }
+    },
+    "That picture could not be used as an icon. Try a different one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieses Bild kann nicht als Symbol verwendet werden. Versuche ein anderes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That picture could not be used as an icon. Try a different one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esa imagen no se pudo usar como icono. Prueba con otra."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette image ne peut pas être utilisée comme icône. Essayez-en une autre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この画像はアイコンとして使用できません。別の画像を選んでください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível usar esta imagem como ícone. Tente outra."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将此图片用作图标，请选择其他图片。"
           }
         }
       }
@@ -10986,6 +13550,100 @@
           "stringUnit": {
             "state": "translated",
             "value": "此版本的 Autheris 无法读取存储在此设备上的验证码。它们没有被更改。你可以将它们另行保存并重新开始，然后在“设置”中恢复备份；如果开启了 iCloud 同步，也可以让其他设备将验证码同步回来。"
+          }
+        }
+      }
+    },
+    "The countdown bar no longer moves when the number drops from ten seconds to nine.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der Countdown-Balken verschiebt sich nicht mehr, wenn die Zahl von zehn auf neun Sekunden springt."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The countdown bar no longer moves when the number drops from ten seconds to nine."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barra de cuenta atrás ya no se desplaza cuando el número pasa de diez segundos a nueve."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La barre de compte à rebours ne bouge plus lorsque le nombre passe de dix secondes à neuf."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り時間の数字が10秒から9秒になっても、カウントダウンのバーが動かなくなりました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A barra de contagem regressiva não se desloca mais quando o número passa de dez segundos para nove."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒计时数字从十秒变为九秒时，进度条不再移动。"
+          }
+        }
+      }
+    },
+    "The next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im nächsten Schritt wählst du, wohin die Datei gehen soll, etwa iCloud Drive, E-Mail, Nachrichten oder AirDrop. Jeder dieser Wege kann eine Kopie behalten, ebenso wie jeder, der Zugriff auf den Speicherort hat. Eine verschlüsselte Sicherung braucht ein Passwort und ist deutlich sicherer."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The next step lets you choose where the file goes, such as iCloud Drive, email, Messages or AirDrop. Each of those can keep a copy, and so can anyone who has access to the place you save it. An encrypted backup needs a password and is much safer."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El siguiente paso te permite elegir dónde se guarda el archivo, como iCloud Drive, el correo, Mensajes o AirDrop. Cada uno de ellos puede conservar una copia, y también quien tenga acceso al lugar donde lo guardes. Una copia de seguridad cifrada necesita una contraseña y es mucho más segura."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "L'étape suivante vous permet de choisir où le fichier est envoyé, par exemple iCloud Drive, l'e-mail, Messages ou AirDrop. Chacun de ces services peut conserver une copie, tout comme quiconque a accès à l'emplacement où vous l'enregistrez. Une sauvegarde chiffrée nécessite un mot de passe et est bien plus sûre."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次の手順で、ファイルの送り先を選べます。iCloud Drive、メール、メッセージ、AirDropなど、それぞれがコピーを保持する場合があり、保存先にアクセスできる人も同様です。暗号化されたバックアップはパスワードが必要で、はるかに安全です。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No próximo passo, você escolhe para onde o arquivo vai, como iCloud Drive, e-mail, Mensagens ou AirDrop. Cada um desses destinos pode manter uma cópia, assim como quem tiver acesso ao local onde você salvar. Um backup criptografado precisa de senha e é muito mais seguro."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步可以选择文件的去向，例如 iCloud 云盘、邮件、信息或隔空投送。这些途径都可能保留副本，保存位置的任何访问者也一样。加密备份需要设置密码，安全得多。"
           }
         }
       }
@@ -11430,42 +14088,49 @@
         }
       }
     },
-    "This file holds every setup key as plain text. Anyone who gets a copy can generate your codes. An encrypted backup is safer.": {
+    "This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back.": {
+      "extractionState": "manual",
       "localizations": {
         "de-DE": {
           "stringUnit": {
             "state": "translated",
-            "value": "Diese Datei enthält alle Einrichtungsschlüssel als Klartext. Wer eine Kopie erhält, kann deine Codes erzeugen. Ein verschlüsseltes Backup ist sicherer."
+            "value": "Diese Datei enthält den Einrichtungsschlüssel jedes Codes im Klartext, und kein Passwort schützt sie. Wer sie öffnet, kann alle deine Codes erzeugen. Sobald du sie teilst, lassen sich die Kopien nicht mehr zurückholen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This file holds every code's setup key as plain text, and no password protects it. Anyone who opens it can generate all of your codes. Once you share it, you can't take the copies back."
           }
         },
         "es-ES": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este archivo contiene todas las claves de configuración como texto sin cifrar. Cualquiera que obtenga una copia puede generar tus códigos. Una copia de seguridad cifrada es más segura."
+            "value": "Este archivo contiene la clave de configuración de cada código en texto sin cifrar, y no está protegido por ninguna contraseña. Cualquiera que lo abra puede generar todos tus códigos. Una vez compartido, no podrás retirar las copias."
           }
         },
         "fr-FR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ce fichier contient toutes les clés de configuration en clair. Toute personne qui en obtient une copie peut générer vos codes. Une sauvegarde chiffrée est plus sûre."
+            "value": "Ce fichier contient la clé de configuration de chaque code en clair, et aucun mot de passe ne le protège. Quiconque l'ouvre peut générer tous vos codes. Une fois partagé, il est impossible de reprendre les copies."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このファイルにはすべてのセットアップキーが平文で含まれます。コピーを入手した人は誰でもあなたのコードを生成できます。暗号化されたバックアップの方が安全です。"
+            "value": "このファイルには、すべてのコードの設定キーが平文で含まれています。パスワードによる保護はありません。開いた人は、あなたのコードをすべて生成できます。共有してしまうと、コピーを取り戻すことはできません。"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Este arquivo guarda todas as chaves de configuração em texto simples. Qualquer pessoa que tiver uma cópia pode gerar seus códigos. Um backup criptografado é mais seguro."
+            "value": "Este arquivo contém a chave de configuração de cada código como texto simples, e nenhuma senha o protege. Quem o abrir pode gerar todos os seus códigos. Depois de compartilhado, não é possível recuperar as cópias."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "此文件以明文形式保存所有设置密钥。任何获得副本的人都能生成你的验证码。加密备份更安全。"
+            "value": "此文件以明文保存每个验证码的设置密钥，且没有密码保护。任何打开它的人都能生成你的全部验证码。一旦分享，副本就无法收回。"
           }
         }
       }
@@ -11951,6 +14616,7 @@
       }
     },
     "Try Again": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -11986,6 +14652,141 @@
           "stringUnit": {
             "state": "translated",
             "value": "重试"
+          }
+        }
+      }
+    },
+    "Turn On": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einschalten"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オンにする"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启"
+          }
+        }
+      }
+    },
+    "Turn On App Lock?": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lock einschalten?"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn On App Lock?"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Activar App Lock?"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer App Lock ?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Lockをオンにしますか?"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar o App Lock?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启 App Lock？"
+          }
+        }
+      }
+    },
+    "Turn On Folders": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ordner aktivieren"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activar carpetas"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activer les dossiers"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "フォルダをオンにする"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ativar pastas"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开启文件夹"
           }
         }
       }
@@ -12590,6 +15391,53 @@
         }
       }
     },
+    "Use Service Logo": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst-Logo verwenden"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use Service Logo"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar el logotipo del servicio"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Utiliser le logo du service"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サービスのロゴを使う"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usar o logotipo do serviço"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用服务徽标"
+          }
+        }
+      }
+    },
     "Use a password of at least %lld characters.": {
       "localizations": {
         "de-DE": {
@@ -12671,6 +15519,7 @@
       }
     },
     "Verification Code Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -12711,6 +15560,7 @@
       }
     },
     "Verification Codes Added": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -12950,6 +15800,47 @@
         }
       }
     },
+    "Violet": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violett"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violeta"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バイオレット"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Violeta"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "紫罗兰"
+          }
+        }
+      }
+    },
     "Waiting for first sync": {
       "localizations": {
         "de-DE": {
@@ -13150,6 +16041,47 @@
         }
       }
     },
+    "Work": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arbeit"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trabajo"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Travail"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仕事"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trabalho"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "工作"
+          }
+        }
+      }
+    },
     "You can change any of these later in Settings › Privacy.": {
       "localizations": {
         "de-DE": {
@@ -13186,6 +16118,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "你之后可以在“设置”›“隐私”中更改这些选项。"
+          }
+        }
+      }
+    },
+    "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jeder Code kann ein eigenes Bild erhalten: Wähle ein Foto oder ein Emoji aus einer Liste. Bilder werden mit iCloud-Sync synchronisiert und sind in Backups enthalten; Emoji funktionieren auch dann, wenn Dienst-Logos ausgeschaltet sind."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puedes dar a cualquier código su propia imagen: elige una foto o un emoji de una lista. Las imágenes se sincronizan con iCloud Sync y se incluyen en las copias de seguridad, y los emoji funcionan aunque los logotipos de los servicios estén desactivados."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vous pouvez donner à chaque code sa propre image : choisissez une photo ou un emoji dans une liste. Les images se synchronisent avec iCloud Sync et figurent dans les sauvegardes, et les emoji fonctionnent même si les logos des services sont désactivés."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "どのコードにも自分の画像を設定できます。写真を選ぶか、一覧から絵文字を選んでください。画像はiCloud同期で同期され、バックアップにも含まれます。サービスのロゴをオフにしていても絵文字を使えます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Você pode dar a qualquer código sua própria imagem: escolha uma foto ou um emoji de uma lista. As imagens são sincronizadas com o iCloud Sync e entram nos backups, e os emoji funcionam mesmo com os logotipos dos serviços desativados."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "每个代码都可以设置自己的图片：选择照片，或从列表中选择表情符号。图片会通过 iCloud 同步同步并包含在备份中；即使关闭了服务徽标，表情符号也能使用。"
           }
         }
       }
@@ -13231,6 +16210,7 @@
       }
     },
     "You've scanned a QR code with authentication tokens. Would you like to import them?": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {
@@ -13266,6 +16246,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "你扫描的二维码中包含验证码，要导入吗？"
+          }
+        }
+      }
+    },
+    "Your codes couldn't be moved to the new protection, so App Lock is as it was. Try again.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Codes konnten nicht in den neuen Schutz verschoben werden, daher bleibt App Lock unverändert. Versuche es erneut."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your codes couldn't be moved to the new protection, so App Lock is as it was. Try again."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron trasladar tus códigos a la nueva protección, así que App Lock sigue como estaba. Inténtalo de nuevo."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vos codes n'ont pas pu être transférés vers la nouvelle protection, App Lock reste donc inchangé. Réessayez."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "コードを新しい保護方式に移行できなかったため、App Lockは変更されていません。もう一度お試しください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível mover seus códigos para a nova proteção, então o App Lock continua como estava. Tente novamente."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将你的验证码移至新的保护方式，因此 App Lock 保持不变。请重试。"
           }
         }
       }
@@ -13386,6 +16413,53 @@
           "stringUnit": {
             "state": "translated",
             "value": "你对这个设置密钥的更改尚未保存。"
+          }
+        }
+      }
+    },
+    "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Bild oder Emoji wird mit diesem Token gespeichert. Es wird mit iCloud-Sync synchronisiert, wenn dieser aktiv ist, und ist in Backups enthalten. Es ist nicht in QR-Codes für die Übertragung enthalten und wird nie an die Apple Watch oder an logo.dev gesendet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu imagen o emoji se guarda con este token. Se sincroniza con iCloud Sync si está activado y se incluye en las copias de seguridad. No se incluye en los códigos QR de transferencia, y nunca se envía al Apple Watch ni a logo.dev."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Votre image ou emoji est enregistré avec ce jeton. Il se synchronise avec iCloud Sync si celui-ci est activé et figure dans les sauvegardes. Il n'est pas inclus dans les codes QR de transfert, et n'est jamais envoyé à l'Apple Watch ni à logo.dev."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画像や絵文字はこのトークンとともに保存されます。iCloud同期がオンのときは同期され、バックアップにも含まれます。転送用QRコードには含まれず、Apple Watchやlogo.devに送信されることもありません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sua imagem ou emoji é salvo com este token. Ele é sincronizado com o iCloud Sync quando ele está ativado e entra nos backups. Ele não entra nos códigos QR de transferência e nunca é enviado ao Apple Watch nem ao logo.dev."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图片或表情符号会与此令牌一起保存。开启 iCloud 同步时会同步，并包含在备份中。不会包含在传输二维码中，也绝不会发送到 Apple Watch 或 logo.dev。"
           }
         }
       }
@@ -13951,6 +17025,7 @@
       }
     },
     "• **Require Face ID / Touch ID**: Locks Autheris when opened, or when you return after 30 seconds in the background.": {
+      "extractionState": "stale",
       "localizations": {
         "de-DE": {
           "stringUnit": {

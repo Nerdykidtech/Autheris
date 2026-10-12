@@ -25,13 +25,14 @@ final class SyncMergeEngineTests: XCTestCase {
         kind: OTPKind = .totp,
         counter: UInt64 = 0,
         timerRingHex: String? = nil,
+        customIcon: Data? = nil,
         isPinned: Bool = false,
         modifiedAt: Date
     ) -> OTPCode {
         OTPCode(id: id, label: label, account: account, secret: secret,
                 algorithm: algorithm, digits: digits, period: period,
                 kind: kind, counter: counter,
-                timerRingHex: timerRingHex, isPinned: isPinned, modifiedAt: modifiedAt)
+                timerRingHex: timerRingHex, customIcon: customIcon, isPinned: isPinned, modifiedAt: modifiedAt)
     }
 
     private func merge(local: SyncLocalState, remote: [SyncRecord]) -> SyncMergeOutcome {
@@ -326,6 +327,9 @@ final class SyncMergeEngineTests: XCTestCase {
         XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, digits: 8, modifiedAt: now)))
         XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, period: 60, modifiedAt: now)))
         XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, timerRingHex: "FF8800", modifiedAt: now)))
+        // A picture chosen on one device must reach the others, so it has to show
+        // in the fingerprint like every other field the user can change.
+        XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, customIcon: Data([1, 2, 3]), modifiedAt: now)))
         // Pinning has to be visible to the fingerprint, or toggling a pin would
         // look like "no change" and never reach the user's other devices.
         XCTAssertNotEqual(baseFingerprint, SyncFingerprint.forToken(token(id: id, isPinned: true, modifiedAt: now)))

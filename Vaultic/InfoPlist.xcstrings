@@ -1,100 +1,112 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "CFBundleDisplayName" : {
-      "comment" : "Bundle display name",
-      "extractionState" : "extracted_with_value",
-      "shouldTranslate" : false
+  "sourceLanguage": "en",
+  "strings": {
+    "CFBundleDisplayName": {
+      "comment": "Bundle display name",
+      "extractionState": "extracted_with_value",
+      "shouldTranslate": false
     },
-    "CFBundleName" : {
-      "comment" : "Bundle name",
-      "extractionState" : "extracted_with_value",
-      "shouldTranslate" : false
+    "CFBundleName": {
+      "comment": "Bundle name",
+      "extractionState": "extracted_with_value",
+      "shouldTranslate": false
     },
-    "NSCameraUsageDescription" : {
-      "comment" : "Privacy - Camera Usage Description",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de-DE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kamerazugriff ist erforderlich, um QR-Codes für die 2FA-Authentifizierung zu scannen."
+    "NSCameraUsageDescription": {
+      "comment": "Privacy - Camera Usage Description",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Kamerazugriff ist erforderlich, um QR-Codes für die 2FA-Authentifizierung zu scannen."
           }
         },
-        "es-ES" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Se necesita acceso a la cámara para escanear códigos QR de autenticación 2FA."
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Camera access is required to scan ​QR codes for 2​FA tokens"
           }
         },
-        "fr-FR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L'accès à la caméra est nécessaire pour scanner des QR codes d'authentification 2FA."
+        "es-ES": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Se necesita acceso a la cámara para escanear códigos QR de autenticación 2FA."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "2FA 認証の QR コードを読み取るにはカメラへのアクセスが必要です。"
+        "fr-FR": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "L'accès à la caméra est nécessaire pour scanner des QR codes d'authentification 2FA."
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O acesso à câmera é necessário para escanear QR codes de autenticação 2FA."
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "2FA 認証の QR コードを読み取るにはカメラへのアクセスが必要です。"
           }
         },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "扫描 2FA 认证二维码需要相机权限。"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "O acesso à câmera é necessário para escanear QR codes de autenticação 2FA."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "扫描 2FA 认证二维码需要相机权限。"
           }
         }
       }
     },
-    "NSFaceIDUsageDescription" : {
-      "comment" : "Privacy - Face ID Usage Description",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "de-DE" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autheris verwendet Face ID, um Ihre Codes zu entsperren."
+    "NSFaceIDUsageDescription": {
+      "comment": "Privacy - Face ID Usage Description",
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Autheris verwendet Face ID, um Ihre Codes zu entsperren."
           }
         },
-        "es-ES" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autheris usa Face ID para desbloquear tus códigos."
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Autheris uses Face ID to unlock your tokens."
           }
         },
-        "fr-FR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autheris utilise Face ID pour déverrouiller vos codes."
+        "es-ES": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Autheris usa Face ID para desbloquear tus códigos."
           }
         },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autheris は Face ID でコードのロックを解除します。"
+        "fr-FR": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Autheris utilise Face ID pour déverrouiller vos codes."
           }
         },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O Autheris usa o Face ID para desbloquear seus códigos."
+        "ja": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Autheris は Face ID でコードのロックを解除します。"
           }
         },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Autheris 使用 Face ID 解锁你的账户。"
+        "pt-BR": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "O Autheris usa o Face ID para desbloquear seus códigos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "needs_review",
+            "value": "Autheris 使用 Face ID 解锁你的账户。"
           }
         }
       }
     }
   },
-  "version" : "1.3"
+  "version": "1.3"
 }

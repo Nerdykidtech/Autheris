@@ -25,7 +25,7 @@ struct SecretKeySection: View {
             HStack {
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Spacer()
                 
@@ -36,8 +36,8 @@ struct SecretKeySection: View {
                     }
                 } label: {
                     Image(systemName: isRevealed ? "eye.slash" : "eye")
-                        .font(.system(size: 15))
-                        .foregroundColor(.secondary)
+                        .font(.body)
+                        .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(revealToggleLabel)
@@ -50,10 +50,10 @@ struct SecretKeySection: View {
                         .autocorrectionDisabled()
                         .platformSetupKeyContentType()
                         .asciiCapableKeyboard()
-                        .font(.system(size: 16, weight: .medium, design: .monospaced))
+                        .font(.body.monospaced().weight(.medium))
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .padding(12)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
@@ -64,30 +64,31 @@ struct SecretKeySection: View {
                                 .stroke(Color(.separator), lineWidth: 1)
                         )
                 } else {
-                    Text(maskedText)
-                        .font(.system(size: 16, weight: .medium, design: .monospaced))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(.secondarySystemBackground))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color(.separator), lineWidth: 1)
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            Haptics.impact(.light)
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isRevealed = true
-                            }
+                    Button {
+                        Haptics.impact(.light)
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isRevealed = true
                         }
-                        .accessibilityAddTraits(.isButton)
-                        .accessibilityLabel("Setup key hidden")
-                        .accessibilityHint("Tap to reveal the setup key")
+                    } label: {
+                        Text(maskedText)
+                            .font(.body.monospaced().weight(.medium))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(.secondarySystemBackground))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color(.separator), lineWidth: 1)
+                            )
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Setup key hidden")
+                    .accessibilityHint("Reveals the setup key")
                 }
             }
             
@@ -124,7 +125,8 @@ struct SecretKeySection: View {
         withAnimation(.easeInOut(duration: 0.2)) {
             isCopied = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        Task {
+            try? await Task.sleep(for: .seconds(2))
             withAnimation(.easeInOut(duration: 0.2)) {
                 isCopied = false
             }

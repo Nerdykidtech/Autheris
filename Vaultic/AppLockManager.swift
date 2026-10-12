@@ -3,7 +3,7 @@ import LocalAuthentication
 import Combine
 
 /// Shared UserDefaults key so the Settings toggle and the lock manager cannot drift.
-let AppLockEnabledKey = "enableAppLock"
+nonisolated let AppLockEnabledKey = "enableAppLock"
 
 /// The part of `LAContext` App Lock uses, so tests can stand in a device that has
 /// no passcode, or one that refuses.
@@ -42,6 +42,8 @@ final class AppLockManager: ObservableObject {
     private var backgroundedAt: Date?
     /// A fresh context per attempt, as `LAContext` expects. Injectable for tests.
     private let makeContext: () -> DeviceOwnerAuthenticating
+    /// The context of the attempt in progress, handed to the vault on success.
+    private var pendingUnlockContext: LAContext?
 
     #if os(macOS)
     /// Activation observers, held so they are removed with the manager.
@@ -104,6 +106,8 @@ final class AppLockManager: ObservableObject {
 
         if shouldLockOnForeground {
             isLocked = true
+            // Locking gives up the authentication the vault was read with.
+            VaultSession.shared.end()
         }
 
         // Consume the transition so the Face ID / Touch ID prompt's own
@@ -136,25 +140,43 @@ final class AppLockManager: ObservableObject {
         return context.biometryType
     }
 
-    func unlock() {
+    /// `context` is the authentication that just succeeded, which the vault now
+    /// uses. Without one (an unlock that didn't come from `authenticate`), the vault
+    /// stays unreadable until the owner authenticates.
+    func unlock(with context: LAContext? = nil) {
         isLocked = false
         errorMessage = nil
         backgroundedAt = nil
+        if let context {
+            VaultSession.shared.begin(context)
+        }
+    }
+
+    /// Asks the owner to authenticate before the vault is moved into or out of App
+    /// Lock's protected form. Returns the context that authenticated, for
+    /// `VaultKeychain.moveAll`, or `nil` when they didn't or can't.
+    static func authenticateForVault(reason: String) async -> LAContext? {
+        let context = LAContext()
+        guard context.ownerAuthenticationAvailability().available else { return nil }
+        let succeeded = await withCheckedContinuation { continuation in
+            context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
+                continuation.resume(returning: success)
+            }
+        }
+        return succeeded ? context : nil
     }
 
     /// Asks for Face ID, Touch ID or the passcode again before a sensitive action:
     /// turning App Lock off, exporting or backing up every secret, or showing a
-    /// setup key.
+    /// setup key. This applies whether or not App Lock is on, because these actions
+    /// reveal every code and App Lock is not the only thing that should guard them.
     ///
     /// The grace period means a phone unlocked moments ago opens straight into
     /// Autheris, so without this anyone holding it could export the whole vault.
-    /// Returns `true` straight away when App Lock is off, since the user has chosen
-    /// not to be asked, and when the device has no passcode, since there is then
-    /// nothing to authenticate with.
+    /// Returns `true` straight away only when the device has no passcode, since there
+    /// is then nothing to authenticate with.
     static func reauthenticate(reason: String,
                                context: DeviceOwnerAuthenticating = LAContext()) async -> Bool {
-        guard UserDefaults.standard.bool(forKey: AppLockEnabledKey) else { return true }
-
         let availability = context.ownerAuthenticationAvailability()
         guard availability.available else {
             return (availability.error as? LAError)?.code == .passcodeNotSet
@@ -186,6 +208,13 @@ final class AppLockManager: ObservableObject {
             // App Lock is turned off as well, so Settings doesn't go on showing a
             // lock that no longer locks anything.
             if (availability.error as? LAError)?.code == .passcodeNotSet {
+                // Codes bound to the passcode can't be read without one. Turning App
+                // Lock off here would read the vault as empty and then save that over
+                // it, so the lock stays until a passcode is set.
+                guard !VaultKeychain.hasBoundItems() else {
+                    errorMessage = String(localized: "Set a device passcode to unlock your codes. They were protected by it and can't be read without one.")
+                    return
+                }
                 UserDefaults.standard.set(false, forKey: AppLockEnabledKey)
                 unlock()
                 return
@@ -195,6 +224,9 @@ final class AppLockManager: ObservableObject {
             return
         }
 
+        // Held here rather than captured by the reply, which is @Sendable and can't
+        // carry the context across. The unlock below reads it back.
+        pendingUnlockContext = context as? LAContext
         context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { [weak self] success, authError in
             // Bind the weak capture to a plain local *before* the task: the task
             // body runs concurrently, and reading the closure's own mutable weak
@@ -204,7 +236,8 @@ final class AppLockManager: ObservableObject {
             Task { @MainActor in
                 guard let manager else { return }
                 if success {
-                    manager.unlock()
+                    manager.unlock(with: manager.pendingUnlockContext)
+                    manager.pendingUnlockContext = nil
                 } else if let laError = authError as? LAError {
                     switch laError.code {
                     case .userCancel, .systemCancel, .appCancel:

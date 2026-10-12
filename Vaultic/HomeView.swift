@@ -1,6 +1,8 @@
 import SwiftUI
+import TipKit
 import Foundation
 import Combine
+import PhotosUI
 #if os(iOS)
 import UIKit
 #else
@@ -9,6 +11,18 @@ import AppKit
 
 struct HomeView: View {
     @EnvironmentObject private var dataStore: OTPDataStore
+    @Environment(TokenOrganizationStore.self) private var organizationStore
+    /// Off by default; when on, the chips above the list narrow it by folder.
+    @AppStorage(TokenOrganizationStore.enabledKey) private var foldersEnabled = false
+    @State private var organizationFilter: TokenOrganization.Filter = .all
+    /// Where the folder chips are, shared with the grid so its grabber can drop on them.
+    @State private var dropTargets = FolderDropTargets()
+    /// Whether the one-time introduction to Folders has been seen; see `FoldersIntro`.
+    @AppStorage(FoldersIntro.seenKey) private var foldersIntroSeen = false
+    @State private var showingFoldersIntro = false
+    /// The Settings page to open on, set when Home turns folders on.
+    @State private var settingsStartPage: SettingsPage?
+    private let foldersTip = FoldersTip()
     #if os(macOS)
     /// Opens the Mac's `Settings` scene — the preferences window — which is what
     /// the gear button does there. On iOS/iPad the gear opens the sheet instead.
@@ -37,18 +51,64 @@ struct HomeView: View {
     /// narrows by the search term.
     var filteredCodes: [OTPCode] {
         let ordered = dataStore.orderedCodes
-        guard !searchText.isEmpty else { return ordered }
+        let inFolder: [OTPCode]
+        switch (foldersEnabled, organizationFilter) {
+        case (true, .folder(let id)):
+            // A folder shows its own order, which its moves save; All is unaffected.
+            inFolder = TokenOrdering.displayed(organizationStore.organization.orderedTokens(ordered, inFolder: id))
+        default:
+            inFolder = ordered
+        }
+        guard !searchText.isEmpty else { return inFolder }
 
-        return ordered.filter { code in
-            code.label.localizedCaseInsensitiveContains(searchText) ||
-            code.account.localizedCaseInsensitiveContains(searchText)
+        return inFolder.filter { code in
+            code.label.localizedStandardContains(searchText) ||
+            code.account.localizedStandardContains(searchText)
         }
     }
 
-    /// Reordering a filtered list cannot be mapped back onto the stored order, so
-    /// dragging is only offered while the whole list is on screen.
+    /// Whether the chips above the list are shown: the feature is on and there is at
+    /// least one folder to choose.
+    private var showsOrganizationFilter: Bool {
+        foldersEnabled && !organizationStore.organization.folders.isEmpty
+    }
+
+    /// Turns folders on and opens Settings at Folders, where the first one is made.
+    private func turnOnFolders() {
+        foldersEnabled = true
+        foldersIntroSeen = true
+        FoldersTip.introSeen = true
+        foldersTip.invalidate(reason: .actionPerformed)
+        #if os(macOS)
+        openSettings()
+        NSApp.activate(ignoringOtherApps: true)
+        #else
+        settingsStartPage = .organize
+        // After the introduction sheet has gone: a second sheet can't open while the
+        // first is still closing.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
+            showingSettings = true
+        }
+        #endif
+    }
+
+    /// Dragging is offered while search is empty. In a folder a move saves that
+    /// folder's own order.
     private var canReorder: Bool {
         searchText.isEmpty && !filteredCodes.isEmpty
+    }
+
+    /// The folder Home is showing, or `nil` for All. A move made there saves that
+    /// folder's own order, in the list and in the grid alike.
+    private var openFolderID: UUID? {
+        guard foldersEnabled, case .folder(let id) = organizationFilter else { return nil }
+        return id
+    }
+
+    /// The grid rearranges All or, in a folder, that folder's own order.
+    private var canRearrangeGrid: Bool {
+        canReorder
     }
 
     private var emptyState: some View {
@@ -58,19 +118,19 @@ struct HomeView: View {
                 // Yet" here would be wrong, and adding would be refused anyway.
                 Image(systemName: "exclamationmark.lock")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .opacity(0.5)
 
                 Text("Codes Unavailable")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 if dataStore.hasUnreadableCodes {
                     // Stored, but not in a form this version can read. That won't
                     // fix itself, so there has to be a way forward.
                     Text("The codes stored on this device can't be read by this version of Autheris. They haven't been changed. You can set them aside and start over, then restore a backup from Settings — or, with iCloud sync on, let your other devices bring them back.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary.opacity(0.8))
+                        .foregroundStyle(.secondary.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
 
@@ -82,38 +142,53 @@ struct HomeView: View {
                 } else {
                     Text(OTPDataStore.vaultUnavailableMessage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary.opacity(0.8))
+                        .foregroundStyle(.secondary.opacity(0.8))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 40)
                 }
-            } else if searchText.isEmpty {
+            } else if searchText.isEmpty && organizationFilter == .all {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 40))
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .opacity(0.5)
 
                 Text("No Tokens Yet")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("Add your first authentication token to get started")
                     .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
+                    .foregroundStyle(.secondary.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            } else if searchText.isEmpty {
+                Image(systemName: "folder")
+                    .font(.system(size: 40))
+                    .foregroundStyle(Color.accentColor)
+                    .opacity(0.5)
+
+                Text("Nothing Filed Here")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+
+                Text("Move a token into this folder from its edit screen.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             } else {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .opacity(0.5)
 
                 Text("No Results")
                     .font(.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("No tokens match \"\(searchText)\"")
                     .font(.subheadline)
-                    .foregroundColor(.secondary.opacity(0.8))
+                    .foregroundStyle(.secondary.opacity(0.8))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -133,12 +208,12 @@ struct HomeView: View {
             tokenList
             #else
             tokenList.sheet(isPresented: $showingSettings) {
-                SettingsView(dataStore: dataStore)
+                SettingsView(dataStore: dataStore, initialPage: settingsStartPage)
             }
             #endif
         } else {
             tokenList.platformFullScreenCover(isPresented: $showingSettings) {
-                SettingsView(dataStore: dataStore)
+                SettingsView(dataStore: dataStore, initialPage: settingsStartPage)
             }
         }
     }
@@ -151,6 +226,7 @@ struct HomeView: View {
     private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
         ScrollView {
             TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now,
+                          folderID: openFolderID,
                           presentSheet: { tokenSheet = $0 })
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
@@ -165,12 +241,20 @@ struct HomeView: View {
             ForEach(filteredCodes) { code in
                 OTPCardView(code: code, dataStore: dataStore, now: now,
                             presentSheet: { tokenSheet = $0 })
+                    // In Edit mode (always, in a Mac list) the card can be dragged onto a
+                    // folder chip.
+                    .modifier(FilingDrag(tokenID: code.id, layout: .list))
                     .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
             }
             .onMove { offsets, destination in
-                dataStore.move(offsets: offsets, destination: destination)
+                if foldersEnabled, case .folder(let folderID) = organizationFilter {
+                    dataStore.moveInFolder(folderID, shown: filteredCodes,
+                                           offsets: offsets, destination: destination)
+                } else {
+                    dataStore.move(offsets: offsets, destination: destination)
+                }
             }
             .moveDisabled(!canReorder)
         }
@@ -217,9 +301,11 @@ struct HomeView: View {
             // that would offer nothing to rearrange.
             if canReorder {
                 if isGridLayout(width: width) {
-                    Button(isRearrangingGrid ? "Done" : "Edit") {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isRearrangingGrid.toggle()
+                    if canRearrangeGrid {
+                        Button(isRearrangingGrid ? "Done" : "Edit") {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isRearrangingGrid.toggle()
+                            }
                         }
                     }
                 } else {
@@ -235,13 +321,12 @@ struct HomeView: View {
             }
 
             // Add token button on the right (standard iOS pattern)
-            Button(action: {
+            Button("Add Token", systemImage: "plus.circle.fill") {
                 showingAddToken = true
-            }) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.title3)
-                    .foregroundColor(.accentColor)
             }
+            .labelStyle(.iconOnly)
+            .font(.title3)
+            .foregroundStyle(Color.accentColor)
             // Nothing can be added to a vault that hasn't loaded; see
             // `OTPDataStore.isVaultLoaded`.
             .disabled(!dataStore.isVaultLoaded)
@@ -250,6 +335,22 @@ struct HomeView: View {
 
     private var tokenList: some View {
         NavigationStack {
+            VStack(spacing: 0) {
+            // Offers Folders to someone who chose Not Now; TipKit decides when.
+            TipView(foldersTip) { action in
+                if action.id == FoldersTip.turnOnActionID {
+                    turnOnFolders()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            if showsOrganizationFilter {
+                OrganizationFilterBar(organization: organizationStore.organization, filter: $organizationFilter,
+                                      onFile: { token, folder in
+                                          organizationStore.update { $0.setFolder(folder, for: token) }
+                                      })
+                    .padding(.vertical, 8)
+            }
             // The width decides the layout: two cards across, or the one-column
             // list. The grid caps and centres itself, and the toolbar needs the
             // same answer, so it is built in here too.
@@ -263,7 +364,7 @@ struct HomeView: View {
                         TimelineView(.periodic(from: Self.startOfCurrentSecond, by: 1)) { timeline in
                             if isGridLayout(width: proxy.size.width) {
                                 cardGrid(columns: columns(forWidth: proxy.size.width),
-                                         rearranging: isRearrangingGrid && canReorder,
+                                         rearranging: isRearrangingGrid && canRearrangeGrid,
                                          now: timeline.date)
                             } else {
                                 singleColumnList(now: timeline.date)
@@ -273,7 +374,51 @@ struct HomeView: View {
                 }
                 .toolbar { toolbarContent(width: proxy.size.width) }
             }
+            }
+            .environment(dropTargets)
+            .task {
+                FoldersTip.foldersAreOn = foldersEnabled
+                FoldersTip.introSeen = foldersIntroSeen
+                // Only Home reaches here after onboarding, so it has been completed.
+                if FoldersIntro.shouldShow(hasCompletedOnboarding: true, introSeen: foldersIntroSeen,
+                                           foldersEnabled: foldersEnabled) {
+                    showingFoldersIntro = true
+                }
+                #if DEBUG
+                // For checking the introduction: launch with `-showFoldersIntro` to see it
+                // every time, whatever has been seen or turned on.
+                if ProcessInfo.processInfo.arguments.contains("-showFoldersIntro") {
+                    showingFoldersIntro = true
+                }
+                #endif
+            }
+            .onChange(of: foldersEnabled) { _, isOn in
+                FoldersTip.foldersAreOn = isOn
+            }
+            .onChange(of: showingSettings) { _, isShowing in
+                if !isShowing { settingsStartPage = nil }
+            }
+            // On the list, not a row, so a change to the codes cannot close it.
+            .sheet(isPresented: $showingFoldersIntro) {
+                FoldersIntroSheet(
+                    onTurnOn: {
+                        showingFoldersIntro = false
+                        turnOnFolders()
+                    },
+                    onNotNow: {
+                        foldersIntroSeen = true
+                        FoldersTip.introSeen = true
+                        showingFoldersIntro = false
+                    }
+                )
+            }
             .platformSearchable(text: $searchText, prompt: "Search tokens")
+            .onChange(of: organizationStore.organization) { _, organization in
+                // A folder that was just deleted can't keep the list filtered.
+                if !organization.contains(organizationFilter) {
+                    organizationFilter = .all
+                }
+            }
             .navigationTitle("Autheris")
             .largeNavigationTitle()
             .sheet(isPresented: $showingAddToken) {
@@ -286,7 +431,7 @@ struct HomeView: View {
             .sheet(item: $tokenSheet) { sheet in
                 switch sheet {
                 case .edit(let code):
-                    EditTokenView(code: code, dataStore: dataStore)
+                    EditTokenView(code: code, dataStore: dataStore, organization: organizationStore)
                 case .secret(let code):
                     TokenSecretView(code: code, dataStore: dataStore)
                 }
@@ -330,15 +475,21 @@ struct HomeView: View {
 /// and letting go settles it into place. That is the iPhone behaviour, at one card
 /// per gesture rather than one row.
 private struct TokenGridView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let codes: [OTPCode]
     let columns: Int
     let rearranging: Bool
     /// The time every card's code and countdown are shown for.
     let now: Date
+    /// The folder being shown, or `nil` for All. In a folder a move saves that
+    /// folder's order, and All is left as it is.
+    let folderID: UUID?
     /// Asks `HomeView` for a card's Edit or setup-key sheet; see `TokenSheet`.
     let presentSheet: (TokenSheet) -> Void
 
     @EnvironmentObject private var dataStore: OTPDataStore
+    /// The folder chips, so the grabber can drop a card on one.
+    @Environment(FolderDropTargets.self) private var dropTargets
 
     /// The grid's own coordinate space. A drag is measured against the grid rather
     /// than against the card it started on, so a card's offset can be computed from
@@ -347,6 +498,9 @@ private struct TokenGridView: View {
 
     /// The card under the finger.
     @State private var draggedID: UUID?
+    /// Where the carried card was when it was picked up, so a drop on a folder chip
+    /// can put it back if crossing the grid on the way had moved it.
+    @State private var pickedUpIndex: Int?
     /// Where the finger is, in `coordinateSpace`.
     @State private var finger: CGPoint = .zero
     /// Where on the card the finger took hold, so picking it up does not make it jump.
@@ -374,6 +528,8 @@ private struct TokenGridView: View {
 
         return OTPCardView(code: code, dataStore: dataStore, now: now,
                            presentSheet: presentSheet, isRearranging: rearranging)
+            // While rearranging, the card can also be dragged onto a folder chip.
+            .modifier(FilingDrag(tokenID: code.id, layout: .grid(isRearranging: rearranging)))
             .overlay(alignment: .trailing) {
                 if rearranging {
                     grabber(for: code)
@@ -409,6 +565,17 @@ private struct TokenGridView: View {
             .contentShape(Rectangle())
             .padding(.trailing, 2)
             .gesture(dragToReorder(code))
+            // The same drag, measured on the screen, so it can find the folder chips,
+            // which sit outside the grid.
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 1, coordinateSpace: .global)
+                    .onChanged { value in
+                        let folder = dropTargets.folder(at: value.location)
+                        if dropTargets.hoveredFolder != folder {
+                            dropTargets.hoveredFolder = folder
+                        }
+                    }
+            )
             .accessibilityLabel("Reorder \(code.label)")
     }
 
@@ -419,12 +586,17 @@ private struct TokenGridView: View {
                     // Picked up. Remember where the finger is on the card so it
                     // carries on from there rather than snapping to the centre.
                     draggedID = code.id
+                    pickedUpIndex = index
                     let origin = origin(ofIndex: index)
                     grabOffset = CGSize(width: value.startLocation.x - origin.x,
                                         height: value.startLocation.y - origin.y)
                 }
 
                 finger = value.location
+
+                // Over a folder chip the card is on its way to a folder, not to a new
+                // place in the grid.
+                guard dropTargets.hoveredFolder == nil else { return }
 
                 let slot = TokenGrid.slotIndex(at: value.location,
                                                cellSize: cellSize,
@@ -434,16 +606,39 @@ private struct TokenGridView: View {
                 if let current = currentIndex(of: code.id), current != slot {
                     let destination = TokenGrid.insertionIndex(hoveringSlot: slot,
                                                                liftedFrom: current)
-                    withAnimation(.spring(response: 0.28, dampingFraction: 0.75)) {
-                        dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
+                    withAnimation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.75)) {
+                        move(code, toDisplayedIndex: destination)
                     }
                 }
             }
             .onEnded { _ in
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                if let folder = dropTargets.hoveredFolder {
+                    dataStore.organization.update { $0.setFolder(folder, for: code.id) }
+                    // Back to where it started, if crossing the grid had moved it.
+                    if let original = pickedUpIndex, let current = currentIndex(of: code.id), current != original {
+                        let destination = original < current ? original : original + 1
+                        move(code, toDisplayedIndex: destination)
+                    }
+                    Haptics.notify(.success)
+                }
+                dropTargets.hoveredFolder = nil
+                pickedUpIndex = nil
+                withAnimation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.8)) {
                     draggedID = nil
                 }
             }
+    }
+
+    /// Moves a card to an insertion index in the grid as shown: in All the All order,
+    /// in a folder only that folder's order.
+    private func move(_ code: OTPCode, toDisplayedIndex destination: Int) {
+        guard let current = currentIndex(of: code.id) else { return }
+        if let folderID {
+            dataStore.moveInFolder(folderID, shown: codes,
+                                   offsets: IndexSet(integer: current), destination: destination)
+        } else {
+            dataStore.moveCode(withID: code.id, toDisplayedIndex: destination)
+        }
     }
 
     // MARK: - Grid geometry
@@ -489,6 +684,7 @@ enum TokenSheet: Identifiable {
 }
 
 struct OTPCardView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let code: OTPCode
     let dataStore: OTPDataStore
     /// The time to show the code and countdown for. Handed down from the list's
@@ -553,7 +749,7 @@ struct OTPCardView: View {
 
     var body: some View {
         card
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
+            .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: isExpiring)
             .animation(.easeInOut(duration: 0.2), value: isCopied)
     }
 
@@ -568,6 +764,10 @@ struct OTPCardView: View {
             surface
                 .onTapGesture {
                     // Tap to copy with haptic feedback
+                    copyToClipboard()
+                }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction(named: "Copy code") {
                     copyToClipboard()
                 }
                 .contextMenu {
@@ -626,14 +826,14 @@ struct OTPCardView: View {
 
     private var surface: some View {
         HStack(spacing: 12) {
-            IssuerIconView(branding: branding, size: iconSize)
+            IssuerIconView(branding: branding, size: iconSize, customIcon: code.customIcon)
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 4) {
                     if code.isPinned {
                         Image(systemName: "pin.fill")
                             .font(.caption2)
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
 
                     Text(code.label)
@@ -650,7 +850,7 @@ struct OTPCardView: View {
                 if !code.account.isEmpty {
                     Text(code.account)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -661,11 +861,11 @@ struct OTPCardView: View {
                 if isCopied {
                     Label("Copied", systemImage: "checkmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 } else {
                     Text(code.code(at: now))
                         .font(.system(codeTextStyle, design: .monospaced).weight(.bold))
-                        .foregroundColor(isExpiring ? .red : .primary)
+                        .foregroundStyle(isExpiring ? .red : .primary)
                 }
 
                 if code.isTimeBased {
@@ -674,9 +874,17 @@ struct OTPCardView: View {
                             .frame(width: countdownWidth)
                             .tint(isExpiring ? .red : timerRingColor)
 
-                        Text("\(remainingSeconds)s")
-                            .font(.caption.monospacedDigit())
-                            .foregroundColor(isExpiring ? .red : .secondary)
+                        // Sized for the longest label this period can show, so the
+                        // bar doesn't move when the count drops from "10s" to "9s".
+                        ZStack(alignment: .trailing) {
+                            Text("\(code.effectivePeriod)s")
+                                .font(.caption.monospacedDigit())
+                                .hidden()
+
+                            Text("\(remainingSeconds)s")
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(isExpiring ? .red : .secondary)
+                        }
                     }
                 } else {
                     // A counter-based code has nothing to count down and no colour to
@@ -697,7 +905,7 @@ struct OTPCardView: View {
                         // lossless.
                         Text("Counter \(Int(clamping: code.counter))")
                             .font(.caption.monospacedDigit())
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             // Fixed rather than flexible. This column shares the row
                             // with the service name, and a squeezable label here is
                             // what wrapped "Counter" onto two lines and stretched the
@@ -728,7 +936,7 @@ struct OTPCardView: View {
                                 // both, so the chip looked empty and off-centre.
                                 .labelStyle(.titleAndIcon)
                                 .font(.caption.weight(.semibold))
-                                .foregroundColor(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                                 .lineLimit(1)
                                 .fixedSize()
                                 .padding(.horizontal, 10)
@@ -780,7 +988,8 @@ struct OTPCardView: View {
         }
         
         // Reset after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+        Task {
+            try? await Task.sleep(for: .seconds(2))
             withAnimation {
                 isCopied = false
             }
@@ -823,6 +1032,16 @@ struct EditTokenView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var showDiscardConfirmation = false
+    /// The picture the screen is showing, which is the token's own, a new one the
+    /// user picked, or `nil` for the service's logo. Compared to `code.customIcon`.
+    @State private var customIcon: Data?
+    /// The folder as it was when the screen opened. A folder is kept apart from the
+    /// token, so it is saved by `saveOrganization()`.
+    @State private var folderID: UUID?
+    private let openedFolderID: UUID?
+    private let organizationStore: TokenOrganizationStore
+    @AppStorage(TokenOrganizationStore.enabledKey) private var foldersEnabled = false
+    @State private var selectedPhoto: PhotosPickerItem?
     
     private var editBranding: IssuerBranding {
         IssuerBranding.forLabel(code.label)
@@ -855,16 +1074,28 @@ struct EditTokenView: View {
         digits != code.effectiveDigits ||
         period != code.effectivePeriod ||
         counter != Int(clamping: code.counter) ||
-        ringColorChanged
+        ringColorChanged ||
+        iconChanged ||
+        folderID != openedFolderID
     }
 
     private var ringColorChanged: Bool {
         ringColor != openedRingColor
     }
+
+    /// Compared with the picture the screen opened with, as stored, rather than
+    /// with what the screen shows: re-encoding the same picture would not match.
+    private var iconChanged: Bool {
+        customIcon != code.customIcon
+    }
     
-    init(code: OTPCode, dataStore: OTPDataStore) {
+    init(code: OTPCode, dataStore: OTPDataStore, organization: TokenOrganizationStore) {
         _code = State(initialValue: code)
         self.dataStore = dataStore
+        organizationStore = organization
+        let filedIn = organization.organization.folder(for: code.id)?.id
+        openedFolderID = filedIn
+        _folderID = State(initialValue: filedIn)
         _label = State(initialValue: code.label)
         _account = State(initialValue: code.account)
         _algorithm = State(initialValue: code.algorithm)
@@ -884,6 +1115,7 @@ struct EditTokenView: View {
         }
         _openedRingColor = State(initialValue: opened)
         _ringColor = State(initialValue: opened)
+        _customIcon = State(initialValue: code.customIcon)
     }
     
     var body: some View {
@@ -891,7 +1123,11 @@ struct EditTokenView: View {
             Form {
                 headerSection
                 identitySection
+                iconSection
                 codeSection
+                if foldersEnabled {
+                    organizeSection
+                }
                 // A counter-based code has no countdown ring, so a ring colour would
                 // be a setting that changes nothing on screen.
                 if code.isTimeBased {
@@ -940,6 +1176,12 @@ struct EditTokenView: View {
             } message: {
                 Text(alertMessage)
             }
+            .onChange(of: selectedPhoto) { _, newItem in
+                guard let newItem else { return }
+                // Cleared so picking the same photo again still fires.
+                selectedPhoto = nil
+                Task { await loadPicture(from: newItem) }
+            }
         }
         .platformSheetDetents(dragIndicator: true)
             .platformSheetSize()
@@ -952,10 +1194,11 @@ struct EditTokenView: View {
     /// is obvious rather than something to discover later.
     private var headerSection: some View {
         Section {
-            HStack(spacing: 14) {
-                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false)
+            HStack(spacing: 12) {
+                IssuerIconView(branding: previewBranding, size: 44, fetchesMissingLogo: false,
+                               customIcon: customIcon)
 
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(label.isEmpty ? code.label : label)
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
@@ -963,7 +1206,7 @@ struct EditTokenView: View {
                     if !account.isEmpty {
                         Text(account)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -981,7 +1224,7 @@ struct EditTokenView: View {
                     previewText
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 4)
         }
     }
 
@@ -991,6 +1234,39 @@ struct EditTokenView: View {
 
             TextField("Account (optional)", text: $account)
                 .platformNoAutocapitalization()
+        }
+    }
+
+    /// A picture for this token in place of the service's logo. The footer says
+    /// where the picture goes, because it is the one thing on this screen that is
+    /// not a setting of the code.
+    private var iconSection: some View {
+        // Read here, not in the label: the label is a Sendable closure, which can't
+        // reach the main-actor property.
+        let hasPicture = customIcon != nil
+        return Section {
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                Label(hasPicture ? "Change Picture" : "Choose Picture", systemImage: "photo")
+            }
+
+            // Pushed rather than presented: a sheet opened from a row of this Form
+            // would be redrawn away by the same kind of change that closes one in a
+            // List.
+            NavigationLink {
+                EmojiIconPicker(selection: $customIcon)
+            } label: {
+                Label("Choose Emoji", systemImage: "face.smiling")
+            }
+
+            if customIcon != nil {
+                Button("Use Service Logo") {
+                    customIcon = nil
+                }
+            }
+        } header: {
+            Text("Icon")
+        } footer: {
+            Text("Your picture or emoji is saved with this token. It syncs with iCloud Sync when that is on, and goes into backups. It is not included in Transfer QR codes, and it is never sent to the Apple Watch or to logo.dev.")
         }
     }
 
@@ -1044,6 +1320,41 @@ struct EditTokenView: View {
             : "This code changes only when you ask for the next one. Raise the counter if the service has moved ahead of it — for instance after a code was used on a device that no longer has this account."
     }
 
+    /// The folder for this token. Shown only when folders are on.
+    private var organizeSection: some View {
+        let organization = organizationStore.organization
+        return Section {
+            Picker("Folder", selection: $folderID) {
+                Text("None").tag(UUID?.none)
+                ForEach(organization.folders) { folder in
+                    Label {
+                        Text(folder.name)
+                    } icon: {
+                        Image(systemName: "folder.fill")
+                            .foregroundStyle(folder.color?.color ?? .secondary)
+                    }
+                    .tag(UUID?.some(folder.id))
+                }
+            }
+
+            if organization.folders.isEmpty {
+                Text("Add folders in Settings to sort your tokens.")
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Organize")
+        }
+    }
+
+    /// Saves the folder, when it changed. Kept apart from the token, so an edit that
+    /// changes only the folder does not stamp `modifiedAt` or sync.
+    private func saveOrganization() {
+        guard folderID != openedFolderID else { return }
+        organizationStore.update { organization in
+            organization.setFolder(folderID, for: code.id)
+        }
+    }
+
     private var appearanceSection: some View {
         Section {
             ColorPicker(selection: $ringColor, supportsOpacity: false) {
@@ -1060,7 +1371,7 @@ struct EditTokenView: View {
                         Text("Ring color")
                         Text(ringColorLabel)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
                 }
@@ -1098,8 +1409,10 @@ struct EditTokenView: View {
 
     private var previewText: some View {
         Text(previewCode)
-            .font(.system(.body, design: .monospaced).weight(.semibold))
-            .foregroundColor(.secondary)
+            .font(.system(.title2, design: .rounded).weight(.semibold))
+            .monospacedDigit()
+            .contentTransition(.numericText())
+            .foregroundStyle(.primary)
     }
 
     private var ringColorMatchesBranding: Bool {
@@ -1123,6 +1436,21 @@ struct EditTokenView: View {
         return picked == brand ? nil : picked
     }
     
+    /// Reads the picked photo and keeps it as a small PNG; see `CustomIcon`.
+    private func loadPicture(from item: PhotosPickerItem) async {
+        guard let data = try? await item.loadTransferable(type: Data.self) else {
+            alertMessage = String(localized: "Could not read the selected image.")
+            showingAlert = true
+            return
+        }
+        guard let prepared = CustomIcon.prepared(from: data) else {
+            alertMessage = String(localized: "That picture could not be used as an icon. Try a different one.")
+            showingAlert = true
+            return
+        }
+        customIcon = prepared
+    }
+
     private func saveChanges() {
         if label.isEmpty {
             alertMessage = String(localized: "Service name cannot be empty.")
@@ -1142,14 +1470,17 @@ struct EditTokenView: View {
             period: period != code.effectivePeriod ? period : nil,
             counter: counter != Int(clamping: code.counter) ? UInt64(max(0, counter)) : nil,
             timerRingHex: ringColorChanged ? .some(ringHexForSave()) : nil,
+            customIcon: iconChanged ? .some(customIcon) : nil,
             modifiedAt: code.modifiedAt
         )
 
         switch dataStore.saveEdit(from: code, to: edited) {
         case .saved:
-            break
+            saveOrganization()
         case .unchanged:
-            // Nothing to save, so nothing to celebrate or ask a review for.
+            // Nothing to save, so nothing to celebrate or ask a review for. A folder
+            // change is still kept, since it is not part of the token.
+            saveOrganization()
             dismiss()
             return
         case .nameTaken:

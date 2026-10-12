@@ -25,5 +25,8 @@ struct OnboardingChoices: Equatable {
     func complete(in defaults: UserDefaults = .standard) {
         defaults.set(fetchIssuerLogos, forKey: AppPreferences.fetchIssuerLogosKey)
         defaults.set(true, forKey: "hasCompletedOnboarding")
+        // The welcome is a new user's introduction, so the Folders sheet for people
+        // updating from an earlier version is never shown to them.
+        defaults.set(true, forKey: FoldersIntro.seenKey)
     }
 }

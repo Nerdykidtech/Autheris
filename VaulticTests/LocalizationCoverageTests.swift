@@ -286,9 +286,14 @@ final class LocalizationCoverageTests: XCTestCase {
             let catalog = try loadCatalog(path)
             for (key, entry) in catalog.sorted(by: { $0.key < $1.key }) {
                 guard entry["shouldTranslate"] as? Bool == false else { continue }
-                XCTAssertNil(
-                    entry["localizations"],
-                    "\(path): \"\(key)\" opts out of translation, so it needs no translations"
+                // Xcode writes the source value into the English localization of an
+                // opted-out key on every build, so English is allowed. Any other
+                // language is still a translation the key says it does not have.
+                let languages = Set((entry["localizations"] as? [String: Any] ?? [:]).keys)
+                XCTAssertTrue(
+                    languages.subtracting(["en"]).isEmpty,
+                    "\(path): \"\(key)\" opts out of translation, so it needs no translations "
+                    + "(only the English source value Xcode writes)"
                 )
             }
         }
