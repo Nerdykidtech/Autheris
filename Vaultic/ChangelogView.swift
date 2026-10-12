@@ -60,6 +60,7 @@ struct ChangelogRelease: Identifiable, Sendable {
             date: "October 2026",
             changes: [
                 "You can give any code its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off.",
+                "Settings is redesigned for iPhone and iPad: each group has its own page instead of one long list, with a side-by-side layout on iPad. Nothing moved or changed, only where it's shown.",
                 "The countdown bar no longer moves when the number drops from ten seconds to nine.",
                 "A picture is never sent to the Apple Watch or to logo.dev.",
                 "An unencrypted backup now warns that anyone who opens the file can generate every code, and that a shared copy can't be taken back.",

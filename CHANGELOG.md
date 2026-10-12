@@ -21,6 +21,16 @@ A version number lives in four places, and a release is not finished until they 
 
 - Any code can have its own picture: choose a photo, or pick an emoji from a list. Pictures sync with iCloud Sync and go into backups, and emoji work even with service logos turned off. A picture is never sent to the Apple Watch or to logo.dev, and it is not included in Transfer QR codes.
 
+### Changed
+
+- Settings is redesigned for iPhone and iPad. Each group — Privacy, iCloud Sync, Appearance, Data and Help — now has its own page instead of one long list, with a side-by-side layout on iPad. Nothing moved or changed, only where it's shown.
+
+### Security
+
+- An unencrypted backup now warns that anyone who opens the file can generate every code, and that a shared copy can't be taken back.
+- Backup, Transfer QR codes and setup keys now ask for Face ID, Touch ID or your passcode even when App Lock is off, since they show every code.
+- App Lock now protects your codes where they are stored, not only the screen. With it on, the iPhone asks for Face ID, Touch ID or your passcode before the codes can be read, and turning App Lock on or off asks you to authenticate.
+
 ### Fixed
 
 - The countdown bar no longer moves when the number drops from two digits to one.
