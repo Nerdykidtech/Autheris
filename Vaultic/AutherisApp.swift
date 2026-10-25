@@ -75,6 +75,12 @@ struct AutherisApp: App {
             WindowIdentity { windowID in
                 window(windowID)
             }
+            #if os(macOS)
+            // An `otpauth://` or `autheris://` link goes to a window that is
+            // already open. Without this a Mac `WindowGroup` opens a new window
+            // for every link, and the import shows up in that one.
+            .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
+            #endif
         }
 
         #if os(macOS)
@@ -350,12 +356,11 @@ struct AutherisApp: App {
 
     private func updatePrivacyOverlay() {
         showPrivacyOverlay = PrivacyShield.shouldShowOverlay(privacyConditions, privacyPreferences)
-        #if os(iOS)
         // The overlay and blur above only reach this window's root view, and a
-        // sheet is presented over that — so on iOS the same decision is drawn
-        // again in a window above everything. See `PrivacyShieldWindow`.
+        // sheet is presented over that (on the Mac, the Settings window is outside
+        // it too) — so the same decision is drawn again over everything the app
+        // shows. See `PrivacyShieldWindow`.
         PrivacyShieldWindow.show(showPrivacyOverlay ? .cover : shouldBlurContent ? .blur : .hidden)
-        #endif
         #if DEBUG
         print("Privacy overlay: \(showPrivacyOverlay), appIsActive: \(isAppActive), screenIsCaptured: \(isScreenCaptured), hideCodesInAppSwitcher: \(hideCodesInAppSwitcher), hideCodesWhenScreenCaptured: \(hideCodesWhenScreenCaptured)")
         #endif

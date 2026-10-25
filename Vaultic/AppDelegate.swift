@@ -64,6 +64,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.registerForRemoteNotifications()
     }
 
+    /// A copied code is cleared by a timer in the app, which quitting would
+    /// otherwise outlive. See `ClipboardHelper.clearPendingCopy`.
+    func applicationWillTerminate(_ notification: Notification) {
+        ClipboardHelper.clearPendingCopy()
+    }
+
     func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         #if DEBUG
         print("Registered for remote notifications")

@@ -14,9 +14,10 @@
 	<key>com.apple.security.device.camera</key>
 	<true/>
 
-	<!-- Restoring a backup the user picks in the open panel. Read-only: the app
-	     never writes back to a user-selected location. -->
-	<key>com.apple.security.files.user-selected.read-only</key>
+	<!-- Restoring a backup the user picks in the open panel, and saving one to
+	     the place the user picks in the save panel. Nothing is written anywhere
+	     the user didn't choose in that panel. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 
 	<!-- Same private container as the iOS app, so tokens sync between them. -->

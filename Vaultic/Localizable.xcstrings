@@ -717,6 +717,53 @@
         }
       }
     },
+    "A link that adds codes on the Mac now opens in the Autheris window you have open, instead of a new one.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein Link, der auf dem Mac Codes hinzufügt, öffnet sich jetzt im geöffneten Autheris-Fenster statt in einem neuen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A link that adds codes on the Mac now opens in the Autheris window you have open, instead of a new one."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un enlace que añade códigos en el Mac ahora se abre en la ventana de Autheris que tienes abierta, en lugar de en una nueva."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un lien qui ajoute des codes sur le Mac s'ouvre désormais dans la fenêtre Autheris déjà ouverte, au lieu d'une nouvelle."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macでコードを追加するリンクは、新しいウインドウではなく、開いているAutherisのウインドウで開くようになりました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Um link que adiciona códigos no Mac agora abre na janela do Autheris que já está aberta, em vez de uma nova."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上添加验证码的链接现在会在已打开的 Autheris 窗口中打开，而不是新窗口。"
+          }
+        }
+      }
+    },
     "A picture is never sent to the Apple Watch or to logo.dev.": {
       "extractionState": "manual",
       "localizations": {
@@ -3893,6 +3940,53 @@
         }
       }
     },
+    "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave Autheris or lock your Mac. With App Lock on, your codes are also stored so that macOS itself asks for Touch ID or your password before they can be read.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes sind immer ausgeblendet, wenn Autheris nicht die vorderste App ist und solange der Bildschirm aufgenommen oder gespiegelt wird. App Lock sperrt 30 Sekunden, nachdem du Autheris verlässt oder deinen Mac sperrst, erneut. Bei eingeschaltetem App Lock werden deine Codes außerdem so gespeichert, dass macOS selbst Touch ID oder dein Passwort verlangt, bevor sie gelesen werden können."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave Autheris or lock your Mac. With App Lock on, your codes are also stored so that macOS itself asks for Touch ID or your password before they can be read."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los códigos se ocultan siempre que Autheris no sea la app en primer plano, y mientras la pantalla se graba o se duplica. App Lock vuelve a bloquear 30 segundos después de salir de Autheris o de bloquear tu Mac. Con App Lock activado, tus códigos también se guardan de forma que macOS pida Touch ID o tu contraseña antes de poder leerlos."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Les codes sont masqués dès qu'Autheris n'est pas l'app au premier plan, et pendant l'enregistrement ou la mise en miroir de l'écran. App Lock se verrouille à nouveau 30 secondes après que vous avez quitté Autheris ou verrouillé votre Mac. Avec App Lock activé, vos codes sont aussi stockés de façon que macOS demande Touch ID ou votre mot de passe avant de pouvoir les lire."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autherisが最前面のアプリでないとき、および画面が録画・ミラーリングされているときは、コードは隠されます。App Lockは、Autherisを離れるかMacをロックしてから30秒後に再びロックされます。App Lockがオンのときは、コードはmacOS自体がTouch IDまたはパスワードを求めてからでないと読めない形で保存されます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Os códigos ficam ocultos sempre que o Autheris não estiver em primeiro plano e enquanto a tela estiver sendo gravada ou espelhada. O App Lock bloqueia novamente 30 segundos depois que você sai do Autheris ou bloqueia o Mac. Com o App Lock ativado, seus códigos também são guardados de modo que o macOS peça Touch ID ou sua senha antes de poderem ser lidos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只要 Autheris 不在最前台，或屏幕正在录制或镜像，验证码就会被隐藏。离开 Autheris 或锁定 Mac 30 秒后 App Lock 会重新锁定。开启 App Lock 后，你的验证码还会以这样的方式存储：macOS 本身需要 Touch ID 或你的密码才能读取。"
+          }
+        }
+      }
+    },
     "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave.": {
       "extractionState": "stale",
       "localizations": {
@@ -3930,53 +4024,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "只要 Autheris 不在最前面，或屏幕正在被录制、投送，验证码就会隐藏。离开 30 秒后应用锁会重新锁定。"
-          }
-        }
-      }
-    },
-    "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.": {
-      "extractionState": "manual",
-      "localizations": {
-        "de-DE": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Codes sind immer ausgeblendet, wenn Autheris nicht die vorderste App ist und solange der Bildschirm aufgenommen oder gespiegelt wird. App Lock sperrt 30 Sekunden nach dem Verlassen der App erneut. Bei eingeschaltetem App Lock werden deine Codes außerdem so gespeichert, dass das iPhone selbst Face ID, Touch ID oder deinen Gerätecode verlangt, bevor sie gelesen werden können."
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read."
-          }
-        },
-        "es-ES": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Los códigos se ocultan siempre que Autheris no sea la app en primer plano, y mientras la pantalla se graba o se duplica. App Lock vuelve a bloquear 30 segundos después de salir. Con App Lock activado, tus códigos también se guardan de forma que el iPhone pida Face ID, Touch ID o tu código de acceso antes de poder leerlos."
-          }
-        },
-        "fr-FR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Les codes sont masqués dès qu'Autheris n'est pas l'app au premier plan, et pendant l'enregistrement ou la mise en miroir de l'écran. App Lock se verrouille à nouveau 30 secondes après votre départ. Avec App Lock activé, vos codes sont aussi stockés de façon que l'iPhone demande Face ID, Touch ID ou votre code d'accès avant de pouvoir les lire."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autherisが最前面のアプリでないとき、および画面が録画・ミラーリングされているときは、コードは隠されます。App Lockは、アプリを離れてから30秒後に再びロックされます。App Lockがオンのときは、コードはiPhone自体がFace ID、Touch ID、またはパスコードを求めてからでないと読めない形で保存されます。"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Os códigos ficam ocultos sempre que o Autheris não estiver em primeiro plano e enquanto a tela estiver sendo gravada ou espelhada. O App Lock bloqueia novamente 30 segundos depois que você sai. Com o App Lock ativado, seus códigos também são guardados de modo que o iPhone peça Face ID, Touch ID ou sua senha antes de poderem ser lidos."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只要 Autheris 不在最前台，或屏幕正在录制或镜像，验证码就会被隐藏。离开应用 30 秒后 App Lock 会重新锁定。开启 App Lock 后，你的验证码还会以这样的方式存储：iPhone 本身需要 Face ID、Touch ID 或设备密码才能读取。"
           }
         }
       }
@@ -4825,6 +4872,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "无法添加账户"
+          }
+        }
+      }
+    },
+    "Couldn't Save Backup": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup konnte nicht gesichert werden"
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la copia"
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Impossible d'enregistrer la sauvegarde"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バックアップを保存できませんでした"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar o backup"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存备份"
           }
         }
       }
@@ -9790,6 +9877,241 @@
         }
       }
     },
+    "On a Mac in full screen or a wide window, and on a large iPad in landscape, your codes are now centred instead of sitting off to one side.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf einem Mac im Vollbild oder in einem breiten Fenster und auf einem großen iPad im Querformat sind deine Codes jetzt zentriert, statt am Rand zu sitzen."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On a Mac in full screen or a wide window, and on a large iPad in landscape, your codes are now centred instead of sitting off to one side."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En un Mac a pantalla completa o en una ventana ancha, y en un iPad grande en horizontal, tus códigos ahora aparecen centrados en lugar de quedar a un lado."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur un Mac en plein écran ou dans une fenêtre large, et sur un grand iPad à l'horizontale, vos codes sont désormais centrés au lieu d'être décalés sur un côté."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macのフルスクリーンや幅の広いウインドウ、横向きの大きなiPadで、コードが片側に寄らず中央に表示されるようになりました。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Em um Mac em tela cheia ou em uma janela larga, e em um iPad grande na horizontal, seus códigos agora ficam centralizados em vez de ficarem de um lado."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在全屏或宽窗口的 Mac 上，以及横屏的大尺寸 iPad 上，你的验证码现在会居中显示，而不是偏在一侧。"
+          }
+        }
+      }
+    },
+    "On the Mac, App Lock also re-locks after you lock your Mac, it sleeps, or you close its last window. The 30 seconds now count from when you first left, so locking the screen later doesn't restart them.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Mac sperrt App Lock auch erneut, nachdem du deinen Mac sperrst, er in den Ruhezustand geht oder du sein letztes Fenster schließt. Die 30 Sekunden zählen jetzt ab dem ersten Verlassen, sodass ein späteres Sperren des Bildschirms sie nicht neu startet."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the Mac, App Lock also re-locks after you lock your Mac, it sleeps, or you close its last window. The 30 seconds now count from when you first left, so locking the screen later doesn't restart them."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el Mac, App Lock también vuelve a bloquear después de bloquear el Mac, de que entre en reposo o de cerrar su última ventana. Los 30 segundos ahora cuentan desde que saliste por primera vez, así que bloquear la pantalla más tarde no los reinicia."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le Mac, App Lock se verrouille aussi à nouveau après le verrouillage du Mac, sa mise en veille ou la fermeture de sa dernière fenêtre. Les 30 secondes comptent désormais à partir de votre premier départ, donc verrouiller l'écran plus tard ne les relance pas."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macでは、Macをロックしたとき、スリープしたとき、最後のウインドウを閉じたときにもApp Lockが再びロックされます。30秒は最初に離れたときから数えるため、後から画面をロックしてもリセットされません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Mac, o App Lock também bloqueia novamente depois que você bloqueia o Mac, ele entra em repouso ou você fecha a última janela. Os 30 segundos agora contam a partir da primeira vez que você saiu, então bloquear a tela depois não os reinicia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上，锁定 Mac、Mac 进入睡眠或关闭最后一个窗口后，App Lock 也会重新锁定。30 秒现在从你第一次离开时开始计算，之后锁定屏幕不会让它重新开始。"
+          }
+        }
+      }
+    },
+    "On the Mac, a copied code stays on that Mac instead of reaching your other devices through Universal Clipboard, and it is cleared when you quit Autheris.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Mac bleibt ein kopierter Code auf diesem Mac, statt über die universelle Zwischenablage auf deine anderen Geräte zu gelangen, und er wird gelöscht, wenn du Autheris beendest."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the Mac, a copied code stays on that Mac instead of reaching your other devices through Universal Clipboard, and it is cleared when you quit Autheris."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el Mac, un código copiado se queda en ese Mac en lugar de llegar a tus otros dispositivos mediante el Portapapeles Universal, y se borra al salir de Autheris."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le Mac, un code copié reste sur ce Mac au lieu d'atteindre vos autres appareils via le Presse-papiers universel, et il est effacé quand vous quittez Autheris."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macでは、コピーしたコードはユニバーサルクリップボードで他のデバイスに渡らずそのMacにとどまり、Autherisを終了するとクリアされます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Mac, um código copiado fica nesse Mac em vez de chegar aos seus outros dispositivos pela Área de Transferência Universal, e é apagado quando você encerra o Autheris."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上，拷贝的验证码只留在这台 Mac 上，不会通过通用剪贴板传到你的其他设备，并会在退出 Autheris 时被清除。"
+          }
+        }
+      }
+    },
+    "On the Mac, the privacy screen now covers open sheets and the Settings window too, so a code, a setup key or a Transfer QR code isn't left showing when you switch to another app.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Mac deckt der Datenschutzbildschirm jetzt auch geöffnete Blätter und das Einstellungsfenster ab, sodass ein Code, ein Einrichtungsschlüssel oder ein Transfer-QR-Code nicht sichtbar bleibt, wenn du zu einer anderen App wechselst."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the Mac, the privacy screen now covers open sheets and the Settings window too, so a code, a setup key or a Transfer QR code isn't left showing when you switch to another app."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el Mac, la pantalla de privacidad ahora también cubre las hojas abiertas y la ventana de Ajustes, para que un código, una clave de configuración o un código QR de transferencia no queden a la vista al cambiar a otra app."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le Mac, l'écran de confidentialité couvre désormais aussi les feuilles ouvertes et la fenêtre Réglages, pour qu'un code, une clé de configuration ou un QR code de transfert ne reste pas affiché quand vous passez à une autre app."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macでは、プライバシー画面が開いているシートと設定ウインドウも覆うようになり、別のアプリに切り替えたときにコード、セットアップキー、転送用QRコードが表示されたままになりません。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Mac, a tela de privacidade agora também cobre as folhas abertas e a janela de Ajustes, para que um código, uma chave de configuração ou um QR code de transferência não fique visível quando você muda para outro app."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上，隐私屏幕现在也会遮住打开的表单和设置窗口，切换到其他应用时，验证码、设置密钥或传输二维码不会继续显示。"
+          }
+        }
+      }
+    },
+    "On the Mac, you can save a backup to a folder you choose, and sharing a backup or a Transfer QR code opens the share menu instead of an empty window.": {
+      "extractionState": "manual",
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auf dem Mac kannst du ein Backup in einem Ordner deiner Wahl sichern, und das Teilen eines Backups oder eines Transfer-QR-Codes öffnet das Teilen-Menü statt eines leeren Fensters."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On the Mac, you can save a backup to a folder you choose, and sharing a backup or a Transfer QR code opens the share menu instead of an empty window."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "En el Mac puedes guardar una copia de seguridad en la carpeta que elijas, y al compartir una copia o un código QR de transferencia se abre el menú de compartir en lugar de una ventana vacía."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sur le Mac, vous pouvez enregistrer une sauvegarde dans le dossier de votre choix, et partager une sauvegarde ou un QR code de transfert ouvre le menu de partage au lieu d'une fenêtre vide."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Macでは、バックアップを好きなフォルダに保存できるようになりました。また、バックアップや転送用QRコードを共有すると、空のウインドウではなく共有メニューが開きます。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Mac, você pode salvar um backup na pasta que escolher, e compartilhar um backup ou um QR code de transferência abre o menu de compartilhamento em vez de uma janela vazia."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Mac 上，你可以将备份保存到自己选择的文件夹；共享备份或传输二维码时会打开共享菜单，而不是一个空白窗口。"
+          }
+        }
+      }
+    },
     "Only when you make one. A backup file holds every setup key, encrypted with your password unless you choose a plain file. A Transfer QR code holds them unencrypted, so anyone who sees it can copy them.": {
       "localizations": {
         "de-DE": {
@@ -13510,6 +13832,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Autheris 的 CloudKit 架构尚未部署。"
+          }
+        }
+      }
+    },
+    "The backup couldn't be saved there. Try another location.": {
+      "localizations": {
+        "de-DE": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Das Backup konnte dort nicht gesichert werden. Versuche einen anderen Ort."
+          }
+        },
+        "es-ES": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar la copia ahí. Prueba otra ubicación."
+          }
+        },
+        "fr-FR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La sauvegarde n'a pas pu être enregistrée à cet endroit. Essayez un autre emplacement."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その場所にはバックアップを保存できませんでした。別の場所を試してください。"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Não foi possível salvar o backup nesse local. Tente outro local."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法将备份保存到该位置。请尝试其他位置。"
           }
         }
       }

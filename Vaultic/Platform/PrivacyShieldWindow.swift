@@ -70,4 +70,89 @@ enum PrivacyShieldWindow {
         }
     }
 }
+#elseif os(macOS)
+import AppKit
+import SwiftUI
+
+/// The privacy cover on the Mac, drawn over every window the app has open.
+///
+/// The cover in each window's root `ZStack` hides that window's own content and
+/// nothing in front of it. A Mac sheet is a window of its own attached above the
+/// main one, and the preferences window is outside the window group entirely, so
+/// switching to another app left an open Edit sheet's code, a revealed setup key
+/// or the Transfer QR code readable on screen.
+///
+/// iOS draws the cover in one window above the app's. A Mac app can't do that
+/// without its cover also floating over the other apps the user switched to, so
+/// instead the cover is laid over the content of each of the app's windows —
+/// main windows, sheets and Settings alike — from this one place.
+///
+/// `PrivacyShield` still decides *when*; this only decides where it is drawn.
+@MainActor
+enum PrivacyShieldWindow {
+    /// What the shield shows.
+    enum Style: Equatable {
+        /// Nothing: the app is in front.
+        case hidden
+        /// A blur over everything, for "Blur when backgrounded".
+        case blur
+        /// The full privacy screen, for "Hide in app switcher".
+        case cover
+    }
+
+    /// The cover laid on each window, so it can be taken off again. A window
+    /// that has gone takes its cover with it; a new one at the same address is
+    /// told apart by the cover not being in its content.
+    private static var shields: [ObjectIdentifier: NSView] = [:]
+    private static var style: Style = .hidden
+
+    static func show(_ newStyle: Style) {
+        if newStyle != style {
+            removeAll()
+            style = newStyle
+        }
+        guard newStyle != .hidden else { return }
+        for window in NSApplication.shared.windows where window.isVisible {
+            cover(window)
+        }
+    }
+
+    private static func cover(_ window: NSWindow) {
+        guard let content = window.contentView else { return }
+        let key = ObjectIdentifier(window)
+        if let existing = shields[key], existing.superview === content { return }
+
+        let shield = makeShield(for: style)
+        shield.frame = content.bounds
+        shield.autoresizingMask = [.width, .height]
+        content.addSubview(shield, positioned: .above, relativeTo: nil)
+        // SwiftUI can add views of its own to the window while it is covered — a
+        // representable appearing — and those would be drawn above a cover that
+        // was added first. The layer keeps it on top.
+        shield.wantsLayer = true
+        shield.layer?.zPosition = 1_000
+        shields[key] = shield
+    }
+
+    private static func removeAll() {
+        shields.values.forEach { $0.removeFromSuperview() }
+        shields.removeAll()
+    }
+
+    private static func makeShield(for style: Style) -> NSView {
+        // Blurs what is behind it within the window, and takes the clicks that
+        // land on it, so nothing under the cover can be clicked through it.
+        let blur = NSVisualEffectView()
+        blur.blendingMode = .withinWindow
+        blur.material = .hudWindow
+        blur.state = .active
+        if style == .cover {
+            let host = NSHostingView(rootView: PrivacyOverlay())
+            host.frame = blur.bounds
+            host.autoresizingMask = [.width, .height]
+            blur.addSubview(host)
+        }
+        return blur
+    }
+}
 #endif

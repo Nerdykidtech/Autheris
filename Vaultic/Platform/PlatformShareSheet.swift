@@ -1,15 +1,35 @@
 import SwiftUI
 
+extension View {
+    /// Offers `items` to the system's sharing services while `isPresented` is true.
+    ///
+    /// The two platforms present this differently, so the difference lives here
+    /// rather than at each call site. iOS shows a `UIActivityViewController` in a
+    /// sheet, as it always has. The Mac's `NSSharingServicePicker` is a popover
+    /// anchored to a view; hosting it in a sheet left an empty, zero-sized sheet
+    /// with no way to close it once the picker went away. So on the Mac the picker
+    /// is anchored to this view instead, and `isPresented` is reset when it closes.
+    func platformShareSheet(isPresented: Binding<Bool>, items: [Any]) -> some View {
+        #if os(iOS)
+        sheet(isPresented: isPresented) {
+            if items.isEmpty {
+                Text("Nothing to share.")
+                    .platformSheetDetents([.medium])
+                    .platformSheetSize(minHeight: 200)
+            } else {
+                PlatformShareSheet(activityItems: items)
+            }
+        }
+        #else
+        background(SharingPickerAnchor(isPresented: isPresented, items: items))
+        #endif
+    }
+}
+
 #if os(iOS)
 import UIKit
 
-/// The system share sheet.
-///
-/// One type rather than the two near-identical `UIViewControllerRepresentable`
-/// wrappers this app used to carry — a `UIActivityViewController` on iOS and an
-/// `NSSharingServicePicker` on the Mac, which is the same feature under each
-/// platform's own name. The iOS behaviour is unchanged: it is the same
-/// `UIActivityViewController(activityItems:)` call as before.
+/// The system share sheet. Presented through `platformShareSheet(isPresented:items:)`.
 struct PlatformShareSheet: UIViewControllerRepresentable {
     let activityItems: [Any]
 
@@ -22,34 +42,56 @@ struct PlatformShareSheet: UIViewControllerRepresentable {
 #else
 import AppKit
 
-/// `NSSharingServicePicker`, which unlike its iOS counterpart is a *popover*
-/// anchored to a view rather than a full-screen controller, so it has to be
-/// presented from something already in the hierarchy.
-struct PlatformShareSheet: NSViewRepresentable {
-    let activityItems: [Any]
+/// Shows `NSSharingServicePicker` from the view it sits behind whenever
+/// `isPresented` turns true, and turns it back off when the picker closes —
+/// whether a service was chosen or not.
+private struct SharingPickerAnchor: NSViewRepresentable {
+    @Binding var isPresented: Bool
+    let items: [Any]
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSView {
-        let anchor = NSView(frame: .zero)
-        // The picker can only be anchored once the view is in a window, which it
-        // is not during `makeNSView`.
-        DispatchQueue.main.async {
-            // The picker can only be anchored to a view that is in a window.
-            guard anchor.window != nil else { return }
-            let picker = NSSharingServicePicker(items: activityItems)
-            // Retained for as long as the popover is up; the picker is not held
-            // by the presentation itself.
-            context.coordinator.picker = picker
-            picker.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .minY)
-        }
-        return anchor
+        NSView(frame: .zero)
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {}
+    func updateNSView(_ view: NSView, context: Context) {
+        let coordinator = context.coordinator
+        coordinator.onClose = { isPresented = false }
+        guard isPresented, !coordinator.isShowing else { return }
+        coordinator.isShowing = true
+        // Deferred a turn: the picker can only be anchored to a view that is in a
+        // window, and SwiftUI may still be placing this one.
+        DispatchQueue.main.async {
+            guard view.window != nil, !items.isEmpty else {
+                coordinator.close()
+                return
+            }
+            let picker = NSSharingServicePicker(items: items)
+            picker.delegate = coordinator
+            // Retained while the popover is up; the presentation does not hold it.
+            coordinator.picker = picker
+            picker.show(relativeTo: view.bounds, of: view, preferredEdge: .minY)
+        }
+    }
 
-    final class Coordinator {
+    final class Coordinator: NSObject, NSSharingServicePickerDelegate {
         var picker: NSSharingServicePicker?
+        var isShowing = false
+        var onClose: (() -> Void)?
+
+        func close() {
+            picker = nil
+            isShowing = false
+            onClose?()
+        }
+
+        /// Called with `nil` when the picker is dismissed without a choice, so this
+        /// is the one place the presentation ends.
+        func sharingServicePicker(_ sharingServicePicker: NSSharingServicePicker,
+                                  didChoose service: NSSharingService?) {
+            close()
+        }
     }
 }
 #endif

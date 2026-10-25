@@ -29,7 +29,7 @@ If the stored codes are present but can't be decoded — damaged, or written by 
 
 App Lock (**Settings → Privacy → Require Face ID / Touch ID**) uses `LAPolicy.deviceOwnerAuthentication`, so Face ID or Touch ID with the passcode as the fallback, or Touch ID and the login password on a Mac. The logic is in `Vaultic/AppLockManager.swift`.
 
-- **When it locks.** Every cold launch, and on returning after more than **30 seconds** away. On iOS "away" is the scene reaching the background. A Mac window that loses focus never gets there, so on the Mac the grace period starts when the app resigns active.
+- **When it locks.** Every cold launch, and on returning after more than **30 seconds** away. On iOS "away" is the scene reaching the background. A Mac window that loses focus never gets there, so on the Mac the grace period starts when the app resigns active — and also when the screen locks or sleeps, another user takes over the session, or the last window closes, none of which resigns active. The earliest of these counts, so a later one can't restart the clock. Coming back from them is a return only when Autheris is frontmost.
 - **The Mac Settings window** is a separate window outside the main window group, and shows the same lock screen while the app is locked.
 - **Asking again before sensitive actions.** The grace period means a phone unlocked moments ago opens straight into the code list. So with App Lock on, `AppLockManager.reauthenticate(reason:)` asks again before **turning App Lock off**, opening **Backup**, opening **Transfer via QR Code**, and **View Secret**. Each of those either hands over every secret or removes the lock. Cancelling leaves things as they were.
 
@@ -37,11 +37,11 @@ With App Lock off, none of this applies: the user has chosen not to be asked. On
 
 ## Copied codes
 
-`Vaultic/ClipboardHelper.swift` copies a code with `.localOnly`, so Universal Clipboard doesn't carry it to the user's other devices, and with an expiration date **60 seconds** out, so it clears itself. On the Mac it is marked `org.nspasteboard.ConcealedType`, which keeps it out of Universal Clipboard and out of clipboard-history tools that honour the convention. The app clears it after 60 seconds, unless something else has been copied since.
+`Vaultic/ClipboardHelper.swift` copies a code with `.localOnly`, so Universal Clipboard doesn't carry it to the user's other devices, and with an expiration date **60 seconds** out, so it clears itself. On the Mac it is written with `NSPasteboard.ContentsOptions.currentHostOnly`, which keeps it out of Universal Clipboard, and marked `org.nspasteboard.ConcealedType`, which keeps it out of clipboard-history tools that honour the convention. The Mac pasteboard has no expiry, so the app clears it after 60 seconds, unless something else has been copied since — and on quitting, so a code copied just before can't outlive the app.
 
 ## Backups
 
-**Settings → Data → Backup** writes files to `Documents/OTPBackups`.
+**Settings → Data → Backup** writes files to `Documents/OTPBackups`. On the Mac that folder is inside the app's sandbox container, where Finder doesn't show it, so each backup also has **Save**, which writes a copy wherever the user picks in the save panel (the `files.user-selected.read-write` entitlement).
 
 - **Encrypted backups** (`.autheris`) use AES-256-GCM with a key from PBKDF2-HMAC-SHA256 (CommonCrypto). The envelope is versioned: version 2 records its iteration count, written as **600,000**. Version 1 files used a fixed 120,000 and still open. The stored count is bounds-checked, so a forged file can't skip the work or hang the app deriving a key. New encrypted backups need a password of at least **10 characters**. See `Vaultic/BackupCrypto.swift`.
 - **Unencrypted backups** (`.json`) are plain JSON, which is every secret in readable form. The choice is explicit in the UI, which offers the encrypted backup first.
@@ -64,6 +64,8 @@ The rule lives in `Vaultic/PrivacyShield.swift`, which is pure so it can be unit
 
 - **The app is not frontmost** — the app switcher and the home screen. Controlled by *Hide codes in app switcher* (a full cover) and *Blur when backgrounded* (a softer treatment).
 - **The screen is being recorded or mirrored**, while the app is still frontmost. This is the case that produces no `scenePhase` change and no "will resign active", so there is nothing for the existing app-lifecycle notifications to hang off. It is observed through `UIScreen.capturedDidChangeNotification` in `Vaultic/ScreenCaptureMonitor.swift` and controlled by *Hide codes while recording or mirroring*.
+
+The cover is drawn over everything the app shows, not only the token list: `Vaultic/Platform/PrivacyShieldWindow.swift` puts it in a window above the app's on iOS, and on the Mac lays it over the content of every window the app has open — the main windows, their sheets and the Settings window. A sheet is drawn above the window's own root view, so a cover there alone left an open Edit sheet, a revealed setup key or the Transfer QR code on screen.
 
 The two reasons are OR-ed rather than exclusive: a device can be recording while the app sits in the background, and honouring only the app-switcher setting there would leave the recording with a visible — merely blurred — token list. All three toggles default to on.
 

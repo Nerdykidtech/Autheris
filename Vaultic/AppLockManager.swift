@@ -1,6 +1,9 @@
 import SwiftUI
 import LocalAuthentication
 import Combine
+#if os(macOS)
+import AppKit
+#endif
 
 /// Shared UserDefaults key so the Settings toggle and the lock manager cannot drift.
 nonisolated let AppLockEnabledKey = "enableAppLock"
@@ -42,24 +45,29 @@ final class AppLockManager: ObservableObject {
     private var backgroundedAt: Date?
     /// A fresh context per attempt, as `LAContext` expects. Injectable for tests.
     private let makeContext: () -> DeviceOwnerAuthenticating
+    /// The time, injectable so tests can step past the grace period.
+    private let now: () -> Date
     /// The context of the attempt in progress, handed to the vault on success.
     private var pendingUnlockContext: LAContext?
 
     #if os(macOS)
-    /// Activation observers, held so they are removed with the manager.
+    /// Activation observers, each with the centre it was added to, held so they
+    /// are removed with the manager.
     ///
     /// `nonisolated(unsafe)` only so `deinit`, which is not main-actor isolated,
     /// can read it. It is written once in `init` and read once in `deinit`, when
     /// nothing else can still be holding the manager.
-    nonisolated(unsafe) private var activationObservers: [NSObjectProtocol] = []
+    nonisolated(unsafe) private var activationObservers: [(center: NotificationCenter, token: NSObjectProtocol)] = []
     #endif
 
     var isEnabled: Bool {
         UserDefaults.standard.bool(forKey: AppLockEnabledKey)
     }
 
-    init(makeContext: @escaping () -> DeviceOwnerAuthenticating = { LAContext() }) {
+    init(makeContext: @escaping () -> DeviceOwnerAuthenticating = { LAContext() },
+         now: @escaping () -> Date = Date.init) {
         self.makeContext = makeContext
+        self.now = now
         // Restore Keychain-backed preferences before reading the lock setting.
         PreferencesStore.restoreIntoUserDefaults()
 
@@ -73,27 +81,84 @@ final class AppLockManager: ObservableObject {
         // minimising or hiding — so on the Mac, leaving the app is what starts
         // the grace period. Observed here rather than in a view so that it works
         // whichever windows are open, including none.
+        //
+        // Leaving also covers the moments the app stays frontmost but nobody is
+        // in front of it: the screen locking or sleeping, another user taking
+        // over the session, and the last window closing with the app still
+        // active. None of those resigns active, so each starts the grace period
+        // itself, and coming back from it is checked the way returning to the app
+        // is.
         let center = NotificationCenter.default
-        activationObservers = [
-            center.addObserver(forName: AppActivity.willResignActive, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.appDidEnterBackground() }
-            },
-            center.addObserver(forName: AppActivity.didBecomeActive, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.appDidBecomeActive() }
+        let workspace = NSWorkspace.shared.notificationCenter
+        let distributed = DistributedNotificationCenter.default()
+        func observe(_ observed: NotificationCenter, _ name: Notification.Name,
+                     _ action: @escaping @MainActor (AppLockManager, Notification) -> Void) {
+            let token = observed.addObserver(forName: name, object: nil, queue: .main) { [weak self] notification in
+                MainActor.assumeIsolated {
+                    if let self { action(self, notification) }
+                }
             }
-        ]
+            activationObservers.append((observed, token))
+        }
+
+        observe(center, AppActivity.willResignActive) { manager, _ in manager.appDidEnterBackground() }
+        observe(center, AppActivity.didBecomeActive) { manager, _ in manager.appDidBecomeActive() }
+
+        for name in [Notification.Name("com.apple.screenIsLocked")] {
+            observe(distributed, name) { manager, _ in manager.appDidEnterBackground() }
+        }
+        for name in [NSWorkspace.screensDidSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
+            observe(workspace, name) { manager, _ in manager.appDidEnterBackground() }
+        }
+        // Back from any of those, but only counted as a return to Autheris when
+        // it is the frontmost app; otherwise the user is still away from it.
+        for name in [Notification.Name("com.apple.screenIsUnlocked")] {
+            observe(distributed, name) { manager, _ in manager.returnIfFrontmost() }
+        }
+        for name in [NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
+            observe(workspace, name) { manager, _ in manager.returnIfFrontmost() }
+        }
+
+        // The last window closing, with the app still frontmost. Reopening it from
+        // the Dock makes a window key without the app ever becoming active again,
+        // so a window becoming key is the return.
+        observe(center, NSWindow.willCloseNotification) { manager, notification in
+            guard let closing = notification.object as? NSWindow else { return }
+            let othersRemain = NSApplication.shared.windows.contains {
+                $0 !== closing && $0.isVisible && $0.canBecomeMain
+            }
+            if !othersRemain { manager.appDidEnterBackground() }
+        }
+        observe(center, NSWindow.didBecomeKeyNotification) { manager, _ in
+            manager.returnIfFrontmost()
+        }
         #endif
     }
 
     #if os(macOS)
     deinit {
-        activationObservers.forEach(NotificationCenter.default.removeObserver)
+        for observer in activationObservers {
+            observer.center.removeObserver(observer.token)
+        }
+    }
+
+    /// A return from a screen lock, sleep, session switch or closed window, which
+    /// is only a return to the app if the app is in front.
+    private func returnIfFrontmost() {
+        guard backgroundedAt != nil, NSApplication.shared.isActive else { return }
+        appDidBecomeActive()
     }
     #endif
 
+    /// Starts the grace period, unless it has already started.
+    ///
+    /// The earliest moment counts. Leaving the app and then locking the Mac five
+    /// minutes later is five minutes away, not the few seconds since the lock —
+    /// restarting the clock at the second event would let an unlock moments later
+    /// skip the re-lock that was already due.
     func appDidEnterBackground() {
-        guard isEnabled else { return }
-        backgroundedAt = Date()
+        guard isEnabled, backgroundedAt == nil else { return }
+        backgroundedAt = now()
     }
 
     func appDidBecomeActive() {
@@ -120,7 +185,7 @@ final class AppLockManager: ObservableObject {
         // can briefly push the scene through .inactive -> .active, and treating
         // that as a foreground event would re-lock right after a successful scan.
         guard let backgroundedAt else { return false }
-        return Date().timeIntervalSince(backgroundedAt) > gracePeriod
+        return now().timeIntervalSince(backgroundedAt) > gracePeriod
     }
 
     /// Asked of a fresh context, through the biometrics-only policy.

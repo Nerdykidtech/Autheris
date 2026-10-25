@@ -81,7 +81,7 @@ struct HomeView: View {
         foldersTip.invalidate(reason: .actionPerformed)
         #if os(macOS)
         openSettings()
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         #else
         settingsStartPage = .organize
         // After the introduction sheet has gone: a second sheet can't open while the
@@ -224,14 +224,19 @@ struct HomeView: View {
     /// whole row — and in a grid a row is two codes. So the grid does its own
     /// dragging, one card at a time.
     private func cardGrid(columns: Int, rearranging: Bool, now: Date) -> some View {
+        // The grid is capped and centred *inside* a full-width scroll view. Capping
+        // the scroll view itself left it at the GeometryReader's leading edge, so a
+        // full-screen Mac window showed the two columns off to one side — and only
+        // that strip of the window scrolled.
         ScrollView {
             TokenGridView(codes: filteredCodes, columns: columns, rearranging: rearranging, now: now,
                           folderID: openFolderID,
                           presentSheet: { tokenSheet = $0 })
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
+                .frame(maxWidth: TokenGrid.maximumContentWidth)
+                .frame(maxWidth: .infinity)
         }
-        .readableWidth(TokenGrid.maximumContentWidth)
     }
 
     /// The list as it has always been: one card per row, reordered by `List`'s own
@@ -286,7 +291,7 @@ struct HomeView: View {
                 // `openSettings` can leave the window behind the main one when the
                 // app is not already active, so it is brought forward explicitly.
                 openSettings()
-                NSApp.activate(ignoringOtherApps: true)
+                NSApp.activate()
                 #else
                 showingSettings = true
                 #endif
