@@ -30,19 +30,21 @@ final class ChangelogReleaseTests: XCTestCase {
     }
 
     func testTheCatalogIsNewestFirst() {
-        // "2.10" must sort above "2.9", so compare the components, not the string.
-        let numbers: [Double] = ChangelogRelease.catalog.compactMap { release in
-            let parts = release.version.split(separator: ".").compactMap { Double($0) }
-            guard parts.count == 2 else { return nil }
-            return parts[0] + parts[1] / 100
+        // "2.10" must sort above "2.9", and "3.2.1" above "3.2", so compare the
+        // components, not the string. A missing patch number counts as zero.
+        let versions: [[Int]] = ChangelogRelease.catalog.compactMap { release in
+            let parts = release.version.split(separator: ".").compactMap { Int($0) }
+            guard (2...3).contains(parts.count) else { return nil }
+            return parts + Array(repeating: 0, count: 3 - parts.count)
         }
 
         XCTAssertEqual(
-            numbers.count,
+            versions.count,
             ChangelogRelease.catalog.count,
-            "every version must be of the form major.minor"
+            "every version must be of the form major.minor or major.minor.patch"
         )
-        XCTAssertEqual(numbers, numbers.sorted(by: >), "the catalog must list newest first")
+        XCTAssertEqual(versions, versions.sorted { $0.lexicographicallyPrecedes($1) }.reversed(),
+                       "the catalog must list newest first")
     }
 
     func testEveryReleaseHasNotesAndADate() {
