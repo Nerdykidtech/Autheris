@@ -1,0 +1,39 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, "SF Pro Display", system-ui, sans-serif;
+  color: #fff;
+  background:
+    radial-gradient(ellipse 60% 70% at 50% 62%, rgba(120, 200, 255, .55), transparent 70%),
+    radial-gradient(ellipse 120% 120% at 50% 30%, #1a9bff 0%, #0a6fe0 45%, #06399a 100%);
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+/* Faint spokes echoing the icon */
+.spokes { position: absolute; left: 50%; top: 58%; width: 0; height: 0; }
+.spokes i {
+  position: absolute; left: -9px; top: -1400px; width: 18px; height: 2800px;
+  border-radius: 9px; background: rgba(255, 255, 255, .07);
+}
+.spokes i:nth-child(2) { transform: rotate(60deg); }
+.spokes i:nth-child(3) { transform: rotate(-60deg); }
+.ring {
+  position: absolute; left: 50%; top: 58%; border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, .10); transform: translate(-50%, -50%);
+}
+.phone {
+  position: absolute; border-radius: 64px; background: #0b0b0f; padding: 14px;
+  box-shadow: 0 40px 90px rgba(0, 20, 70, .55), 0 0 0 3px rgba(255, 255, 255, .18) inset;
+}
+.phone img { display: block; width: 100%; border-radius: 52px; }
+.watch {
+  position: absolute; border-radius: 58px; background: #0b0b0f; padding: 18px;
+  box-shadow: 0 30px 70px rgba(0, 20, 70, .55), 0 0 0 3px rgba(255, 255, 255, .18) inset;
+}
+.watch img { display: block; width: 100%; border-radius: 40px; }
+.watch::after {
+  content: ""; position: absolute; right: -14px; top: 26%; width: 14px; height: 70px;
+  border-radius: 0 8px 8px 0; background: #2a2a30;
+}
+h1 { font-weight: 800; letter-spacing: -0.025em; line-height: 1.02; }
+p.sub { font-weight: 600; opacity: .85; letter-spacing: -0.01em; }
