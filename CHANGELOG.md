@@ -15,6 +15,15 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [3.2.2] — October 27, 2026
+
+Brings the 3.2.1 fixes that apply to iPhone and iPad to iOS, where 3.2.1 was not released.
+
+### Fixed
+
+- On a large iPad in landscape, your codes are now centred instead of sitting off to one side.
+- App Lock's 30 seconds now count from when you first leave Autheris, so leaving again before it locks doesn't restart them.
+
 ## [3.2.1] — October 24, 2026
 
 ### Fixed
