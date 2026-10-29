@@ -15,7 +15,7 @@ Most of the source is shared. The platform differences are named once, in `Vault
 | `PlatformImage.swift` | `PlatformImage`/`PlatformColor` (`UIImage`/`NSImage`, `UIColor`/`NSColor`), `Image(platformImage:)`, PNG encoding and `CGImage` bridging |
 | `PlatformSemanticColors.swift` | AppKit spellings for `NSColor.systemBackground`, `.separator`, `.secondarySystemBackground`, `.secondarySystemGroupedBackground` |
 | `PlatformNavigation.swift` | Navigation titles, sheet sizing (macOS has no `presentationDetents`), `fullScreenCover`, search placement, list style, toolbar placements, AutoFill and keyboard hints || `PlatformFeedback.swift` | `Haptics` — a no-op on macOS, which has no haptic engine |
-| `PlatformShareSheet.swift` | `UIActivityViewController` on iOS, `NSSharingServicePicker` on the Mac |
+| `PlatformShareSheet.swift` | `platformShareSheet(isPresented:items:)`: a `UIActivityViewController` sheet on iOS; on the Mac an `NSSharingServicePicker` popover anchored to the view, never a sheet |
 | `PlatformLifecycle.swift` | App-activation notification names, mapping iOS background/foreground onto macOS hide/unhide |
 | `PlatformApplication.swift` | Machine model and OS version for the support template, the camera privacy deep-link, in-app-mail availability |
 | `WindowCaptureExclusion.swift` | Excludes the window from capture on macOS; a no-op on iOS, which can detect capture instead |

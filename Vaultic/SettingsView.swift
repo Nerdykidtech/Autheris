@@ -668,7 +668,7 @@ struct SettingsView: View {
             // per-switch list reads as a wall of text. The switch labels carry the
             // meaning already; this says what they add up to.
             VStack(alignment: .leading, spacing: 8) {
-                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave. With App Lock on, your codes are also stored so that the iPhone itself asks for Face ID, Touch ID or your passcode before they can be read.")
+                Text("Codes are hidden whenever Autheris isn't the frontmost app, and while the screen is being recorded or mirrored. App Lock re-locks 30 seconds after you leave Autheris or lock your Mac. With App Lock on, your codes are also stored so that macOS itself asks for Touch ID or your password before they can be read.")
                 fetchLogosFooter
             }
             .settingsFooterStyle()

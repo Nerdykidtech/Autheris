@@ -19,6 +19,8 @@ private struct BackupRowView: View {
     let backupURL: URL
     let onRestore: () -> Void
     let onShare: () -> Void
+    /// Save to a chosen folder; `nil` where Share already covers it (iOS).
+    let onSave: (() -> Void)?
     let onDelete: () -> Void
 
     var body: some View {
@@ -44,6 +46,12 @@ private struct BackupRowView: View {
             Menu {
                 Button(action: onRestore) {
                     Label("Restore", systemImage: "arrow.counterclockwise")
+                }
+
+                if let onSave {
+                    Button(action: onSave) {
+                        Label("Save", systemImage: "square.and.arrow.down")
+                    }
                 }
 
                 Button(action: onShare) {
@@ -97,6 +105,12 @@ struct BackupView: View {
     @State private var isImportingFile = false
     @State private var shareURL: URL?
     @State private var showingShareSheet = false
+    #if os(macOS)
+    /// The backup being saved through the save panel.
+    @State private var exportDocument: BackupFileDocument?
+    @State private var showingExporter = false
+    @State private var showingSaveError = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -124,6 +138,13 @@ struct BackupView: View {
                 refreshBackups()
             }
             .alert("Backup Created", isPresented: $showingCreateBackupAlert) {
+                #if os(macOS)
+                Button("Save") {
+                    if let shareURL {
+                        saveBackup(shareURL)
+                    }
+                }
+                #endif
                 Button("Share") {
                     if shareURL != nil {
                         showingShareSheet = true
@@ -219,15 +240,29 @@ struct BackupView: View {
             ) { result in
                 handleFileImport(result)
             }
-            .sheet(isPresented: $showingShareSheet) {
-                if let shareURL {
-                    PlatformShareSheet(activityItems: [shareURL])
-                } else {
-                    Text("Nothing to share.")
-                        .platformSheetDetents([.medium])
-                        .platformSheetSize(minHeight: 200)
+            .platformShareSheet(isPresented: $showingShareSheet, items: shareURL.map { [$0] } ?? [])
+            #if os(macOS)
+            // Backups are written inside the app's sandbox container, which Finder
+            // doesn't show, and the Mac's sharing services have no "save to a
+            // folder". Save is how a backup reaches a place the user chose.
+            .fileExporter(
+                isPresented: $showingExporter,
+                document: exportDocument,
+                contentType: exportDocument?.contentType ?? .data,
+                defaultFilename: exportDocument?.filename
+            ) { result in
+                exportDocument = nil
+                if case .failure(let error) = result,
+                   (error as? CocoaError)?.code != .userCancelled {
+                    showingSaveError = true
                 }
             }
+            .alert("Couldn't Save Backup", isPresented: $showingSaveError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("The backup couldn't be saved there. Try another location.")
+            }
+            #endif
             .disabled(isWorking)
             .overlay {
                 if isWorking {
@@ -272,6 +307,7 @@ struct BackupView: View {
                     backupURL: backupURL,
                     onRestore: { prepareRestore(backupURL) },
                     onShare: { shareBackup(backupURL) },
+                    onSave: saveAction(for: backupURL),
                     onDelete: {
                         backupToDelete = backupURL
                         showingDeleteAlert = true
@@ -451,4 +487,57 @@ struct BackupView: View {
         shareURL = backupURL
         showingShareSheet = true
     }
+
+    /// The row's Save action: the Mac's save panel, and nothing on iOS, where
+    /// Share already offers Save to Files.
+    private func saveAction(for backupURL: URL) -> (() -> Void)? {
+        #if os(macOS)
+        return { saveBackup(backupURL) }
+        #else
+        return nil
+        #endif
+    }
+
+    #if os(macOS)
+    private func saveBackup(_ backupURL: URL) {
+        guard let document = BackupFileDocument(url: backupURL) else {
+            showingSaveError = true
+            return
+        }
+        exportDocument = document
+        showingExporter = true
+    }
+    #endif
 }
+
+#if os(macOS)
+/// A backup file's bytes, for the save panel. Write-only: restoring reads files
+/// through `fileImporter`, not through this.
+private nonisolated struct BackupFileDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [] }
+    static var writableContentTypes: [UTType] {
+        [.json, .data] + (UTType(filenameExtension: "autheris").map { [$0] } ?? [])
+    }
+
+    let data: Data
+    let filename: String
+    let contentType: UTType
+
+    init?(url: URL) {
+        guard let data = try? Data(contentsOf: url) else { return nil }
+        self.data = data
+        filename = url.lastPathComponent
+        contentType = url.pathExtension.lowercased() == "json"
+            ? .json
+            : UTType(filenameExtension: url.pathExtension) ?? .data
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        throw CocoaError(.featureUnsupported)
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
+    }
+}
+#endif

@@ -2,6 +2,9 @@ import XCTest
 import LocalAuthentication
 import Security
 @testable import Vaultic
+#if os(macOS)
+import AppKit
+#endif
 
 /// App Lock on a device that can't authenticate its owner.
 ///
@@ -152,6 +155,78 @@ final class AppLockManagerTests: XCTestCase {
         for _ in 0..<100 where lock.isLocked { await Task.yield() }
 
         XCTAssertFalse(lock.isLocked)
+    }
+
+    // MARK: - The grace period
+
+    /// An unlocked manager on a clock the test moves by hand.
+    private func unlockedManager(clock: Clock) -> AppLockManager {
+        let lock = AppLockManager(makeContext: { FakeAuthenticationContext.succeeds }, now: { clock.now })
+        lock.unlock()
+        return lock
+    }
+
+    func testReturningWithinTheGracePeriodStaysUnlocked() async {
+        let clock = Clock()
+        let lock = unlockedManager(clock: clock)
+
+        lock.appDidEnterBackground()
+        clock.advance(by: 20)
+        lock.appDidBecomeActive()
+
+        XCTAssertFalse(lock.isLocked)
+    }
+
+    func testReturningAfterTheGracePeriodLocks() async {
+        let clock = Clock()
+        let lock = unlockedManager(clock: clock)
+
+        lock.appDidEnterBackground()
+        clock.advance(by: 31)
+        lock.appDidBecomeActive()
+
+        XCTAssertTrue(lock.isLocked)
+    }
+
+    /// Leaving the app and then locking the Mac minutes later is minutes away. The
+    /// second event used to restart the clock, so unlocking the Mac moments after
+    /// it walked straight back into an unlocked vault.
+    func testASecondLeaveDoesNotRestartTheGracePeriod() async {
+        let clock = Clock()
+        let lock = unlockedManager(clock: clock)
+
+        lock.appDidEnterBackground()
+        clock.advance(by: 300)
+        lock.appDidEnterBackground()
+        clock.advance(by: 5)
+        lock.appDidBecomeActive()
+
+        XCTAssertTrue(lock.isLocked, "five minutes away counts, not the five seconds since the second leave")
+    }
+
+    #if os(macOS)
+    /// The screen sleeping leaves Autheris frontmost, so it never resigns active;
+    /// it has to start the grace period itself.
+    func testTheScreenSleepingStartsTheGracePeriodOnTheMac() async {
+        let clock = Clock()
+        let lock = unlockedManager(clock: clock)
+
+        NSWorkspace.shared.notificationCenter.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+        clock.advance(by: 31)
+        lock.appDidBecomeActive()
+
+        XCTAssertTrue(lock.isLocked)
+    }
+    #endif
+}
+
+/// A time the test sets, for stepping past the grace period without waiting.
+@MainActor
+private final class Clock {
+    private(set) var now = Date(timeIntervalSinceReferenceDate: 0)
+
+    func advance(by seconds: TimeInterval) {
+        now = now.addingTimeInterval(seconds)
     }
 }
 

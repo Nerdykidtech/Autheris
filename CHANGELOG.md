@@ -15,6 +15,26 @@ A version number lives in four places, and a release is not finished until they 
 
 `VaulticTests/ChangelogReleaseTests.swift` fails if (1) and (2) disagree, because bumping the version without adding its notes is the drift that is easiest to miss — the app cheerfully reports a release its own changelog has never heard of.
 
+## [3.2.2] — October 27, 2026
+
+Brings the 3.2.1 fixes that apply to iPhone and iPad to iOS, where 3.2.1 was not released.
+
+### Fixed
+
+- On a large iPad in landscape, your codes are now centred instead of sitting off to one side.
+- App Lock's 30 seconds now count from when you first leave Autheris, so leaving again before it locks doesn't restart them.
+
+## [3.2.1] — October 24, 2026
+
+### Fixed
+
+- On a Mac in full screen or a wide window, and on a large iPad in landscape, your codes are now centred instead of sitting off to one side.
+- On the Mac, the privacy screen now covers open sheets and the Settings window too, so a code, a setup key or a Transfer QR code isn't left showing when you switch to another app.
+- On the Mac, you can save a backup to a folder you choose, and sharing a backup or a Transfer QR code opens the share menu instead of an empty window.
+- On the Mac, a copied code stays on that Mac instead of reaching your other devices through Universal Clipboard, and it is cleared when you quit Autheris.
+- On the Mac, App Lock also re-locks after you lock your Mac, it sleeps, or you close its last window. The 30 seconds now count from when you first left, so locking the screen later doesn't restart them.
+- A link that adds codes on the Mac now opens in the Autheris window you have open, instead of a new one.
+
 ## [3.2] — October 17, 2026
 
 ### Added

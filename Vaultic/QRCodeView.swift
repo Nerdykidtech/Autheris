@@ -79,6 +79,8 @@ struct QRCodeView: View {
                 }
                 .disabled(qrImage == nil)
                 .opacity(qrImage == nil ? 0.45 : 1)
+                // On the button, so the Mac's sharing popover points at it.
+                .platformShareSheet(isPresented: $isSharing, items: qrImage.map { [$0] } ?? [])
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
             }
@@ -94,11 +96,6 @@ struct QRCodeView: View {
             }
             .onAppear {
                 generateQRCode()
-            }
-            .sheet(isPresented: $isSharing) {
-                if let qrImage {
-                    PlatformShareSheet(activityItems: [qrImage])
-                }
             }
         }
         .platformSheetSize(minHeight: 560)
