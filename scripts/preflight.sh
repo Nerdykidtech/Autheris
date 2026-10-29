@@ -7,7 +7,7 @@
 # Exit status is 0 only when the tree is safe to build from.
 set -euo pipefail
 
-root=$(git rev-parse --show-toplevel)
+root=$(git -C "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" rev-parse --show-toplevel)
 cd "$root"
 
 fail() {
