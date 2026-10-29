@@ -1,0 +1,5 @@
+{
+  "name": "2FA 身份验证器 Autheris",
+  "subtitle": "OTP 与 TOTP 验证码，离线可用",
+  "privacyPolicyUrl": "https://autheris.app/privacy"
+}
