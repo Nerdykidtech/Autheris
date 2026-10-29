@@ -73,6 +73,25 @@ Two places, and they have to agree:
 
 Those are the **Xcode** language codes, not the App Store Connect ones: `es`, `de` and `fr` rather than `es-ES`, `de-DE`, `fr-FR`. The two vocabularies differ, and the store's own mapping between them is exactly that — `pt-BR` and `zh-Hans` are qualified on both sides. The language-level code is also the more useful of the two: `es` covers the Spanish of every region, where `es-ES` would answer an `es-MX` user in English.
 
+## Before you archive: one clone, matching origin
+
+Archives have to come from a tree that matches what was pushed. Two things break that quietly:
+
+**A second checkout.** A clone in `~/Documents` and one in iCloud are different working trees. Building from the stale one ships the previous release's version and metadata; that is how 3.2.3 was once uploaded as `3.1 (28)`. The clone you build from is the only one that matters at archive time.
+
+**iCloud conflict copies.** With Desktop & Documents sync on, iCloud resolves two copies of a file by writing a sibling named `Thing 2.swift`. Xcode's synchronized folders compile every `.swift` in a target's directory, so each copy is a duplicate type and the archive fails with `invalid redeclaration`. The copies can appear between one build and the next.
+
+`scripts/preflight.sh` checks both, plus the version, before any archive:
+
+```bash
+./scripts/preflight.sh   # fails on stale/dirty tree or conflict copies
+xcodebuild archive ...
+```
+
+It refuses when the clone is behind or ahead of `origin/main`, when a tracked file is modified, when `MARKETING_VERSION` or `CURRENT_PROJECT_VERSION` differs across the six configurations, and when a `* 2.swift` copy exists. Conflict copies outside the sources (skills, docs) only warn — they cannot break the build, but they mean iCloud is fighting the folder.
+
+The durable fix is one checkout outside iCloud, for example `~/Developer/Autheris`, with a plain `git pull --ff-only` before building. If a second clone is kept, let git be the thing that syncs it: pull before archiving, push after committing, and never edit the same file in both.
+
 ## Keeping the catalogs in step with the code
 
 The `Localizable` catalogs are neither written nor maintained by hand. During a build the extractor reads the sources (`SWIFT_EMIT_LOC_STRINGS` is on) and emits a `.stringsdata` file per source file; `xcstringstool sync` merges those into the catalog.
